@@ -1,0 +1,168 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+?>
+<meta name="csrf-token" content="<?= function_exists('csrf_token') ? csrf_token() : '' ?>">
+    <!-- apexcharts css -->
+    <?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+
+
+    <!-- glight css -->
+    <link rel="stylesheet" href="<?= asset('assets/vendor/glightbox/glightbox.min.css') ?>">
+    
+    <!-- Select2 css -->
+    <link rel="stylesheet" type="text/css" href="<?= asset('assets/vendor/select/select2.min.css') ?>">
+    
+    <style>
+    	
+    </style>
+
+)
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xxl-12">
+                    <div class="card-body app-breadcrumb">
+                        <div>
+                            <ol class="breadcrumb  bg-light-secondary p-2">
+															<li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+															<li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+															<li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.logs') ?></li>
+                            </ol>
+                        </div>
+                    </div>
+          	</div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="/assets/deportes/ca_<?= $deporte ?>.jpg" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+            <div class="col-xxl-12">
+                <div class="card-body ">
+                    <div class="row app-form">
+                        <div class="col-xxl-12">
+                            <div class="mt-1 mb-3">
+															<label class="form-label">Evento:</label>
+															<select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+															    <option value=""><?= $evento ? 'Evento seleccionado: ' . $evento['titulo'] : 'Seleccione evento' ?></option>
+															    <?php foreach($eventos as $ev): ?>
+															        <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid'] ?? '']) ?>"
+															            <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>>
+															            <?= $ev['titulo'] ?>
+															        </option>
+															    <?php endforeach; ?>
+															</select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <div class="card">
+                    <div class="card-body">
+												<?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV , 'deporte' => $deporte]) ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <ul class=" box-list mb-4">
+                    <li class="b-s-4-primary">
+                        <h5>Logs</h5>
+                    </li>
+                </ul>
+            </div>
+            
+<div class="col-xxl-12">
+    <div class="card equal-card">
+        <div class="card-body p-0">
+            <div id="myTable">
+                <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                    <form class="app-form app-icon-form" action="#">
+                        <div class="position-relative">
+                            <input type="search" class="form-control search" placeholder="<?= __("deporte_padel.buscar") ?>..." aria-label="Search">
+                            <i class="ti ti-search text-dark"></i>
+                        </div>
+                    </form>
+                </div>
+                <div class="overflow-auto app-scroll">
+                    <table class="table table-bottom-border list-table-data align-middle mb-0">
+                        <thead>
+                            <tr class="app-sort" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <th style="width:15%; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1); color: white;" class="sort" data-sort="categoria" scope="col"><?= __("deporte_padel.conexion") ?></th>
+                                <th style="width:15%; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1); color: white;" class="sort" data-sort="color" scope="col"><?= __("deporte_padel.seccion") ?></th>
+                                <th style="width:15%; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1); color: white;" class="sort" data-sort="inscritos" scope="col"><?= __("deporte_padel.accion") ?></th>
+                                <th style="width:25%; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1); color: white;" class="sort" data-sort="limite" scope="col"><?= __("deporte_padel.detalle") ?></th>
+                                <th style="width:30%; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1); color: white;" class="sort" data-sort="consideraciones" scope="col"><?= __("deporte_padel.agente_fecha") ?></th>
+                            </tr>
+                        </thead>
+                        <tbody class="list" id="t-data">
+                            <?php
+                            $logsSort = is_array($evento['logs'] ?? null)
+                                ? $evento['logs']
+                                : (array) ($evento['logs'] ?? []);
+                            usort($logsSort, fn($a, $b) => strcmp($b->updated_at ?? '', $a->updated_at ?? ''));
+                            foreach ($logsSort as $log):
+                            ?>
+                                <tr style="transition: all 0.3s ease; border-left: 4px solid transparent;" onmouseover="this.style.backgroundColor='#f8f9ff'; this.style.borderLeftColor='#667eea'; this.style.transform='translateX(2px)'" onmouseout="this.style.backgroundColor=''; this.style.borderLeftColor='transparent'; this.style.transform='translateX(0)'">
+                                    <td>
+                                        <div class="d-flex justify-content-left align-items-center">
+                                            <div>
+                                                <h6 class="f-s-15 mb-0" style="color: #2c3e50; font-weight: 600;"><small><small>ID:<?= $log->user_id ?></small><br/><small><?= user_find($log->user_id)['name'] ?? 'Sin usuario' ?></small></small></h6>
+                                                <p class="text-secondary f-s-13 mb-0" style="color: #7f8c8d; font-family: 'Courier New', monospace;"><?= $log->ip ?></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="inscritos">
+                                        <span style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                            <?= __("deporte_padel.$log->seccion") ?>
+                                        </span>
+                                    </td>
+                                    <td class="limite">
+                                        <?= __("deporte_padel.$log->accion") ?>
+                                    </td>
+                                    <td class="consideraciones">
+                                        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 120px; overflow-y: auto; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                                            <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; color: #495057; line-height: 1.4;"><?= json_encode(json_decode($log->detalle), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></pre>
+                                        </div>
+                                    </td>
+                                    <td class="estructura">
+                                        <p class="text-secondary f-s-13 mb-0" style="color: #7f8c8d; font-family: 'Courier New', monospace; margin-bottom: 15px !important;">
+                                        	<?= ha_pasado($log->updated_at) ?>
+                                        </p>
+                                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 8px; font-size: 11px; color: #856404; max-width: 300px; word-wrap: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                            <?= $log->user_agent ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="list-pagination">
+                    <ul class="pagination"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        </div>
+    </div>
+
+    <!-- apexcharts js-->
+    <?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/apexcharts/apexcharts.min.js')); ?>
+
+    <!-- Glight js -->
+    <?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/glightbox/glightbox.min.js')); ?>
+    
+    <!-- select2 -->
+    <?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/select/select2.min.js')); ?>
+
+    <!--js-->
+    <?php $this->inlineScript()->appendFile($this->basePath('assets/js/select.js')); ?>

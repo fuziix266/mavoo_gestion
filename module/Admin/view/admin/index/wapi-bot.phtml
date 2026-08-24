@@ -1,0 +1,96 @@
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fab fa-whatsapp text-success me-2"></i> Integración WhatsApp (WAPI)
+            </h1>
+            <p class="text-muted mt-2">
+                Estado del microservicio de notificaciones por WhatsApp.
+            </p>
+        </div>
+        <div class="col-auto">
+            <button onclick="window.location.reload()" class="btn btn-outline-primary shadow-sm">
+                <i class="fas fa-sync-alt fa-sm text-primary-50"></i> Refrescar Estado
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Tarjeta Central de Estado -->
+        <div class="col-xl-6 col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Estado de Conexión del Microbot</h6>
+                    <?php if ($status === 'connected'): ?>
+                        <span class="badge bg-success">Conectado y Listo</span>
+                    <?php elseif ($status === 'waiting_qr'): ?>
+                        <span class="badge bg-warning text-dark">Esperando Escaneo</span>
+                    <?php elseif ($status === 'disconnected'): ?>
+                        <span class="badge bg-danger">Desconectado</span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary"><?= htmlspecialchars($status) ?></span>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="card-body text-center py-5">
+                    
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3 d-block"></i>
+                            <strong>Error de Comunicación con el Node Bot</strong><br>
+                            <?= htmlspecialchars($error) ?>
+                            <hr>
+                            <small>Solución: Es posible que Dokploy esté reiniciando el servicio, o que falte ejecutar `git push` para desplegar el reciente parche en Wapi.</small>
+                        </div>
+                    <?php else: ?>
+
+                        <?php if ($status === 'connected'): ?>
+                            <div class="py-4">
+                                <i class="fas fa-check-circle text-success" style="font-size: 6rem;"></i>
+                                <h3 class="mt-4 text-success">¡Totalmente Operativo!</h3>
+                                <p class="text-muted mt-3 px-4">
+                                    El bot de WhatsApp está enlazado a tu sesión de WhatsApp Web permanentemente mediante la persistencia LocalAuth. Los webhooks de Laminas están encendidos.
+                                </p>
+                            </div>
+                        <?php elseif ($status === 'waiting_qr' && $qr): ?>
+                            <div class="py-2">
+                                <h4 class="text-dark mb-3">Vincular Número de Empresa</h4>
+                                <p class="text-muted mb-4 px-3">
+                                    Abre WhatsApp en tu teléfono, ve a Dispositivos Vinculados, toca "Vincular un dispositivo" y apunta la cámara a este código QR.
+                                </p>
+                                
+                                <div class="bg-light p-3 d-inline-block rounded shadow-sm mb-3">
+                                    <img src="<?= $qr ?>" alt="QR Code WhatsApp" style="width: 250px; height: 250px;">
+                                </div>
+                                
+                                <p class="small text-danger mt-2">
+                                    <i class="fas fa-clock"></i> Este código expira cada 60 segundos. Si falla, haz clic en "Refrescar Estado" arriba.
+                                </p>
+                            </div>
+                        <?php else: ?>
+                            <div class="py-4">
+                                <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <h4 class="mt-4 text-secondary">Iniciando Motor Automático...</h4>
+                                <p class="text-muted mt-2">
+                                    Chromium y Node.js se están levantando en el servidor interno.<br> Refresca en unos segundos.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+
+                    <?php endif; ?>
+
+                </div>
+            </div>
+            
+            <div class="card shadow">
+               <div class="card-body bg-light rounded text-center">
+                   <p class="mb-0 text-muted small">
+                       <i class="fas fa-server"></i> Conectando al microservicio Node WAPI en <code><?= htmlspecialchars($config['whatsapp']['wapi']['api_url'] ?? 'http://localhost:3001') ?></code>
+                   </p>
+               </div>
+            </div>
+        </div>
+    </div>
+</div>

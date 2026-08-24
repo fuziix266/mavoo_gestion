@@ -1,0 +1,1596 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+$menuEV = $this->menuEV ?? (object)[
+    'uuid'           => $evento['uuid'] ?? '',
+    'sedes'          => true,
+    'categorias'     => true,
+    'nominas'        => true,
+    'fixture'        => true,
+    'ranking'        => true,
+    'notificaciones' => true,
+    'logs'           => true,
+];
+$sedes = $this->sedes ?? [];
+$categorias = $this->categorias ?? [];
+$partidos = $this->partidos ?? [];
+$programados = $this->programados ?? [];
+$bloques = $this->bloques ?? [];
+$duelos = $this->duelos ?? [];
+$categoriasRows = $this->categoriasRows ?? [];
+?>
+<meta name="csrf-token" content="<?= function_exists('csrf_token') ? csrf_token() : '' ?>">
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+
+    <link rel="stylesheet" href="<?= $this->basePath('assets/vendor/glightbox/glightbox.min.css') ?>">
+    <link rel="stylesheet" type="text/css" href="<?= $this->basePath('assets/vendor/select/select2.min.css') ?>">
+    <style>
+        .custom-rounded-table td {
+            background-color: #fff;
+        }
+        .custom-rounded-table tr:first-child th:first-child,
+        .custom-rounded-table tr:first-child td:first-child {
+            border-top-left-radius: 12px;
+        }
+        .custom-rounded-table tr:first-child th:last-child,
+        .custom-rounded-table tr:first-child td:last-child {
+            border-top-right-radius: 12px;
+        }
+        .custom-rounded-table tr:last-child td:first-child {
+            border-bottom-left-radius: 12px;
+        }
+        .custom-rounded-table tr:last-child td:last-child {
+            border-bottom-right-radius: 12px;
+        }
+        .custom-rounded-table td:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <style>
+        .pareja-cell {
+            white-space: pre-line;
+            font-size: 14px;
+            line-height: 1.2;
+            text-align: left;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .pareja-cell strong {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0052cc;
+        }
+        .pareja-cell span {
+            display: block;
+            font-size: 12px;
+            color: #333;
+            margin-top: 4px;
+        }
+        .criterio-cell {
+            text-transform: capitalize;
+            font-size: 14px;
+            color: #555;
+        }
+        .resultado-cell {
+            text-align: center;
+            padding: 10px;
+        }
+        .resultado-marcador {
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f0f0f0;
+            padding: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .resultado-marcador div {
+            padding: 2px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .resultado-marcador div:last-child {
+            border-bottom: none;
+        }
+        .set-ganador {
+            background: #e6ffed;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .eliminatoria-final {
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            color: #333;
+        }
+    </style>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xxl-12">
+                <div class="card-body app-breadcrumb">
+                    <div>
+                        <ol class="breadcrumb bg-light-secondary p-2">
+                            <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+                            <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+                            <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.programacion') ?></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+                <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+                <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                    <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <div class="card-body">
+                    <div class="row app-form">
+                        <div class="col-xxl-12">
+                            <div class="mt-1 mb-3">
+                                <label class="form-label"><?= __('deporte_padel.evento') ?>:</label>
+                                <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                    <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . ': ' . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
+                                    <?php foreach($eventos as $ev): ?>
+                                        <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>"
+                                            <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>>
+                                            <?= $ev['titulo'] ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV , 'deporte' => $deporte]) ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <ul class="box-list mb-4">
+                    <li class="b-s-4-primary">
+                        <h5><?= __('deporte_padel.programacion') ?></h5>
+                        <?php
+                            // Faked for migration stabilization
+                            $ultimaFecha = date('Y-m-d H:i:s');
+                        ?>
+                        <h7><?= __('deporte_padel.ultima_modificacion') ?> <?= ha_pasado($ultimaFecha) ?></h7>
+                    </li>
+                </ul>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="programar-grupos" data-evento-id="<?= ($evento['id'] ?? '') ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #007bff; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.programar_fase_grupos') ?>
+                </button>
+                <button class="programar-eliminatorias" data-evento-id="<?= ($evento['id'] ?? '') ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #6f42c1; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.programar_fase_eliminatoria') ?>
+                </button>
+                <button class="reset" data-evento-id="<?= ($evento['id'] ?? '') ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #ffc107; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.reset') ?>
+                </button>
+                <button class="reset-total" data-evento-id="<?= ($evento['id'] ?? '') ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #dc3545; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.reset_total') ?>
+                </button>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#modalReiniciarAvanzado" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #fd7e14; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.reiniciar_avanzado') ?>
+                </button>
+                <button id="mostrarFixture" data-evento-id="<?= ($evento['id'] ?? '') ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #A80B4E; border: none; border-radius: 4px; cursor: pointer;">
+                    <?= __('deporte_padel.fixture') ?>
+                </button>
+            </div>
+            <div class="modal fade" id="modalReiniciarAvanzado" tabindex="-1" role="dialog" aria-labelledby="modalReiniciarAvanzadoLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background-color: #fd7e14; color: white;">
+                            <h5 class="modal-title" id="modalReiniciarAvanzadoLabel" style="color:white;"><?= __('deporte_padel.reinicio_avanzado_fixture') ?></h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="<?= $this->url('ligas.fixture', ['deporte' => $deporte ?? 'padel', 'accion' => 'reiniciar-avanzado', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST">
+                            
+                            <input type="hidden" name="evento_uuid" value="<?= ($evento['uuid'] ?? '') ?>">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="categoriaSelectReset" class="form-label"><?= __('deporte_padel.seleccione_categoria_reiniciar') ?></label>
+                                    <select class="form-select" id="categoriaSelectReset" name="id_categoria" required>
+                                        <option value=""><?= __('deporte_padel.seleccionar_categoria') ?></option>
+                                        <?php foreach($categorias as $categoria): ?>
+                                            <option value="<?= $categoria->id ?>"><?= $categoria->categoriaLista->titulo ?> - <?= $categoria->categoriaLista->subtitulo ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="alert alert-warning" role="alert">
+                                    <?= __('deporte_padel.aviso_reinicio_categoria') ?>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                <button type="submit" class="btn btn-warning"><?= __('deporte_padel.reiniciar') ?></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="fixtureModal" tabindex="-1" role="dialog" aria-labelledby="fixtureModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background-color: #A80B4E; color: white;">
+                            <h5 class="modal-title" id="fixtureModalLabel" style="color: white;"><?= __('deporte_padel.gestion_fixtures') ?></h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th><?= __('deporte_padel.categoria') ?></th>
+                                        <th><?= __('deporte_padel.ultima_actualizacion') ?></th>
+                                        <th><?= __('deporte_padel.enlace_es') ?></th>
+                                        <th><?= __('deporte_padel.enlace_en') ?></th>
+                                        <th><?= __('deporte_padel.accion') ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fixtureTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php foreach ($categorias as $categoria): ?>
+                <div class="col-xxl-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-left align-items-center">
+                                <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2">
+                                    <?= $categoria->categoriaLista->icono ?>
+                                </div>
+                                <div>
+                                    <h6 class="f-s-15 mb-0"><?= $categoria->categoriaLista->titulo ?></h6>
+                                    <p class="text-secondary f-s-13 mb-0"><?= $categoria->categoriaLista->subtitulo ?></p>
+                                </div>
+                                <?php
+                                    $fixtureProg = mod_gestion_lookup('mod_gestion_fixture_progs', 'mod_evento_id', $categoria->mod_evento_id ?? null);
+                                    $duelos = $fixtureProg ? (is_string($fixtureProg->duelos) ? json_decode($fixtureProg->duelos, true) ?? [] : (is_array($fixtureProg->duelos) ? $fixtureProg->duelos : [])) : [];
+                                    $partidos = is_string($categoria->partidos) ? json_decode($categoria->partidos, true) ?? [] : (is_array($categoria->partidos) ? $categoria->partidos : []);
+                                    $duelosConFase = array_map(function ($duelo) use ($partidos, $categoria) {
+                                        $partidoIdx = $duelo['partido_idx'] - 1;
+                                        if (isset($partidos[$partidoIdx]) && $duelo['categoria_id'] == $categoria->id) {
+                                            $duelo['fase'] = $partidos[$partidoIdx]['fase'] ?? null;
+                                        }
+                                        return $duelo;
+                                    }, $duelos);
+                                    $partidosGrupos = array_filter($partidos, fn($p) => isset($p['fase']) && strtoupper($p['fase']) === 'GRUPOS');
+                                    $partidosEliminatorias = array_filter($partidos, fn($p) => isset($p['fase']) && strtoupper($p['fase']) !== 'GRUPOS');
+                                    $duelosCompletadosGrupos = array_filter($duelosConFase, fn($d) => isset($d['categoria_id']) && $d['categoria_id'] == $categoria->id && isset($d['fase']) && strtoupper($d['fase']) === 'GRUPOS' && (!empty($d['ganador']) || !empty($d['wo']) || !empty($d['descalificado'])));
+                                    $duelosCompletadosEliminatorias = array_filter($duelosConFase, fn($d) => isset($d['categoria_id']) && $d['categoria_id'] == $categoria->id && isset($d['fase']) && strtoupper($d['fase']) !== 'GRUPOS' && (!empty($d['ganador']) || !empty($d['wo']) || !empty($d['descalificado'])));
+                                    $totalGrupos = count($partidosGrupos);
+                                    $completadosGrupos = count($duelosCompletadosGrupos);
+                                    $porcentajeGrupos = $totalGrupos > 0 ? round(($completadosGrupos / $totalGrupos) * 100) : 0;
+                                    $totalEliminatorias = count($partidosEliminatorias);
+                                    $completadosEliminatorias = count($duelosCompletadosEliminatorias);
+                                    $porcentajeEliminatorias = $totalEliminatorias > 0 ? round(($completadosEliminatorias / $totalEliminatorias) * 100) : 0;
+                                ?>
+                                <?php if ($totalGrupos > 0): ?>
+                                    <div style="display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 30px;">
+                                        <div style="padding-left: 15px; padding-right: 15px;"><?= __('deporte_padel.fase_grupos') ?></div>
+                                        <div style="border-top: 1px solid #ccc; margin-top: 5px; padding-top: 5px; text-align: center;">
+                                            <strong><?= $completadosGrupos ?> <?= __('deporte_padel.de') ?> <?= $totalGrupos ?> (<?= $porcentajeGrupos ?>%)</strong>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 30px;">
+                                        <button class="btn m-1 btn-outline-info btn-ordenar-ranking" data-categoria-uuid="<?= $categoria->uuid ?>" data-fase="grupos">
+                                            <i class="ti ti-sort-descending"></i> <span><?= __('deporte_padel.fase_grupos') ?></span>
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($totalEliminatorias > 0): ?>
+                                    <div style="display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 10px;">
+                                        <div style="padding-left: 15px; padding-right: 15px;"><?= __('deporte_padel.fase_eliminatoria') ?></div>
+                                        <div style="border-top: 1px solid #ccc; margin-top: 5px; padding-top: 5px; text-align: center;">
+                                            <strong><?= $completadosEliminatorias ?> <?= __('deporte_padel.de') ?> <?= $totalEliminatorias ?> (<?= $porcentajeEliminatorias ?>%)</strong>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 10px;">
+                                        <button class="btn m-1 btn-outline-info btn-ordenar-ranking" data-categoria-uuid="<?= $categoria->uuid ?>" data-fase="eliminatorias">
+                                            <i class="ti ti-sort-descending"></i> <span><?= __('deporte_padel.eliminatorias') ?></span>
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <div class="modal fade" id="rankingModal" tabindex="-1" aria-labelledby="rankingModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px;">
+                        <div class="modal-header" style="background: #007bff; color: white; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                            <h5 class="modal-title" id="rankingModalLabel"><?= __('deporte_padel.ranking_fase_grupos_eliminatorias') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+                        </div>
+                        <div class="modal-body" id="rankingContent">
+                        </div>
+                        <div class="modal-footer" style="background: #f5f7fa;">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php foreach($sedes as $sede): ?>
+                <div class="col-xxl-12">
+                    <div class="card equal-card">
+                        <div class="card-header">
+                            <h5>
+                                <?= \Carbon\Carbon::parse($sede->fecha_inicio)->isoFormat('dddd D \d\e MMMM HH:mm') ?> -
+                                <?= \Carbon\Carbon::parse($sede->fecha_cierre)->isoFormat('dddd D \d\e MMMM HH:mm') ?>
+                            </h5>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="bloquear-todos" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #dc3545; border: none; border-radius: 4px; cursor: pointer;">
+                                    <?= __('deporte_padel.bloquear_todos') ?>
+                                </button>
+                                <button class="desbloquear-todos" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #28a745; border: none; border-radius: 4px; cursor: pointer;">
+                                    <?= __('deporte_padel.desbloquear_todos') ?>
+                                </button>
+                            </div>
+                        </div>
+            <div id="scrollTop-<?= $sede->id ?>" style="overflow-x: auto; overflow-y: hidden; width: 100%; max-width: none; scrollbar-width: thin; scrollbar-color: #007bff #e9ecef;">
+                <div style="width: <?= 150 + ($sede->canchas->sum('cantidad') * 140) + ($sede->canchas->sum('cantidad') * 9) ?>px; height: 1px; min-width: 100%;"></div>
+            </div>
+            <div id="scrollBottom-<?= $sede->id ?>" class="card-body" style="overflow-x: auto; white-space: nowrap; width: 100%; max-width: none; scrollbar-width: thin; scrollbar-color: #007bff #e9ecef;">
+    <style>
+        #scrollTop-<?= $sede->id ?>::-webkit-scrollbar,
+        #scrollBottom-<?= $sede->id ?>::-webkit-scrollbar {
+            height: 26px;
+        }
+        #scrollTop-<?= $sede->id ?>::-webkit-scrollbar-track,
+        #scrollBottom-<?= $sede->id ?>::-webkit-scrollbar-track {
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+        }
+        #scrollTop-<?= $sede->id ?>::-webkit-scrollbar-thumb,
+        #scrollBottom-<?= $sede->id ?>::-webkit-scrollbar-thumb {
+            background: #343a40;
+            border-radius: 6px;
+        }
+        #scrollTop-<?= $sede->id ?>::-webkit-scrollbar-thumb:hover,
+        #scrollBottom-<?= $sede->id ?>::-webkit-scrollbar-thumb:hover {
+            background: #212529;
+        }
+    </style>
+                            <table class="custom-rounded-table" style="border-collapse: separate; border-spacing: 9px; background-color: #fff;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <?php
+                                            $totalCanchas = $sede->canchas->sum('cantidad');
+                                            $canchaIndex = 1;
+                                        ?>
+                                        <?php foreach($sede->canchas as $cancha): ?>
+                                            <?php for($i = 1; $i <= $cancha->cantidad; $i++): ?>
+                                                <th style="border-radius: 8px; padding: 12px; text-align: center; font-weight: bold;">
+                                                    <?= __('deporte_padel.cancha') ?> <?= $canchaIndex ?><br/>
+                                                    <div style="display: flex; justify-content: center; gap: 4px;">
+                                                        <button class="bloquear-columna" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-cancha="<?= $canchaIndex ?>" style="font-size: 15px; color: red; display: flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer;">
+                                                            <i class="ti ti-lock"></i>
+                                                            <i class="ti ti-arrow-big-down-lines-filled"></i>
+                                                        </button>
+                                                        <button class="desbloquear-columna" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-cancha="<?= $canchaIndex ?>" style="font-size: 15px; color: green; display: flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer;">
+                                                            <i class="ti ti-lock-open"></i>
+                                                            <i class="ti ti-arrow-big-down-lines-filled"></i>
+                                                        </button>
+                                                    </div>
+                                                </th>
+                                                <?php $canchaIndex++; ?>
+                                            <?php endfor; ?>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                        $bloquesGrupo = $sede->evento->ajustes()->latest('created_at')->first()?->bloques_grupo ?? '01:00';
+                                        $bloques = calcular_bloques($sede->fecha_inicio, $sede->fecha_cierre, $bloquesGrupo);
+                                        $fixture = $sede->mod_evento_id
+                                            ? mod_gestion_lookup('mod_gestion_fixture', 'mod_evento_id', $sede->mod_evento_id)
+                                            : null;
+                                        $bloqueos = $fixture ? ($fixture->bloqueos ?? []) : [];
+                                        $fixtureProg = mod_gestion_lookup('mod_gestion_fixture_progs', 'mod_evento_id', $sede->mod_evento_id ?? null);
+                                        $programados = $fixtureProg ? ($fixtureProg->fixture[$sede->id] ?? []) : [];
+                                        $duelos = $fixtureProg ? ($fixtureProg->duelos ?? []) : [];
+                                        // Cargar categorías + nóminas del evento (reemplazo Laminas del eloquent with())
+                                        $categoriasRows = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                            "SELECT * FROM mod_gestion_categorias WHERE mod_evento_id = ? AND activo = 1 ORDER BY orden",
+                                            [$sede->mod_evento_id]
+                                        )->toArray();
+                                        $categorias = [];
+                                        foreach ($categoriasRows as $cat) {
+                                            $cat['nominas'] = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                                "SELECT * FROM mod_gestion_nominas WHERE mod_categoria_id = ? ORDER BY orden",
+                                                [$cat['id']]
+                                            )->toArray();
+                                            $cat['id'] = (int)$cat['id'];
+                                            $categorias[$cat['id']] = (object) $cat;
+                                        }
+                                        if ($deporte == 'futbol') {
+                                            // Cargar categorías + nóminas (Laminas-compatible)
+                                            $categoriasRows = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                                "SELECT * FROM mod_gestion_categorias WHERE mod_evento_id = ? AND activo = 1 ORDER BY orden",
+                                                [$sede->mod_evento_id]
+                                            )->toArray();
+                                            $categorias = [];
+                                            foreach ($categoriasRows as $cat) {
+                                                $cat['nominas'] = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                                    "SELECT * FROM mod_gestion_nominas WHERE mod_categoria_id = ? AND uuid_b IS NULL ORDER BY orden",
+                                                    [$cat['id']]
+                                                )->toArray();
+                                                $cat['id'] = (int)$cat['id'];
+                                                $cat['partidos'] = is_string($cat['partidos'] ?? null) ? json_decode($cat['partidos'], true) : ($cat['partidos'] ?? []);
+                                                $cat['variables'] = is_string($cat['variables'] ?? null) ? json_decode($cat['variables'], true) : ($cat['variables'] ?? []);
+                                                $categorias[$cat['id']] = (object) $cat;
+                                            }
+                                        }
+                                        $categoriasConPartidos = [];
+                                        $variables = $categoria->variables ?? [];
+                                        foreach ($categorias as $categoria) {
+                                            $partidos = is_array($categoria->partidos) ? $categoria->partidos : [];
+                                            foreach ($partidos as $idx => $partido) {
+                                                $partido_idx = $idx + 1;
+                                                $found = false;
+                                                foreach ($programados as $bloque => $canchas) {
+                                                    foreach ($canchas as $cancha => $partidoData) {
+                                                        if ($partidoData['categoria_id'] == $categoria->id && $partidoData['partido_idx'] == $partido_idx) {
+                                                            $found = true;
+                                                            break 2;
+                                                        }
+                                                    }
+                                                }
+                                                if (!$found) {
+                                                    $categoriasConPartidos[$categoria->id] = true;
+                                                }
+                                            }
+                                        }
+                                        $hasPartidosNoProgramados = !empty($categoriasConPartidos);
+                                        if (empty($programados)) { $hasPartidosNoProgramados = empty($programados); }
+                                        
+                                    ?>
+                                    <?php foreach($bloques as $bloque): ?>
+                                        <tr>
+                                            <td style="height: 185px; font-size: 10px; width: 80px; min-width: 80px; max-width: 80px; text-align: center; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <?= \Carbon\Carbon::parse($bloque)->format('d/m H:i') ?><br/>
+                                                <?= \Carbon\Carbon::parse($bloque)->addHour()->format('d/m H:i') ?><br/>
+                                                <div style="display: flex; justify-content: center; gap: 4px;">
+                                                    <button class="bloquear-fila" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-bloque="<?= $bloque ?>" style="font-size: 15px; color: red; display: flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer;">
+                                                        <i class="ti ti-lock"></i>
+                                                        <i class="ti ti-arrow-big-right-lines-filled"></i>
+                                                    </button>
+                                                    <button class="desbloquear-fila" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-bloque="<?= $bloque ?>" style="font-size: 15px; color: green; display: flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer;">
+                                                        <i class="ti ti-lock-open"></i>
+                                                        <i class="ti ti-arrow-big-right-lines-filled"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <?php for($i = 1; $i <= $totalCanchas; $i++): ?>
+                                                <?php
+                                                    $isBloqueado = isset($bloqueos[$bloque][$i]) && $bloqueos[$bloque][$i];
+                                                    $partido = $programados[$bloque][$i] ?? null;
+                                                    $partidoData = null;
+                                                    $duelo = null;
+                                                    $isIniciado = false;
+                                                    $hasResultado = false;
+                                                    $puedePartir = true;
+                                                    $ganador = null;
+                                                    if ($partido) {
+                                                        $categoria = $categorias[$partido['categoria_id']];
+                                                        $variables = $categoria->variables ?? [];
+                                                        $partidos = json_decode($categoria->partidos, true) ?? [];
+                                                        $partidoData = $partidos[$partido['partido_idx'] - 1] ?? null;
+                                                        if ($partidoData) {
+                                                            $nominas = $categoria->nominas->keyBy('orden');
+                                                            if (isset($variables[$partidoData['parejaA']])) { $partidoData['parejaA'] = $variables[$partidoData['parejaA']]; }
+                                                            if (isset($variables[$partidoData['parejaB']])) { $partidoData['parejaB'] = $variables[$partidoData['parejaB']]; }
+                                                            $parejaA = $partidoData['parejaA'];
+                                                            $parejaB = $partidoData['parejaB'];
+                                                            if ($deporte == 'futbol') {
+                                                                $parejaANombre = is_numeric($parejaA) && isset($nominas[$parejaA]) ? implode('<br/>', $nominas[$parejaA]->detalles->pluck('nombre')->toArray()).'<br/><br/>' : 'Equipo no definido<br/><br/>';
+                                                                $parejaBNombre = is_numeric($parejaB) && isset($nominas[$parejaB]) ? implode('<br/>', $nominas[$parejaB]->detalles->pluck('nombre')->toArray()).'<br/><br/>' : 'Equipo no definido<br/><br/>';
+                                                            }
+                                                            else {
+                                                                $parejaANombre = is_numeric($parejaA) && isset($nominas[$parejaA]) ? implode('<br/>', $nominas[$parejaA]->detalles->pluck('name')->toArray()) : 'Pareja no definida<br/><br/>';
+                                                                $parejaBNombre = is_numeric($parejaB) && isset($nominas[$parejaB]) ? implode('<br/>', $nominas[$parejaB]->detalles->pluck('name')->toArray()) : 'Pareja no definida<br/><br/>';
+                                                            }
+                                                            if ($parejaANombre == 'Pareja no definida<br/><br/>' || $parejaBNombre == 'Pareja no definida<br/><br/>') { $puedePartir = false; }
+                                                            $totalPartidos = count($partidos);
+                                                            $titulo = mod_gestion_value('mod_gestion_categorias_listas', 'uuid', $categoria->categoria, 'titulo');
+                                                            $subtitulo = mod_gestion_value('mod_gestion_categorias_listas', 'uuid', $categoria->categoria, 'subtitulo');
+                                                            foreach ($duelos as $d) {
+                                                                if ($d['categoria_id'] == $partido['categoria_id'] && $d['partido_idx'] == $partido['partido_idx']) {
+                                                                    $duelo = $d;
+                                                                    $isIniciado = !empty($d['hora_inicio']);
+                                                                    $ganador = $d['ganador'] ?? null;
+                                                                    $hasResultado = !empty($d['ganador']) || !empty($d['wo']) || !empty($d['descalificado']);
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ?>
+                                                <td style="border: 1px dashed <?= $isBloqueado ? '#d6d6d6' : ($partido ? '#e45656' : '#d6d6d6') ?>; border-radius: 8px; padding: 12px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; <?= $isBloqueado ? 'background: #f9e3e3;' : ($partido ? 'box-shadow: 0 2px 4px '.$categoria->color.'; background: '.($isIniciado ? ($ganador ? '#fffae5' : '#e6ffe6') : '#fff').';' : '') ?> font-size: 10px; width: 140px; min-width: 140px; max-width: 140px; padding: 4px; line-height: 1.2; text-align: center; font-family: sans-serif;">
+                                                    <?php if($partido): ?>
+                                                        <strong><?= __('deporte_padel.partido') ?> <?= $partido['partido_idx'] ?> <?= __('deporte_padel.de') ?> <?= $totalPartidos ?></strong><br/>
+                                                        <span style="font-size: 9px; color: #555;"><?= $titulo ?> <?= $subtitulo ?></span><br/>
+                                                        <div style="width: 80%; height: 4px; background-color: <?= $categoria->color ?>; margin: 4px auto;"></div>
+                                                        <strong style="font-size: 9px; color: #222;"><?= $partidoData['fase'] == 'GRUPOS' ? __('deporte_padel.grupo') : $partidoData['fase'] ?> <?= $partidoData['letra'] ?? '' ?></strong><br/>
+                                                        <?php
+                                                            $textoPareja = '';
+                                                            $dsi = true;
+                                                            if (is_numeric($parejaA)) {
+                                                                if ($deporte == 'futbol') {
+                                                                    $textoPareja = __('deporte_padel.equipo')." ".$parejaA;
+                                                                }
+                                                                else {
+                                                                    $textoPareja = __('deporte_padel.pareja')." ".$parejaA;
+                                                                }
+                                                            } elseif (preg_match('/^(GP|PP)(\d+)$/', $parejaA, $m)) {
+                                                                $textoPareja = ($m[1] === 'GP' ? __('deporte_padel.ganador') : __('deporte_padel.perdedor')) . ' ' . __('deporte_padel.partido') . ' ' . $m[2];
+                                                                $dsi = false;
+                                                            } elseif (preg_match('/^([1-3])([A-Z])$/i', $parejaA, $m)) {
+                                                                $lugares = ['1' => __('deporte_padel.primer'), '2' => __('deporte_padel.segundo'), '3' => __('deporte_padel.tercer')];
+                                                                $grupo = strtoupper($m[2]);
+                                                                $textoPareja = $lugares[$m[1]] .' '. __('deporte_padel.lugar') .' '. __('deporte_padel.grupo') .' '. $grupo;
+                                                                $dsi = false;
+                                                            } else {
+                                                                $textoPareja = $parejaA;
+                                                            }
+                                                        ?>
+                                                        <?php if($ganador && $ganador == 'parejaA'): ?>
+                                                            <div style="margin-top: 4px; border-left: 2px solid #baa700; padding-left: 2px; border-right: 2px solid #baa700; padding-right: 2px;">
+                                                                <span style="font-weight: bold; color: #444;">
+                                                                    <i class="ti ti-trophy" style="color: #e0b200; font-size: 10px;"></i>
+                                                                    <?= $textoPareja ?>
+                                                                    <i class="ti ti-trophy" style="color: #e0b200; font-size: 10px;"></i>
+                                                                </span><br/>
+                                                                <span style="font-size: 9px;"><?= $dsi ? $parejaANombre : '<br/>vs<br/><br/>' ?></span>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <div style="margin-top: 4px;">
+                                                                <span style="font-weight: bold; color: #444;"><?= $textoPareja ?></span><br/>
+                                                                <span style="font-size: 9px;"><?= $dsi ? $parejaANombre  : '<br/>vs<br/><br/>' ?></span>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        <?php
+                                                            $dsi = true;
+                                                            if (is_numeric($parejaB)) {
+                                                                $textoPareja = __('deporte_padel.pareja')." ".$parejaB;
+                                                            } elseif (preg_match('/^(GP|PP)(\d+)$/', $parejaB, $m)) {
+                                                                $textoPareja = ($m[1] === 'GP' ? __('deporte_padel.ganador') : __('deporte_padel.perdedor')) . ' ' . __('deporte_padel.partido') . ' ' . $m[2];
+                                                                $dsi = false;
+                                                            } elseif (preg_match('/^([1-3])([A-Z])$/i', $parejaB, $m)) {
+                                                                $lugares = ['1' => __('deporte_padel.primer'), '2' => __('deporte_padel.segundo'), '3' => __('deporte_padel.tercer')];
+                                                                $grupo = strtoupper($m[2]);
+                                                                $textoPareja = $lugares[$m[1]] .' '. __('deporte_padel.lugar') .' '. __('deporte_padel.grupo') .' '. $grupo;
+                                                                $dsi = false;
+                                                            } else {
+                                                                $textoPareja = $parejaB;
+                                                            }
+                                                        ?>
+                                                        <?php if($ganador && $ganador == 'parejaB'): ?>
+                                                            <div style="margin-top: 4px; border-left: 2px solid #baa700; padding-left: 2px; border-right: 2px solid #baa700; padding-right: 2px;">
+                                                                <span style="font-weight: bold; color: #444;">
+                                                                    <i class="ti ti-trophy" style="color: #e0b200; font-size: 10px;"></i>
+                                                                    <?= $textoPareja ?>
+                                                                    <i class="ti ti-trophy" style="color: #e0b200; font-size: 10px;"></i>
+                                                                </span><br/>
+                                                                <span style="font-size: 9px;"><?= $dsi ? $parejaBNombre : '<br/>vs<br/><br/>' ?></span>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <div style="margin-top: 4px;">
+                                                                <span style="font-weight: bold; color: #444;"><?= $textoPareja ?></span><br/>
+                                                                <span style="font-size: 9px;"><?= $dsi ? $parejaBNombre : '<br/><br/>' ?></span>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        <div style="margin-top: 4px;">
+                                                        		<?php if(!$hasResultado): ?>
+                                                            <button class="mover-partido" data-evento-id="<?= ($evento['id'] ?? '') ?>" data-sede-id="<?= $sede->id ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" data-categoria-id="<?= $partido['categoria_id'] ?>" data-partido-idx="<?= $partido['partido_idx'] ?>" style="font-size: 16px; color: green; border: none; background: none; cursor: pointer;">
+                                                                <i class="ti ti-arrows-move"></i>
+                                                            </button>
+                                                            <?php endif; ?>
+                                                            <?php if(is_numeric($parejaA) && is_numeric($parejaB) && $puedePartir && !$isIniciado): ?>
+                                                                <button class="iniciar-partido" data-evento-id="<?= ($evento['id'] ?? '') ?>" data-sede-id="<?= $sede->id ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" data-categoria-id="<?= $partido['categoria_id'] ?>" data-partido-idx="<?= $partido['partido_idx'] ?>" style="font-size: 16px; color: green; border: none; background: none; cursor: pointer;">
+                                                                    <i class="ti ti-player-play"></i>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                            <?php if($isIniciado && $puedePartir && !$hasResultado): ?>
+                                                                <button class="registrar-resultado" data-evento-id="<?= ($evento['id'] ?? '') ?>" data-sede-id="<?= $sede->id ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" data-categoria-id="<?= $partido['categoria_id'] ?>" data-partido-idx="<?= $partido['partido_idx'] ?>" style="font-size: 16px; color: green; border: none; background: none; cursor: pointer;">
+                                                                    <i class="ti ti-square-rounded-check-filled"></i>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                            <?php if($hasResultado && $puedePartir): ?>
+                                                                <button class="editar-resultado" data-evento-id="<?= ($evento['id'] ?? '') ?>" data-sede-id="<?= $sede->id ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" data-categoria-id="<?= $partido['categoria_id'] ?>" data-partido-idx="<?= $partido['partido_idx'] ?>" style="font-size: 16px; color: green; border: none; background: none; cursor: pointer;">
+                                                                    <i class="ti ti-edit"></i>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <button class="toggle-bloqueo" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" style="font-size: 16px; color: <?= $isBloqueado ? 'red' : 'green' ?>; border: none; background: none; cursor: pointer;">
+                                                            <i class="ti ti-lock<?= $isBloqueado ? '' : '-open' ?>"></i>
+                                                        </button>
+                                                        <?php if(!$isBloqueado): ?>
+                                                            <button class="agregar-partido" data-sede-id="<?= $sede->id ?>" data-evento-id="<?= $sede->mod_evento_id ?? '' ?>" data-bloque="<?= $bloque ?>" data-cancha="<?= $i ?>" style="font-size: 16px; color: #007bff; border: none; background: none; cursor: pointer;">
+                                                                <i class="ti ti-plus"></i>
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </td>
+                                            <?php endfor; ?>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <div class="modal fade" id="agregarPartidoModal" tabindex="-1" aria-labelledby="agregarPartidoModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="agregarPartidoModalLabel"><?= __('deporte_padel.agregar_partido') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="categoriaSelect" class="form-label"><?= __('deporte_padel.categoria') ?></label>
+                                <select class="form-select" id="categoriaSelect">
+                                    <option value=""><?= __('deporte_padel.seleccione_categoria') ?></option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="partidoSelect" class="form-label"><?= __('deporte_padel.partido') ?></label>
+                                <select class="form-select" id="partidoSelect" disabled>
+                                    <option value=""><?= __('deporte_padel.seleccione_partido') ?></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                            <button type="button" class="btn btn-primary" id="agregarPartidoBtn" disabled><?= __('deporte_padel.agregar') ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+<div class="modal fade" id="resultadoModal" tabindex="-1" aria-labelledby="resultadoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #718096 0%, #a0aec0 100%); color: white; border-radius: 15px 15px 0 0; padding: 20px;">
+                <h5 class="modal-title" id="resultadoModalLabel" style="font-weight: 600; font-size: 1.4rem;"><?= __('deporte_padel.registrar_resultado') ?></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 25px; background-color: #edf2f7;">
+                <!-- Parejas Section -->
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div style="background: linear-gradient(135deg, #e2e8f0, #cbd5e0); padding: 15px; border-radius: 10px; text-align: center; color: #2d3748; font-weight: 600; margin-bottom: 10px;">
+                                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 5px;"><?= __('deporte_padel.pareja_a') ?></div>
+                                <div style="font-size: 1.1rem;" id="parejaANombre">Pareja A</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="background: linear-gradient(135deg, #b2ebf2, #90cdf4); padding: 15px; border-radius: 10px; text-align: center; color: #2d3748; font-weight: 600; margin-bottom: 10px;">
+                                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 5px;"><?= __('deporte_padel.pareja_b') ?></div>
+                                <div style="font-size: 1.1rem;" id="parejaBNombre">Pareja B</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sets Section -->
+                <div class="mb-4">
+                    <h6 style="color: #2d3748; font-weight: 600; margin-bottom: 20px; text-align: center; font-size: 1.2rem;"><?= __('deporte_padel.marcador') ?></h6>
+                    <?php for($i = 1; $i <= 5; $i++): ?>
+                        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px; gap: 15px;">
+                            <div style="background: #4a5568; color: white; padding: 12px; border-radius: 8px; min-width: 100px; text-align: center; font-weight: 600; font-size: 1rem; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+                                SET <?= $i ?>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #e2e8f0, #cbd5e0); border-radius: 12px; box-shadow: 0 4px 10px rgba(203,213,224,0.2); overflow: hidden;">
+                                <input type="number" id="set<?= $i ?>ParejaA" min="0" placeholder="0" style="border: none; background: transparent; color: #2d3748; font-weight: 700; text-align: center; font-size: 1.8rem; width: 80px; height: 80px; outline: none; padding: 0;">
+                            </div>
+                            <div style="color: #4a5568; font-weight: 700; font-size: 1.5rem; padding: 0 10px;">
+                                -
+                            </div>
+                            <div style="background: linear-gradient(135deg, #b2ebf2, #90cdf4); border-radius: 12px; box-shadow: 0 4px 10px rgba(144,205,244,0.2); overflow: hidden;">
+                                <input type="number" id="set<?= $i ?>ParejaB" min="0" placeholder="0" style="border: none; background: transparent; color: #2d3748; font-weight: 700; text-align: center; font-size: 1.8rem; width: 80px; height: 80px; outline: none; padding: 0;">
+                            </div>
+                            <div style="background: #4a5568; color: white; padding: 12px; border-radius: 8px; min-width: 100px; text-align: center; font-weight: 600; font-size: 1rem; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+                                SET <?= $i ?>
+                            </div>
+                        </div>
+                    <?php endfor; ?>
+                </div>
+                <!-- Horarios Section -->
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="horaInicio" class="form-label" style="color: #2d3748; font-weight: 600;"><?= __('deporte_padel.hora_inicio') ?></label>
+                            <input type="datetime-local" class="form-control" id="horaInicio" style="border: 2px solid #68d391; border-radius: 8px; padding: 10px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="horaFin" class="form-label" style="color: #2d3748; font-weight: 600;"><?= __('deporte_padel.hora_fin') ?></label>
+                            <input type="datetime-local" class="form-control" id="horaFin" style="border: 2px solid #fc8181; border-radius: 8px; padding: 10px;">
+                        </div>
+                    </div>
+                </div>
+                <!-- Acciones Especiales -->
+                <div class="mb-3">
+                    <h6 style="color: #2d3748; font-weight: 600; margin-bottom: 15px; text-align: center;"><?= __('deporte_padel.acciones_especiales') ?></h6>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-warning w-100" id="woParejaA" style="border-radius: 8px; font-weight: 600; padding: 10px; background: linear-gradient(135deg, #f6e05e, #ecc94b);"><?= __('deporte_padel.wo_pareja_a') ?></button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-warning w-100" id="woParejaB" style="border-radius: 8px; font-weight: 600; padding: 10px; background: linear-gradient(135deg, #f6e05e, #ecc94b);"><?= __('deporte_padel.wo_pareja_b') ?></button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-danger w-100" id="descalificarParejaA" style="border-radius: 8px; font-weight: 600; padding: 10px; background: linear-gradient(135deg, #fc8181, #f56565);"><?= __('deporte_padel.descalificar_pareja_a') ?></button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-danger w-100" id="descalificarParejaB" style="border-radius: 8px; font-weight: 600; padding: 10px; background: linear-gradient(135deg, #fc8181, #f56565);"><?= __('deporte_padel.descalificar_pareja_b') ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #edf2f7; border-top: 2px solid #e2e8f0; padding: 20px; border-radius: 0 0 15px 15px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 20px; font-weight: 600; background: #a0aec0;"><?= __('deporte_padel.cerrar') ?></button>
+                <button type="button" class="btn btn-primary" id="guardarResultadoBtn" style="border-radius: 8px; padding: 10px 20px; font-weight: 600; background: linear-gradient(135deg, #63b3ed, #4299e1);"><?= __('deporte_padel.guardar') ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+
+<script src="<?= $this->basePath('assets/vendor/apexcharts/apexcharts.min.js') ?>"></script>
+    <script src="<?= $this->basePath('assets//vendor/glightbox/glightbox.min.js') ?>"></script>
+    <script src="<?= $this->basePath('assets/vendor/select/select2.min.js') ?>"></script>
+    <script src="<?= $this->basePath('assets/js/select.js') ?>"></script>
+    <script src="<?= $this->basePath('assets/vendor/sortable/Sortable.min.js') ?>"></script>
+    <script src="<?= $this->basePath('assets/js/draggable.js') ?>"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mostrarFixtureBtn = document.getElementById('mostrarFixture');
+            const fixtureTableBody = document.getElementById('fixtureTableBody');
+            mostrarFixtureBtn.addEventListener('click', function () {
+                const eventoId = this.dataset.eventoId;
+                fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'links']) ?>?evento_id=' + eventoId, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fixtureTableBody.innerHTML = '';
+                    data.data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.categoria}</td>
+                            <td>${row.lastUpdate}</td>
+                            <td>
+                                ${row.enlaceEs !== '<?= __('deporte_padel.no_generado') ?>' ? `<a href="${row.enlaceEs}" target="_blank">${row.enlaceEs}</a> <button class="btn btn-sm btn-info copy-btn" data-link="${row.enlaceEs}"><?= __('deporte_padel.copiar') ?></button>` : '<?= __('deporte_padel.no_generado') ?>'}
+                            </td>
+                            <td>
+                                ${row.enlaceEn !== '<?= __('deporte_padel.no_generado') ?>' ? `<a href="${row.enlaceEn}" target="_blank">${row.enlaceEn}</a> <button class="btn btn-sm btn-info copy-btn" data-link="${row.enlaceEn}"><?= __('deporte_padel.copiar') ?></button>` : '<?= __('deporte_padel.no_generado') ?>'}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary actualizar-fixture" data-uuid="${row.uuid}"><?= __('deporte_padel.actualizar_fixture') ?></button>
+                            </td>
+                        `;
+                        fixtureTableBody.appendChild(tr);
+                    });
+                    $('#fixtureModal').modal('show');
+                })
+                .catch(error => {
+                    console.error('<?= __('deporte_padel.error_cargar_fixtures') ?>:', error);
+                    alert('<?= __('deporte_padel.error_cargar_fixtures') ?>');
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('.btn-ordenar-ranking').click(function() {
+                const categoriaUuid = $(this).data('categoria-uuid');
+                const fase = $(this).data('fase');
+                $.ajax({
+                    url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "ranking-grupos"]) ?>',
+                    method: 'POST',
+                    data: {
+                        categoria_uuid: categoriaUuid,
+                        fase: fase,
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function(response) {
+                        console.log('<?= __('deporte_padel.respuesta_ajax') ?>:', response);
+                        console.log('<?= __('deporte_padel.procesando_eliminatorias') ?>:', response.eliminatorias, '<?= __('deporte_padel.fases') ?>:', Object.keys(response.eliminatorias).length, '<?= __('deporte_padel.partidos_por_fase') ?>:', Object.entries(response.eliminatorias).map(([fase, partidos]) => ({ fase, count: partidos.length })));
+                        let html = '';
+                        if (fase === 'grupos') {
+                            for (const [letra, grupo] of Object.entries(response.grupos)) {
+                                html += `<h5 style="color: #007bff; margin-top: 20px;"><?= __('deporte_padel.tabla_posiciones_grupo') ?> ${letra}</h5>`;
+                                html += `
+                                    <table class="table table-striped table-bordered" style="background: white; border-radius: 8px;">
+                                        <thead style="background: linear-gradient(90deg, #28a745, #20c997); color: white;">
+                                            <tr>
+                                                <th><?= __('deporte_padel.pareja') ?></th>
+                                                <th><?= __('deporte_padel.puntos') ?></th>
+                                                <th><?= __('deporte_padel.sets') ?></th>
+                                                <th><?= __('deporte_padel.juegos') ?></th>
+                                                <th><?= __('deporte_padel.ranking') ?></th>
+                                                <th><?= __('deporte_padel.lista') ?></th>
+                                                <th><?= __('deporte_padel.criterio') ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                `;
+                                grupo.posiciones.forEach(pos => {
+                                    html += `
+                                        <tr>
+                                            <td class="pareja-cell"><strong><?= __('deporte_padel.pareja') ?> ${pos.orden}</strong><span>${pos.nombre.split('\n').slice(1).join('<br>')}</span></td>
+                                            <td>${pos.puntos}</td>
+                                            <td>${pos.sets}</td>
+                                            <td>${pos.juegos}</td>
+                                            <td>${pos.ranking}</td>
+                                            <td>${pos.lista}</td>
+                                            <td class="criterio-cell">${pos.criterio || 'N/A'}</td>
+                                        </tr>
+                                    `;
+                                });
+                                html += `</tbody></table>`;
+                                html += `<h5 style="color: #007bff; margin-top: 20px;"><?= __('deporte_padel.partidos_grupo') ?> ${letra}</h5>`;
+                                html += `
+                                    <table class="table table-striped table-bordered" style="background: white; border-radius: 8px;">
+                                        <thead style="background: linear-gradient(90deg, #28a745, #20c997); color: white;">
+                                            <tr>
+                                                <th><?= __('deporte_padel.partido') ?></th>
+                                                <th><?= __('deporte_padel.pareja_a') ?></th>
+                                                <th><?= __('deporte_padel.resultado') ?></th>
+                                                <th><?= __('deporte_padel.pareja_b') ?></th>
+                                                <th><?= __('deporte_padel.fecha') ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                `;
+                                grupo.partidos.forEach(partido => {
+                                    const sets = partido.resultado.split('\n').filter(set => set && set !== '<?= __('deporte_padel.no_jugado') ?>');
+                                    const resultadoHtml = partido.resultado === '<?= __('deporte_padel.no_jugado') ?>' ? '<?= __('deporte_padel.no_jugado') ?>' : `<div class="resultado-marcador">${sets.map(set => {
+                                        const [juegosA, juegosB] = set.split('-').map(Number);
+                                        const claseGanador = juegosA > juegosB ? 'set-ganador' : (juegosB > juegosA ? 'set-ganador' : '');
+                                        return `<div class="${claseGanador}">${set}</div>`;
+                                    }).join('')}</div>`;
+                                    html += `
+                                        <tr>
+                                            <td><?= __('deporte_padel.partido') ?> ${partido.index}</td>
+                                            <td class="pareja-cell"><strong>${partido.nombreA.split('\n')[0]}</strong><span>${partido.nombreA.split('\n').slice(1).join('<br>')}</span></td>
+                                            <td class="resultado-cell">${resultadoHtml}</td>
+                                            <td class="pareja-cell"><strong>${partido.nombreB.split('\n')[0]}</strong><span>${partido.nombreB.split('\n').slice(1).join('<br>')}</span></td>
+                                            <td>${partido.fecha}</td>
+                                        </tr>
+                                    `;
+                                });
+                                html += `</tbody></table>`;
+                            }
+                        } else if (fase === 'eliminatorias') {
+                            if (Object.keys(response.eliminatorias).length === 0) {
+                                html += `<p><?= __('deporte_padel.no_partidos_eliminatorias') ?></p>`;
+                            } else {
+                                for (const [faseNombre, partidos] of Object.entries(response.eliminatorias)) {
+                                    html += `<h5 style="color: #007bff; margin-top: 20px;"><?= __('deporte_padel.partidos') ?> ${faseNombre}</h5>`;
+                                    html += `
+                                        <table class="table table-striped table-bordered" style="background: white; border-radius: 8px;">
+                                            <thead style="${faseNombre.toUpperCase() === 'FINAL' ? 'background: linear-gradient(90deg, #ffd700, #ffaa00); color: #333;' : 'background: linear-gradient(90deg, #ff6b6b, #ff8e53); color: white;'}">
+                                                <tr>
+                                                    <th><?= __('deporte_padel.partido') ?></th>
+                                                    <th><?= __('deporte_padel.pareja_a') ?></th>
+                                                    <th><?= __('deporte_padel.resultado') ?></th>
+                                                    <th><?= __('deporte_padel.pareja_b') ?></th>
+                                                    <th><?= __('deporte_padel.fecha') ?></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                    `;
+                                    partidos.forEach(partido => {
+                                        const sets = partido.resultado.split('\n').filter(set => set && set !== '<?= __('deporte_padel.no_jugado') ?>');
+                                        const resultadoHtml = partido.resultado === '<?= __('deporte_padel.no_jugado') ?>' ? '<?= __('deporte_padel.no_jugado') ?>' : `<div class="resultado-marcador">${sets.map(set => {
+                                            const [juegosA, juegosB] = set.split('-').map(Number);
+                                            const claseGanador = juegosA > juegosB ? 'set-ganador' : (juegosB > juegosA ? 'set-ganador' : '');
+                                            return `<div class="${claseGanador}">${set}</div>`;
+                                        }).join('')}</div>`;
+                                        html += `
+                                            <tr>
+                                                <td><?= __('deporte_padel.partido') ?> ${partido.index}</td>
+                                                <td class="pareja-cell"><strong>${partido.nombreA.split('\n')[0]}</strong><span>${partido.nombreA.split('\n').slice(1).join('<br>')}</span></td>
+                                                <td class="resultado-cell">${resultadoHtml}</td>
+                                                <td class="pareja-cell"><strong>${partido.nombreB.split('\n')[0]}</strong><span>${partido.nombreB.split('\n').slice(1).join('<br>')}</span></td>
+                                                <td>${partido.fecha}</td>
+                                            </tr>
+                                        `;
+                                    });
+                                    html += `</tbody></table>`;
+                                }
+                            }
+                        }
+                        $('#rankingContent').html(html);
+                        $('#rankingModal').modal('show');
+                    },
+                    error: function(xhr) {
+                        console.error('<?= __('deporte_padel.error_ajax') ?>:', xhr.responseJSON, 'Status:', xhr.status, 'StatusText:', xhr.statusText);
+                        alert('<?= __('deporte_padel.error_cargar_ranking') ?>: ' + (xhr.responseJSON?.error || '<?= __('deporte_padel.error_desconocido') ?>'));
+                    }
+                });
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('.agregar-partido').click(function() {
+                const sedeId = $(this).data('sede-id');
+                const eventoId = $(this).data('evento-id');
+                const bloque = $(this).data('bloque');
+                const cancha = $(this).data('cancha');
+                $('#agregarPartidoModal').modal('show');
+                $('#categoriaSelect').html('<option value=""><?= __('deporte_padel.seleccione_categoria') ?></option>');
+                $('#partidoSelect').html('<option value=""><?= __('deporte_padel.seleccione_partido') ?></option>').prop('disabled', true);
+                $('#agregarPartidoBtn').prop('disabled', true);
+                $.ajax({
+                    url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "categorias"]) ?>',
+                    method: 'POST',
+                    data: { evento_id: eventoId, _token: '<?= csrf_token() ?>' },
+                    success: function(response) {
+                        if (response.success) {
+                            response.categorias.forEach(categoria => {
+                                $('#categoriaSelect').append(`<option value="${categoria.id}">${categoria.titulo} ${categoria.subtitulo}</option>`);
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('<?= __('deporte_padel.error_cargar_categorias') ?>: ' + xhr.responseJSON.error);
+                    }
+                });
+                $('#agregarPartidoBtn').off('click').on('click', function() {
+                    const categoriaId = $('#categoriaSelect').val();
+                    const partidoIdx = $('#partidoSelect').val();
+                    if (!categoriaId || !partidoIdx) {
+                        alert('<?= __('deporte_padel.seleccione_categoria_partido') ?>');
+                        return;
+                    }
+                    $.ajax({
+                        url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "agregar"]) ?>',
+                        method: 'POST',
+                        data: {
+                            evento_id: eventoId,
+                            sede_id: sedeId,
+                            bloque: bloque,
+                            cancha: cancha,
+                            categoria_id: categoriaId,
+                            partido_idx: partidoIdx,
+                            _token: '<?= csrf_token() ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                location.reload();
+                            } else {
+                                alert('<?= __('deporte_padel.error') ?>: ' + response.error);
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('<?= __('deporte_padel.error_agregar_partido') ?>: ' + xhr.responseJSON.error);
+                        }
+                    });
+                });
+            });
+            $('#categoriaSelect').change(function() {
+                const categoriaId = $(this).val();
+                $('#partidoSelect').html('<option value=""><?= __('deporte_padel.seleccione_partido') ?></option>').prop('disabled', true);
+                $('#agregarPartidoBtn').prop('disabled', true);
+                if (categoriaId) {
+                    $.ajax({
+                        url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "partidos"]) ?>',
+                        method: 'POST',
+                        data: { categoria_id: categoriaId, _token: '<?= csrf_token() ?>' },
+                        success: function(response) {
+                            if (response.success) {
+                                response.partidos.forEach(partido => {
+                                    $('#partidoSelect').append(`<option value="${partido.partido_idx}"><?= __('deporte_padel.partido') ?> ${partido.partido_idx} - ${partido.fase}${partido.letra ? ' ' + partido.letra : ''}</option>`);
+                                });
+                                $('#partidoSelect').prop('disabled', false);
+                                $('#agregarPartidoBtn').prop('disabled', false);
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('<?= __('deporte_padel.error_cargar_partidos') ?>: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+            let moverPartidoData = null;
+            $('.mover-partido').click(function() {
+                moverPartidoData = {
+                    sede_id: $(this).data('sede-id'),
+                    bloque: $(this).data('bloque'),
+                    cancha: $(this).data('cancha'),
+                    categoria_id: $(this).data('categoria-id'),
+                    partido_idx: $(this).data('partido-idx'),
+                    evento_id: $(this).data('evento-id')
+                };
+                $('.toggle-bloqueo').each(function() {
+                    if ($(this).find('i').hasClass('ti-lock-open')) {
+                        const sedeId = $(this).data('sede-id');
+                        const bloque = $(this).data('bloque');
+                        const cancha = $(this).data('cancha');
+                        $(this).after(`<button class="mover-aqui" data-sede-id="${sedeId}" data-bloque="${bloque}" data-cancha="${cancha}" style="font-size: 16px; color: #007bff; border: none; background: none; cursor: pointer;"><i class="ti ti-check"></i></button>`);
+                    }
+                });
+            });
+            $(document).on('click', '.mover-aqui', function() {
+                const nuevaSedeId = $(this).data('sede-id');
+                const nuevoBloque = $(this).data('bloque');
+                const nuevaCancha = $(this).data('cancha');
+                $.ajax({
+                    url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "validar-movimiento"]) ?>',
+                    method: 'POST',
+                    data: {
+                        evento_id: moverPartidoData.evento_id,
+                        categoria_id: moverPartidoData.categoria_id,
+                        partido_idx: moverPartidoData.partido_idx,
+                        sede_id: nuevaSedeId,
+                        bloque: nuevoBloque,
+                        cancha: nuevaCancha,
+                        bloque_actual: moverPartidoData.bloque,
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function(response) {
+                        if (response.conflictos.length > 0) {
+                            const mensaje = response.conflictos.join('\n');
+                            if (confirm(mensaje + '\n<?= __('deporte_padel.confirmar_movimiento') ?>')) {
+                                moverPartido(nuevaSedeId, nuevoBloque, nuevaCancha);
+                            } else {
+                                $('.mover-aqui').remove();
+                            }
+                        } else {
+                            moverPartido(nuevaSedeId, nuevoBloque, nuevaCancha);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('<?= __('deporte_padel.error_validar_movimiento') ?>: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+            function moverPartido(nuevaSedeId, nuevoBloque, nuevaCancha) {
+                $.ajax({
+                    url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "mover"]) ?>',
+                    method: 'POST',
+                    data: {
+                        evento_id: moverPartidoData.evento_id,
+                        sede_id: moverPartidoData.sede_id,
+                        bloque: moverPartidoData.bloque,
+                        cancha: moverPartidoData.cancha,
+                        categoria_id: moverPartidoData.categoria_id,
+                        partido_idx: moverPartidoData.partido_idx,
+                        nueva_sede_id: nuevaSedeId,
+                        nuevo_bloque: nuevoBloque,
+                        nueva_cancha: nuevaCancha,
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('<?= __('deporte_padel.error') ?>: ' + response.error);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('<?= __('deporte_padel.error_mover_partido') ?>: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+            $('.iniciar-partido').click(function() {
+                const sedeId = $(this).data('sede-id');
+                const eventoId = $(this).data('evento-id');
+                const bloque = $(this).data('bloque');
+                const cancha = $(this).data('cancha');
+                const categoriaId = $(this).data('categoria-id');
+                const partidoIdx = $(this).data('partido-idx');
+                const horaInicio = new Date().toISOString();
+                $.ajax({
+                    url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "iniciar"]) ?>',
+                    method: 'POST',
+                    data: {
+                        evento_id: eventoId,
+                        sede_id: sedeId,
+                        bloque: bloque,
+                        cancha: cancha,
+                        categoria_id: categoriaId,
+                        partido_idx: partidoIdx,
+                        hora_inicio: horaInicio,
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $(`button[data-sede-id="${sedeId}"][data-bloque="${bloque}"][data-cancha="${cancha}"]`).closest('td').css('background', '#e6ffe6');
+                            $(`button[data-sede-id="${sedeId}"][data-bloque="${bloque}"][data-cancha="${cancha}"].iniciar-partido`).hide();
+                            $(`button[data-sede-id="${sedeId}"][data-bloque="${bloque}"][data-cancha="${cancha}"].registrar-resultado`).show();
+                        } else {
+                            alert('<?= __('deporte_padel.error') ?>: ' + response.error);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('<?= __('deporte_padel.error_iniciar_partido') ?>: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+
+$('.registrar-resultado, .editar-resultado').click(function() {
+    cargando();
+    const eventoId = $(this).data('evento-id');
+    const sedeId = $(this).data('sede-id');
+    const bloque = $(this).data('bloque');
+    const cancha = $(this).data('cancha');
+    const categoriaId = $(this).data('categoria-id');
+    const partidoIdx = $(this).data('partido-idx');
+    const accion = $(this).hasClass('registrar-resultado') ? 'registrar' : 'editar';
+    $('#resultadoModal').modal('show');
+    $('#resultadoModalLabel').text(accion === 'editar' ? '<?= __('deporte_padel.editar_resultado') ?>' : '<?= __('deporte_padel.registrar_resultado') ?>');
+    $('#parejaANombre').text('');
+    $('#parejaBNombre').text('');
+    for (let i = 1; i <= 5; i++) {
+        $(`#set${i}ParejaA`).val('');
+        $(`#set${i}ParejaB`).val('');
+    }
+    $('#horaInicio').val('');
+    $('#horaFin').val('');
+    $.ajax({
+        url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "duelo"]) ?>',
+        method: 'POST',
+        data: {
+            categoria_id: categoriaId,
+            evento_id: eventoId,
+            partido_idx: partidoIdx,
+            _token: '<?= csrf_token() ?>'
+        },
+        success: function(response) {
+            if (response.success) {
+                $('#parejaANombre').html(
+                    response.parejaA_nombre ? response.parejaA_nombre.replace(/,/g, '<br/>') : ''
+                );
+                $('#parejaBNombre').html(
+                    response.parejaB_nombre ? response.parejaB_nombre.replace(/,/g, '<br/>') : ''
+                );
+                if (response.duelo) {
+                    for (let i = 0; i < 5; i++) {
+                        if (response.duelo.sets && response.duelo.sets[i]) {
+                            $(`#set${i + 1}ParejaA`).val(response.duelo.sets[i][0]);
+                            $(`#set${i + 1}ParejaB`).val(response.duelo.sets[i][1]);
+                        }
+                    }
+                    $('#horaInicio').val(
+                        response.duelo.hora_inicio
+                            ? response.duelo.hora_inicio.replace(' ', 'T').slice(0,16)
+                            : ''
+                    );
+                    $('#horaFin').val(
+                        response.duelo.hora_fin
+                            ? response.duelo.hora_fin.replace(' ', 'T').slice(0, 16)
+                            : new Date().toISOString().slice(0, 16)
+                    );
+                } else {
+                    const now = new Date().toISOString().slice(0, 16);
+                    $('#horaInicio').val(now);
+                    $('#horaFin').val(now);
+                }
+                cerrarCargando();
+            }
+        },
+        error: function(xhr) {
+            alert('<?= __('deporte_padel.error_cargar_duelo') ?>: ' + xhr.responseJSON.error);
+        }
+    });
+    $('#guardarResultadoBtn').off('click').on('click', function() {
+    		cargando();
+        const sets = [];
+        let setCount = 0;
+        for (let i = 1; i <= 5; i++) {
+            let scoreA = $(`#set${i}ParejaA`).val();
+            let scoreB = $(`#set${i}ParejaB`).val();
+            if (scoreA !== '' && parseInt(scoreA, 10) > 0 && scoreB === '') { scoreB = '0'; }
+            if (scoreB !== '' && parseInt(scoreB, 10) > 0 && scoreA === '') { scoreA = '0'; }
+            if (scoreA !== '' && scoreB !== '') {
+                const a = parseInt(scoreA);
+                const b = parseInt(scoreB);
+                if (a === b) {
+                    alert(`<?= __('deporte_padel.set') ?> ${i} <?= __('deporte_padel.no_puntajes_iguales') ?>`);
+                    return;
+                }
+                sets.push([a, b]);
+                setCount++;
+            } else {
+                sets.push(null);
+            }
+        }
+        const data = {
+            evento_id: eventoId,
+            sede_id: sedeId,
+            bloque: bloque,
+            cancha: cancha,
+            categoria_id: categoriaId,
+            partido_idx: partidoIdx,
+            sets: sets,
+            ganador: $('#ganadorSelect').val(),
+            hora_inicio: $('#horaInicio').val(),
+            hora_fin: $('#horaFin').val(),
+            wo: $('#woParejaA').hasClass('active') ? parseInt(response.parejaA) : ($('#woParejaB').hasClass('active') ? parseInt(response.parejaB) : null),
+            descalificado: $('#descalificarParejaA').hasClass('active') ? parseInt(response.parejaA) : ($('#descalificarParejaB').hasClass('active') ? parseInt(response.parejaB) : null),
+            accion: accion,
+            _token: '<?= csrf_token() ?>'
+        };
+        $.ajax({
+            url: '<?= $this->url("ligas.fixture", ["deporte" => $deporte, "accion" => "resultado"]) ?>',
+            method: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('<?= __('deporte_padel.error') ?>: ' + response.error);
+                }
+                cerrarCargando();
+            },
+            error: function(xhr) {
+                alert('<?= __('deporte_padel.error_guardar_resultado') ?>: ' + xhr.responseJSON.error);
+            }
+        });
+    });
+});
+
+
+
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            <?php if (!empty($sedes)): foreach ($sedes as $sede): ?>
+                const bloques_<?= $sede->id ?> = <?= json_encode(calcular_bloques($sede->fecha_inicio ?? null, $sede->fecha_cierre ?? null, $sede->evento->ajustes()->latest('created_at')->first()?->bloques_grupo ?? '01:00')) ?>;
+                const totalCanchas_<?= $sede->id ?> = <?= (int) (isset($sede->canchas) ? $sede->canchas->sum('cantidad') : 0) ?>;
+                document.querySelectorAll('.toggle-bloqueo[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const bloque = this.getAttribute('data-bloque');
+                        const cancha = this.getAttribute('data-cancha');
+                        const isBloqueado = this.querySelector('i').classList.contains('ti-lock');
+                        const accion = isBloqueado ? 'desbloquear' : 'bloquear';
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, bloque: bloque, cancha: cancha, accion: accion })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                this.querySelector('i').className = 'ti ti-lock' + (accion === 'bloquear' ? '' : '-open');
+                                this.style.color = accion === 'bloquear' ? 'red' : 'green';
+                                this.parentElement.style.backgroundColor = accion === 'bloquear' ? '#f9e3e3' : '';
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+                document.querySelectorAll('.bloquear-fila[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const bloque = this.getAttribute('data-bloque');
+                        const totalCanchas = totalCanchas_<?= $sede->id ?>;
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, bloque: bloque, accion: 'bloquear_fila', total_canchas: totalCanchas })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const row = button.closest('tr');
+                                row.querySelectorAll('.toggle-bloqueo').forEach(btn => {
+                                    btn.querySelector('i').className = 'ti ti-lock';
+                                    btn.style.color = 'red';
+                                    btn.parentElement.style.backgroundColor = '#f9e3e3';
+                                });
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+                document.querySelectorAll('.desbloquear-fila[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const bloque = this.getAttribute('data-bloque');
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, bloque: bloque, accion: 'desbloquear_fila' })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const row = button.closest('tr');
+                                row.querySelectorAll('.toggle-bloqueo').forEach(btn => {
+                                    btn.querySelector('i').className = 'ti ti-lock-open';
+                                    btn.style.color = 'green';
+                                    btn.parentElement.style.backgroundColor = '';
+                                });
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+                document.querySelectorAll('.bloquear-columna[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const cancha = this.getAttribute('data-cancha');
+                        const bloques = bloques_<?= $sede->id ?>;
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, cancha: cancha, accion: 'bloquear_columna', bloques: bloques })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.querySelectorAll(`.toggle-bloqueo[data-sede-id="${sedeId}"][data-cancha="${cancha}"]`).forEach(btn => {
+                                    btn.querySelector('i').className = 'ti ti-lock';
+                                    btn.style.color = 'red';
+                                    btn.parentElement.style.backgroundColor = '#f9e3e3';
+                                });
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+                document.querySelectorAll('.desbloquear-columna[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const cancha = this.getAttribute('data-cancha');
+                        const bloques = bloques_<?= $sede->id ?>;
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, cancha: cancha, accion: 'desbloquear_columna', bloques: bloques })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.querySelectorAll(`.toggle-bloqueo[data-sede-id="${sedeId}"][data-cancha="${cancha}"]`).forEach(btn => {
+                                    btn.querySelector('i').className = 'ti ti-lock-open';
+                                    btn.style.color = 'green';
+                                    btn.parentElement.style.backgroundColor = '';
+                                });
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+                document.querySelectorAll('.bloquear-todos[data-sede-id="<?= $sede->id ?>"], .desbloquear-todos[data-sede-id="<?= $sede->id ?>"]').forEach(button => {
+                    button.addEventListener('click', function () {
+                    		cargando();
+                        const sedeId = this.getAttribute('data-sede-id');
+                        const eventoId = this.getAttribute('data-evento-id');
+                        const bloques = bloques_<?= $sede->id ?>;
+                        const totalCanchas = totalCanchas_<?= $sede->id ?>;
+                        const accion = this.classList.contains('bloquear-todos') ? 'bloquear_todos' : 'desbloquear_todos';
+                        if (!eventoId) {
+                            console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
+                            return;
+                        }
+                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                            },
+                            body: JSON.stringify({ sede_id: sedeId, evento_id: eventoId, accion: accion, bloques: bloques, total_canchas: totalCanchas })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.querySelectorAll(`.toggle-bloqueo[data-sede-id="${sedeId}"]`).forEach(btn => {
+                                    btn.querySelector('i').className = accion === 'bloquear_todos' ? 'ti ti-lock' : 'ti ti-lock-open';
+                                    btn.style.color = accion === 'bloquear_todos' ? 'red' : 'green';
+                                    btn.parentElement.style.backgroundColor = accion === 'bloquear_todos' ? '#f9e3e3' : '';
+                                });
+                                cerrarCargando();
+                            } else {
+                                console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                    });
+                });
+
+            document.querySelectorAll('.programar-grupos').forEach(button => {
+                button.addEventListener('click', function () {
+                		cargando();
+                    const eventoId = this.getAttribute('data-evento-id');
+                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'programar-grupos']) ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                        },
+                        body: JSON.stringify({ evento_id: eventoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                            alert(data.error);
+                        }
+                    })
+                    .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                });
+            });
+            document.querySelectorAll('.programar-eliminatorias').forEach(button => {
+                button.addEventListener('click', function () {
+                		cargando();
+                    const eventoId = this.getAttribute('data-evento-id');
+                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'programar-eliminatorias']) ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                        },
+                        body: JSON.stringify({ evento_id: eventoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                            alert(data.error);
+                        }
+                    })
+                    .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                });
+            });
+            document.querySelectorAll('.reset').forEach(button => {
+                button.addEventListener('click', function () {
+                		cargando();
+                    const eventoId = this.getAttribute('data-evento-id');
+                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'reset']) ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                        },
+                        body: JSON.stringify({ evento_id: eventoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                            alert(data.error);
+                        }
+                    })
+                    .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                });
+            });
+            document.querySelectorAll('.reset-total').forEach(button => {
+                button.addEventListener('click', function () {
+                		cargando();
+                    const eventoId = this.getAttribute('data-evento-id');
+                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'reset-total']) ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '<?= csrf_token() ?>'
+                        },
+                        body: JSON.stringify({ evento_id: eventoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.error('<?= __('deporte_padel.error_respuesta') ?>:', data.error);
+                            alert(data.error);
+                        }
+                    })
+                    .catch(error => console.error('<?= __('deporte_padel.error_solicitud') ?>:', error));
+                });
+            });
+        });
+    </script>
+    <!-- Bloque de optimizarProgramacion comentado en versión actual -->
+<?php endforeach; endif; ?>
+

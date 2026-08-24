@@ -1,0 +1,49 @@
+<?php $this->headTitle('Estadísticas'); $stats = $this->stats ?? []; ?>
+<div class="row g-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-bg-primary">
+            <div class="card-body text-center">
+                <i class="ti ti-trophy fs-1 d-block mb-2"></i>
+                <h2 class="mb-0"><?= (int)($stats['eventos'] ?? 0) ?></h2>
+                <div>Eventos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-bg-success">
+            <div class="card-body text-center">
+                <i class="ti ti-users fs-1 d-block mb-2"></i>
+                <h2 class="mb-0"><?= (int)($stats['usuarios'] ?? 0) ?></h2>
+                <div>Usuarios</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-bg-warning">
+            <div class="card-body text-center">
+                <i class="ti ti-map-pin fs-1 d-block mb-2"></i>
+                <h2 class="mb-0"><?= (int)($stats['sedes'] ?? 0) ?></h2>
+                <div>Sedes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-bg-info">
+            <div class="card-body text-center">
+                <i class="ti ti-calendar-event fs-1 d-block mb-2"></i>
+                <h2 class="mb-0"><?= (int)($stats['reservas'] ?? 0) ?></h2>
+                <div>Reservas</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3">Resumen</h5>
+                <p class="text-muted">Datos globales del sistema. Los datos se actualizan en tiempo real desde la base de datos.</p>
+            </div>
+        </div>
+    </div>
+</div>

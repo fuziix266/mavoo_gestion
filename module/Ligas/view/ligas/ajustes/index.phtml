@@ -1,0 +1,235 @@
+<?php
+if (!function_exists('old')) { function old($k, $d=null) { return $d; } }
+
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/glightbox/glightbox.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/select/select2.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/trumbowyg/trumbowyg.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/filepond/filepond.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/filepond/image-preview.min.css')); ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i><?= ucfirst($deporte) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.migaja_gestion_evento') ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.migaja_ajustes_generales') ?></li>
+                </ol>
+            </div>
+        </div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card-body">
+                <div class="row app-form">
+                    <div class="col-xxl-12">
+                        <div class="mt-1 mb-3">
+                            <label class="form-label"><?= __('deporte_padel.etiqueta_evento') ?></label>
+                            <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccionar_evento') ?></option>
+                                <?php foreach($eventos as $ev): ?>
+                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte ?? 'padel', 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV, 'deporte' => $deporte]) ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <ul class="box-list mb-4">
+                <li class="b-s-4-primary">
+                    <h5><?= __('deporte_padel.ajustes_generales') ?></h5>
+                    <h7><?= __('deporte_padel.ultima_modificacion') ?> <?= $ultimoAjuste ? $ultimoAjuste['updated_at'] : 'Nunca' ?></h7>
+                </li>
+            </ul>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="app-form">
+                        <?php $bloqueados = (array)($ultimoAjuste['campos_bloqueados'] ?? []); ?>
+                        <form method="POST" action="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'guardar']) ?>" enctype="multipart/form-data">
+                            <input type="hidden" name="uuid" value="<?= $evento['uuid'] ?? '' ?>">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.nombre_evento') ?></label>
+                                    <input type="text" name="nombre_evento" class="form-control" value="<?= old('nombre_evento', $ultimoAjuste['nombre_evento'] ?? $evento['titulo'] ?? 'Nuevo evento sin título') ?>" <?= in_array('nombre_evento', $bloqueados) ? 'readonly disabled' : '' ?>>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.fecha_inicio') ?></label>
+                                    <input type="date" name="fecha_inicio" class="form-control" value="<?= old('fecha_inicio', $ultimoAjuste['fecha_inicio'] ?? '') ?>" <?= in_array('fecha_inicio', $bloqueados) ? 'readonly disabled' : '' ?>>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.pais') ?></label>
+                                    <?php $paisSeleccionado = old('pais_uuid', $ultimoAjuste['pais_uuid'] ?? ''); $bloqueado = in_array('pais_uuid', $bloqueados); ?>
+                                    <select name="pais_uuid" class="form-select" <?= $bloqueado ? 'disabled' : '' ?>>
+                                        <option value=""><?= __('deporte_padel.seleccionar_pais') ?></option>
+                                        <?php foreach($paises as $pais): ?>
+                                            <option value="<?= $pais['uuid'] ?>" <?= $paisSeleccionado === $pais['uuid'] ? 'selected' : '' ?>><?= $pais['pais'] ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.direccion') ?></label>
+                                    <input type="text" name="direccion" class="form-control" value="<?= old('direccion', $ultimoAjuste['direccion'] ?? '') ?>" placeholder="<?= __('deporte_padel.placeholder_direccion') ?>" <?= in_array('direccion', $bloqueados) ? 'readonly disabled' : '' ?>>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.correo_notificaciones') ?></label>
+                                    <input type="email" name="correo_notificaciones" class="form-control" placeholder="<?= __('deporte_padel.placeholder_correo') ?>" <?= in_array('correo_notificaciones', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('correo_notificaciones', $ultimoAjuste['correo_notificaciones'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.telefono') ?></label>
+                                    <input type="text" name="telefono" class="form-control" placeholder="<?= __('deporte_padel.placeholder_telefono') ?>" <?= in_array('telefono', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('telefono', $ultimoAjuste['telefono'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.modalidad') ?></label>
+                                    <?php $modalidadSeleccionada = old('modalidad', $ultimoAjuste['modalidad'] ?? ''); $bloqueado = in_array('modalidad', $bloqueados); ?>
+                                    <select name="modalidad" class="form-select" autocomplete="off" <?= $bloqueado ? 'disabled' : '' ?>>
+                                        <option value="Dobles" <?= $modalidadSeleccionada === 'Dobles' ? 'selected' : '' ?>><?= __('deporte_padel.modalidad_dobles') ?></option>
+                                        <option value="Individual" <?= $modalidadSeleccionada === 'Individual' ? 'selected' : '' ?>><?= __('deporte_padel.modalidad_individual') ?></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.bloques_horarios') ?></label>
+                                    <?php
+                                        $valorSeleccionado = old('bloques_grupo', $ultimoAjuste['bloques_grupo'] ?? '');
+                                        $bloqueado = in_array('bloques_grupo', $bloqueados);
+                                        if (preg_match('/^\d{1,2}:\d{2}$/', $valorSeleccionado)) {
+                                            [$hSel, $mSel] = explode(':', $valorSeleccionado);
+                                            $valorSeleccionado = sprintf('%02d:%02d', (int) $hSel, (int) $mSel);
+                                        }
+                                    ?>
+                                    <select name="bloques_grupo" class="form-select" autocomplete="off" <?= $bloqueado ? 'disabled' : '' ?>>
+                                        <option value=""><?= __('deporte_padel.seleccionar_duracion') ?></option>
+                                        <?php for ($i = 30; $i <= 180; $i += 15):
+                                            
+                                                $h = floor($i / 60);
+                                                $m = $i % 60;
+                                                $value = sprintf('%02d:%02d', $h, $m);
+                                                $label = trim(($h > 0 ? $h . ' ' . ($h == 1 ? __('deporte_padel.hora') : __('deporte_padel.horas')) : '') . ($h > 0 && $m > 0 ? ' y ' : '') . ($m > 0 ? $m . ' ' . __('deporte_padel.minutos') : ''));
+                                            ?>
+                                            <option value="<?= $value ?>" <?= $valorSeleccionado === $value ? 'selected' : '' ?>><?= $label ?> <?= __('deporte_padel.por_bloque') ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.inicio_inscripcion') ?></label>
+                                    <input type="datetime-local" name="inscripciones_inicio" class="form-control" <?= in_array('inscripciones_inicio', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('inscripciones_inicio', $ultimoAjuste['inscripciones_inicio'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.cierre_inscripcion') ?></label>
+                                    <input type="datetime-local" name="inscripciones_cierre" class="form-control" <?= in_array('inscripciones_cierre', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('inscripciones_cierre', $ultimoAjuste['inscripciones_cierre'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.restricciones_horarias_total') ?></label>
+                                    <?php $valorSeleccionado = (string) old('restriccion_total', $ultimoAjuste['restriccion_total'] ?? '0'); $bloqueado = in_array('restriccion_total', $bloqueados); ?>
+                                    <select name="restriccion_total" class="form-select" autocomplete="off" <?= $bloqueado ? 'disabled' : '' ?>>
+                                        <?php for ($i = 0; $i <= 16; $i++): ?>
+                                            <option value="<?= $i ?>" <?= (string) $i === $valorSeleccionado ? 'selected' : '' ?>><?= $i === 0 ? __('deporte_padel.sin_limites') : $i . ' ' . __('deporte_padel.bloques') ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.restricciones_horarias_diaria') ?></label>
+                                    <?php $valorSeleccionado = (string) old('restriccion_diaria', $ultimoAjuste['restriccion_diaria'] ?? '0'); $bloqueado = in_array('restriccion_diaria', $bloqueados); ?>
+                                    <select name="restriccion_diaria" class="form-select" autocomplete="off" <?= $bloqueado ? 'disabled' : '' ?>>
+                                        <?php for ($i = 0; $i <= 16; $i++): ?>
+                                            <option value="<?= $i ?>" <?= (string) $i === $valorSeleccionado ? 'selected' : '' ?>><?= $i === 0 ? __('deporte_padel.sin_limites') : $i . ' ' . __('deporte_padel.bloques') ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.pagina_web') ?></label>
+                                    <input type="text" name="pagina_web" class="form-control" placeholder="<?= __('deporte_padel.placeholder_pagina_web') ?>" <?= in_array('pagina_web', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('pagina_web', $ultimoAjuste['pagina_web'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.valor_inscripcion') ?></label>
+                                    <input type="text" name="valor_inscripcion" class="form-control" placeholder="<?= __('deporte_padel.placeholder_valor_inscripcion') ?>" <?= in_array('valor_inscripcion', $bloqueados) ? 'readonly disabled' : '' ?> value="<?= old('valor_inscripcion', $ultimoAjuste['valor_inscripcion'] ?? '') ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><?= __('deporte_padel.descripcion_evento') ?></label>
+                                    <?php $bloqueado = in_array('descripcion_evento', $bloqueados); ?>
+                                    <input type="hidden" id="descripcion_evento_bloqueado" value="<?= $bloqueado ? '1' : '0' ?>">
+                                    <div class="app-editor" id="editor"><?= old('descripcion_evento', $ultimoAjuste['descripcion_evento'] ?? '<p>' . __('deporte_padel.placeholder_descripcion') . '</p>') ?></div>
+                                </div>
+                                <div class="col-md-6 mb-3 pt-5">
+                                    <label class="form-label"><?= __('deporte_padel.afiche_promocional') ?></label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="<?= $ultimoAjuste['afiche_promocional_min'] ?? '/assets/images/avatar/defecto.jpg' ?>" alt="Foto actual" width="64" class="border shadow-sm">
+                                        <input class="form-control form-control-sm" type="file" name="filepond" id="filepond" accept="image/png, image/jpeg, image/gif" <?= in_array('filepond', $bloqueados) ? 'readonly disabled' : '' ?> style="width: 100%;">
+                                    </div>
+                                    <div class="form-text text-muted mt-1"><?= __('deporte_padel.formato_foto') ?></div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-end mt-4">
+                                    <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar_cambios') ?></button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php if(!empty($evento['inscripcion'])): ?>
+                <div class="col-xxl-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><?= __('deporte_padel.formulario_inscripcion') ?></h5>
+                        </div>
+                        <div class="card-body d-flex align-items-center">
+                            <input type="text" class="form-control me-2" value="https://info.mavoo.org/registro/<?= $evento['inscripcion'] ?>/" id="linkInscripcion" readonly>
+                            <button class="btn btn-primary" onclick="copiarLink()"><?= __('deporte_padel.copiar') ?></button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function copiarLink() {
+                        let input = document.getElementById("linkInscripcion");
+                        input.select();
+                        input.setSelectionRange(0, 99999);
+                        document.execCommand("copy");
+                        alert("<?= __('deporte_padel.enlace_copiado') ?>" + input.value);
+                    }
+                </script>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/apexcharts/apexcharts.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/glightbox/glightbox.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/select/select2.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/select.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/trumbowyg/trumbowyg.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/editor.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/file-encode.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/validate-size.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/validate-type.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/exif-orientation.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/image-preview.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/filepond/filepond.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/phosphor/phosphor.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/file_upload.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/cleavejs/cleave.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/input_masks.js')); ?>

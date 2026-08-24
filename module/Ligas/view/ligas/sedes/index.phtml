@@ -1,0 +1,412 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/glightbox/glightbox.min.css')); ?>
+
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/select/select2.min.css')); ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.sedes') ?></li>
+                </ol>
+            </div>
+        </div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card-body">
+                <div class="row app-form">
+                    <div class="col-xxl-12">
+                        <div class="mt-1 mb-3">
+                            <label class="form-label"><?= __('deporte_padel.evento') ?>:</label>
+                            <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
+                                <?php foreach($eventos as $ev): ?>
+                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV, 'deporte' => $deporte]) ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <ul class="box-list mb-4">
+                <li class="b-s-4-primary">
+                    <h5><?= __('deporte_padel.dias_y_sedes') ?></h5>
+                    <h7><?= __('deporte_padel.ultima_modificacion') ?> <?php
+    $ultimaMod = null;
+    if (is_array($sedes) || $sedes instanceof Traversable) {
+        foreach ($sedes as $s) {
+            $ts = is_object($s) ? ($s->updated_at ?? null) : ($s['updated_at'] ?? null);
+            if ($ts && (is_null($ultimaMod) || strtotime($ts) > strtotime($ultimaMod))) {
+                $ultimaMod = $ts;
+            }
+        }
+    }
+    echo ha_pasado($ultimaMod);
+?></h7>
+                </li>
+            </ul>
+        </div>
+        <div class="col-xxl-10">
+            <div class="card equal-card">
+                <div class="card-body p-0">
+                    <div id="myTable">
+                        <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"><?= __('deporte_padel.agregar_dia') ?></button>
+                            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <form id="form-agregar-dia" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'agregar-dia'], $evento ? ['uuid' => $evento['uuid']] : [])) ?>">
+                                    
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5"><?= __('deporte_padel.agregar_dia') ?></h1>
+                                                <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cerrar') ?>"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="fecha_inicio" class="form-label"><?= __('deporte_padel.fecha_inicio') ?>:</label>
+                                                    <input type="datetime-local" class="form-control" name="fecha_inicio" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="fecha_cierre" class="form-label"><?= __('deporte_padel.fecha_cierre') ?>:</label>
+                                                    <input type="datetime-local" class="form-control" name="fecha_cierre" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer add">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                                <button type="submit" class="btn btn-primary"><?= __('deporte_padel.agregar') ?></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <form class="app-form app-icon-form" action="#">
+                                <div class="position-relative">
+                                    <input type="search" class="form-control search" placeholder="<?= __('deporte_padel.buscar') ?>" aria-label="Search">
+                                    <i class="ti ti-search text-dark"></i>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 20%;" class="sort" data-sort="date" scope="col"><?= __('deporte_padel.inicio') ?></th>
+                                        <th style="width: 20%;" class="sort" data-sort="date" scope="col"><?= __('deporte_padel.cierre') ?></th>
+                                        <th style="width: 30%;" class="sort" data-sort="contact" scope="col"><?= __('deporte_padel.canchas_sede') ?></th>
+                                        <th style="width: 10%;" class="sort" data-sort="status" scope="col"><?= __('deporte_padel.total_canchas') ?></th>
+                                        <th style="width: 15%;" class="sort" data-sort="action pattes="col"><?= __('deporte_padel.restricciones') ?></th>
+                                        <th style="width: 5%;" class="sort" data-sort="action" scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-data">
+                                    <?php foreach($sedes as $sede): ?>
+                                        <tr>
+                                            <td><span class="badge text-light-success fs-7"><?= \Carbon\Carbon::parse($sede->fecha_inicio)->format('d - m - Y H:i') ?></span></td>
+                                            <td><span class="badge text-light-success fs-7"><?= \Carbon\Carbon::parse($sede->fecha_cierre)->format('d - m - Y H:i') ?></span></td>
+                                            <td>
+                                                <?php foreach($sede->canchas as $cancha): ?>
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'desactivar-cancha', 'id' => $cancha->uuid]) ?>" style="display:inline;">
+                                                        
+                                                        <button type="submit" class="btn btn-light-danger btn-xs" onclick="return confirm('<?= __('deporte_padel.confirmar_eliminar_sede') ?>')">
+                                                            <i class="ti ti-trash text-danger"></i>
+                                                        </button>
+                                                    </form>
+                                                    <span class="badge text-light-success fs-7 mb-2">(<?= $cancha->cantidad ?>) <?= $cancha->sedeLista->nombre ?></span><br/>
+                                                <?php endforeach; ?>
+                                                <button type="button" class="btn btn-light-success icon-btn b-r-5 fs-7" data-bs-toggle="modal" data-bs-target="#modalAgregarCancha<?= $sede->id ?>">
+                                                    <i class="ti ti-plus text-success"></i>
+                                                </button>
+                                                <div class="modal fade" id="modalAgregarCancha<?= $sede->id ?>" tabindex="-1" aria-labelledby="modalAgregarCanchaLabel" aria-hidden="true">
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'agregar-cancha']) ?>">
+                                                        
+                                                        <input type="hidden" name="mod_gestion_sede_id" value="<?= $sede->id ?>">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h1 class="modal-title fs-5"><?= __('deporte_padel.agregar_cancha') ?></h1>
+                                                                    <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cerrar') ?>"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label for="sede_lista_uuid" class="form-label"><?= __('deporte_padel.sede_disponible') ?>:</label>
+                                                                        <select name="sede_lista_uuid" class="form-select" required>
+                                                                            <option value=""><?= __('deporte_padel.seleccionar_sede') ?></option>
+                                                                            <?php foreach($sedesLista as $opcion): ?>
+                                                                                <option value="<?= $opcion->uuid ?>"><?= $opcion->nombre ?></option>
+                                                                            <?php endforeach; ?>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label for="cantidad" class="form-label"><?= __('deporte_padel.cantidad_canchas') ?>:</label>
+                                                                        <input type="number" class="form-control" name="cantidad" min="1" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                                                    <button type="submit" class="btn btn-success"><?= __('deporte_padel.agregar') ?></button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge text-light-success fs-6"><?= $sede->canchas->sum('cantidad') ?></span></td>
+                                            <td>
+                                                <button class="btn edit-item-btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalHabilitar<?= $sede->id ?>"><?= __('deporte_padel.habilitar') ?> (<?= $sede->restricciones->count() ?>)</button>
+                                                <div class="modal fade" id="modalHabilitar<?= $sede->id ?>" tabindex="-1" aria-labelledby="modalHabilitarLabel" aria-hidden="true">
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'agregar-restricciones']) ?>">
+                                                        
+                                                        <input type="hidden" name="mod_gestion_sede_id" value="<?= $sede->id ?>">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h1 class="modal-title fs-5"><?= __('deporte_padel.habilitar_horarios') ?></h1>
+                                                                    <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cerrar') ?>"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <?php
+                                                                        $bloquesGrupo = calcular_bloques_grupo($evento,$sede);
+                                                                        $bloques = calcular_bloques($sede->fecha_inicio, $sede->fecha_cierre, $bloquesGrupo);
+                                                                        $restriccionesActivas = $sede->restricciones->pluck('hora_inicio')->map(fn($h) => \Carbon\Carbon::parse($h)->format('Y-m-d H:i:s'))->toArray();
+                                                                    ?>
+                                                                    <?php foreach($bloques as $bloque): ?>
+                                                                        <?php $checked = in_array($bloque, $restriccionesActivas); ?>
+                                                                        <div class="form-check mb-2">
+                                                                            <input class="form-check-input" type="checkbox" name="hora_inicio[]" value="<?= $bloque ?>" id="hora_<?= $loop->index ?>" <?php if($checked): ?> checked <?php endif; ?>>
+                                                                            <label class="form-check-label" for="hora_<?= $loop->index ?>"><?= \Carbon\Carbon::parse($bloque)->format('d/m/Y H:i') ?></label>
+                                                                        </div>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="submit" class="btn btn-success"><?= __('deporte_padel.guardar') ?></button>
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'desactivar', 'id' => $sede->uuid]) ?>" style="display:inline;">
+                                                    
+                                                    <button type="submit" class="btn btn-light-danger icon-btn b-r-4" onclick="return confirm('<?= __('deporte_padel.confirmar_eliminar_bloque') ?>')">
+                                                        <i class="ti ti-trash text-danger"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="list-pagination">
+                            <ul class="pagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-2">
+            <div class="card">
+                <span class="bg-<?= ($total_bloques == 0 || $total_bloques < $total_requerido) ? 'danger' : 'primary' ?> h-50 w-50 d-flex-center rounded-circle m-auto eshop-icon-box">
+                    <i class="ph ph-stack f-s-24"></i>
+                </span>
+                <div class="card-body eshop-cards">
+                    <span class="ripple-effect"></span>
+                    <div class="overflow-hidden">
+                        <h3 class="text-primary mb-0"><?= $total_bloques ?></h3>
+                        <p class="mg-b-35 f-w-600 text-dark-800 txt-ellipsis-1"><?= __('deporte_padel.bloques_creados') ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <span class="bg-<?= $total_bloques < $total_requerido ? 'danger' : 'primary' ?> h-50 w-50 d-flex-center rounded-circle m-auto eshop-icon-box">
+                    <i class="ph ph-chart-bar f-s-24"></i>
+                </span>
+                <div class="card-body eshop-cards">
+                    <span class="ripple-effect"></span>
+                    <div class="overflow-hidden">
+                        <h3 class="text-primary mb-0"><?= $total_requerido ?></h3>
+                        <p class="mg-b-35 f-w-600 text-dark-800 txt-ellipsis-1"><?= __('deporte_padel.bloques_requeridos') ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-10">
+            <div class="card equal-card">
+                <div class="card-body p-0">
+                    <div id="sedesListaTable">
+                        <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarSedeLista"><?= __('deporte_padel.agregar_sede_lista') ?></button>
+                            <form class="app-form app-icon-form" action="#">
+                                <div class="position-relative">
+                                    <input type="search" class="form-control search" placeholder="<?= __('deporte_padel.buscar') ?>" aria-label="Search">
+                                    <i class="ti ti-search text-dark"></i>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal fade" id="modalAgregarSedeLista" tabindex="-1" aria-labelledby="modalAgregarSedeListaLabel" aria-hidden="true">
+                            <form id="form-agregar-sede-lista" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'store-sede-lista'], $evento ? ['uuid' => $evento['uuid']] : [])) ?>">
+                                
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5"><?= __('deporte_padel.agregar_sede_lista') ?></h1>
+                                            <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cerrar') ?>"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="nombre" class="form-label"><?= __('deporte_padel.nombre_sede') ?>:</label>
+                                                <input type="text" class="form-control" name="nombre" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="direccion" class="form-label"><?= __('deporte_padel.direccion_sede') ?>:</label>
+                                                <input type="text" class="form-control" name="direccion" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.agregar') ?></button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 40%;" class="sort" data-sort="name" scope="col"><?= __('deporte_padel.nombre_sede') ?></th>
+                                        <th style="width: 50%;" class="sort" data-sort="address" scope="col"><?= __('deporte_padel.direccion_sede') ?></th>
+                                        <th style="width: 10%;" class="sort" data-sort="action" scope="col"><?= __('deporte_padel.acciones') ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-sedes-lista">
+                                    <?php foreach($sedesLista as $sedeLista): ?>
+                                        <tr>
+                                            <td><?= $sedeLista->nombre ?></td>
+                                            <td><?= $sedeLista->direccion ?></td>
+                                            <td>
+                                                <button type="button" class="btn btn-light-success icon-btn b-r-5 fs-7" data-bs-toggle="modal" data-bs-target="#modalEditarSedeLista<?= $sedeLista->uuid ?>">
+                                                    <i class="ti ti-pencil text-success"></i>
+                                                </button>
+                                                <div class="modal fade" id="modalEditarSedeLista<?= $sedeLista->uuid ?>" tabindex="-1" aria-labelledby="modalEditarSedeListaLabel" aria-hidden="true">
+                                                    <form id="form-editar-sede-lista-<?= $sedeLista->uuid ?>" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'update-sede-lista'], $evento ? ['uuid' => $evento['uuid'], 'id' => $sedeLista->uuid] : [])) ?>">
+                                                        
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h1 class="modal-title fs-5"><?= __('deporte_padel.editar_sede_lista') ?></h1>
+                                                                    <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cerrar') ?>"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label for="nombre_<?= $sedeLista->uuid ?>" class="form-label"><?= __('deporte_padel.nombre_sede') ?>:</label>
+                                                                        <input type="text" class="form-control" name="nombre" id="nombre_<?= $sedeLista->uuid ?>" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label for="direccion_<?= $sedeLista->uuid ?>" class="form-label"><?= __('deporte_padel.direccion_sede') ?>:</label>
+                                                                        <input type="text" class="form-control" name="direccion" id="direccion_<?= $sedeLista->uuid ?>" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                                                                    <button type="submit" class="btn btn-success"><?= __('deporte_padel.guardar') ?></button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="list-pagination">
+                            <ul class="pagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/apexcharts/apexcharts.min.js')); ?>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/glightbox/glightbox.min.js')); ?>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/select/select2.min.js')); ?>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/select.js')); ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-bs-target^="#modalEditarSedeLista"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const sedeUuid = this.getAttribute('data-bs-target').replace('#modalEditarSedeLista', '');
+            const form = document.querySelector(`#form-editar-sede-lista-${sedeUuid}`);
+
+            // 👇 Generamos una plantilla con marcador de posición
+            const routeTemplate = '<?= $this->url("ligas.sedes", ["deporte" => $deporte, "accion" => "get-sede-lista", "id" => "SEDE_UUID_PLACEHOLDER"]) ?>';
+            const url = routeTemplate.replace('SEDE_UUID_PLACEHOLDER', sedeUuid);
+
+            fetch(url, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                form.querySelector(`#nombre_${sedeUuid}`).value = data.nombre;
+                form.querySelector(`#direccion_${sedeUuid}`).value = data.direccion;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    document.querySelectorAll('#form-agregar-dia, [id^="form-agregar-sede-lista"], [id^="form-editar-sede-lista"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetch(this.action, {
+                method: this.method,
+                body: new FormData(this),
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) location.reload();
+                else throw new Error('Error en la solicitud');
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+
+

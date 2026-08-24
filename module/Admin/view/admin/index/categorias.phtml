@@ -1,0 +1,495 @@
+<!-- resources/views/sistema/ceo/categorias.blade.php -->
+<?php extract($this->vars()->getArrayCopy()); ?>
+
+
+
+<?php $this->headStyle()->captureStart(); ?>
+    <style>
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: .75rem; }
+        .icon-option { border: 1px solid #e5e7eb; border-radius: .75rem; padding: .75rem; text-align: center; cursor: pointer; }
+        .icon-option.active { border-color: #0d6efd; box-shadow: 0 0 0 .25rem rgba(13,110,253,.15); }
+        .drag-item { cursor: grab; }
+        .drag-item:active { cursor: grabbing; }
+        .card-hover { transition: transform .05s ease; }
+        .card-hover:active { transform: scale(.995); }
+        .hidden { display: none !important; }
+        /* Ajustes solicitados */
+        .icono-lista { color: #fff !important; font-size: 1.6rem !important; line-height: 1; }
+        .h-40.w-40 { display: flex; align-items: center; justify-content: center; }
+    </style>
+<?php $this->headStyle()->captureEnd(); ?>
+
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <div>
+                    <ol class="breadcrumb bg-light-secondary p-2">
+                        <li class="breadcrumb-item">
+                            <a href="#"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> Dios</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <i class="fa-solid fa-sliders me-1"></i> Gestión de Categorías
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertaSeleccion" class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="ti ti-info-circle me-2"></i>
+        <div>Selecciona un deporte para gestionar sus categorías.</div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex gap-2">
+            <button id="btnSeleccionarDeporte" type="button" class="btn btn-outline-primary">
+                <i class="ti ti-sport-basketball me-1"></i>Seleccionar Deporte
+            </button>
+            <button id="btnAgregarCategoria" type="button" class="btn btn-primary hidden">
+                <i class="ti ti-plus me-1"></i>Añadir categoría
+            </button>
+        </div>
+    </div>
+
+    <div id="cabeceraDeporte" class="card mb-3 hidden">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-secondary">Deporte:</span>
+                <strong id="deporteNombre"></strong>
+                <span class="ms-2 badge bg-secondary-subtle text-secondary" id="deporteAlias"></span>
+            </div>
+            <button id="btnCambiarDeporte" class="btn btn-sm btn-outline-secondary">
+                <i class="ti ti-arrows-exchange me-1"></i>Cambiar
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Categorías</h5>
+            <small class="text-secondary">Arrastra para reordenar</small>
+        </div>
+        <div class="card-body">
+            <ul id="listaCategorias" class="list-group handle-list-group">
+                <!-- Se llena por JS -->
+            </ul>
+            <div id="emptyState" class="text-center text-secondary py-4 hidden">
+                <i class="ti ti-folder-open f-s-32 d-block mb-2"></i>
+                <span>No hay categorías creadas</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Seleccionar Deporte (cards) -->
+<div class="modal fade" id="modalDeportes" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Seleccionar Deporte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+            <?php foreach($deportes as $dep) { ?>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="card h-100 card-hover">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="h-40 w-40 d-flex align-items-center justify-content-center b-r-50 overflow-hidden text-bg-primary me-2">
+                                <i class="ti ti-sport-basketball"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold"><?= htmlspecialchars($dep->deporte) ?></div>
+                                <div class="text-secondary small">Alias: <?= htmlspecialchars($dep->alias) ?></div>
+                            </div>
+                        </div>
+                        <div class="mt-auto">
+                            <button
+                                class="btn btn-outline-primary w-100 btnElegirDeporte"
+                                data-alias="<?= htmlspecialchars($dep->alias) ?>"
+                                data-nombre="<?= htmlspecialchars($dep->deporte) ?>">
+                                Seleccionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php } ?>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reutilizable Agregar/Editar -->
+<div class="modal fade" id="modalCategoria" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formCategoria">
+        
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCategoriaTitulo">Nueva Categoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="categoriaUuid" name="uuid" value="">
+            <input type="hidden" id="icono" name="icono" value="">
+            <div class="mb-3">
+                <label class="form-label">Ícono Representativo</label>
+                <div class="icon-grid" id="iconGrid">
+                    <?php
+                    $iconos = [
+                        'ti ti-trophy', 'ti ti-medal', 'ti ti-award', 'ti ti-star',
+                        'ti ti-flag', 'ti ti-heart', 'ti ti-users', 'ti ti-user',
+                        'ti ti-user-check', 'ti ti-shield',
+                        'ti ti-run', 'ti ti-swimming', 'ti ti-bike', 'ti ti-ball-football',
+                        'ti ti-ball-volleyball', 'ti ti-ball-tennis', 'ti ti-ball-baseball',
+                        'ti ti-ball-basketball', 'ti ti-ball-american-football', 'ti ti-ball-bowling',
+                        'ti ti-target', 'ti ti-timeline-event',
+                        'ti ti-stairs-up', 'ti ti-trophy-filled', 'ti ti-crown',
+                        'ti ti-tournament', 'ti ti-clipboard-list', 'ti ti-clipboard-check',
+                        'ti ti-notes', 'ti ti-book', 'ti ti-gender-male',
+                        'ti ti-gender-female', 'ti ti-gender-bigender', 'ti ti-diamond',
+                        'ti ti-circle-dashed', 'ti ti-checklist', 'ti ti-tie',
+                    ];
+                    foreach($iconos as $ic) {
+                        $parts = explode('-', $ic);
+                        $last = end($parts);
+                        $label = ucfirst($last);
+                    ?>
+                    <div class="icon-option" data-icon="<?= $ic ?>">
+                        <i class="<?= $ic ?> f-s-24 d-block mb-1"></i>
+                        <small class="text-secondary d-block"><?= $label ?></small>
+                    </div>
+                    <?php } ?>
+                </div>
+                <div class="form-text">Elige un ícono para esta categoría.</div>
+            </div>
+            <div class="mb-3">
+                <label for="titulo" class="form-label">Título</label>
+                <input type="text" id="titulo" name="titulo" class="form-control" maxlength="255">
+                <div class="invalid-feedback" id="error_titulo"></div>
+            </div>
+            <div class="mb-3">
+                <label for="subtitulo" class="form-label">Subtítulo (Opcional)</label>
+                <input type="text" id="subtitulo" name="subtitulo" class="form-control" maxlength="255">
+                <div class="invalid-feedback" id="error_subtitulo"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="btnGuardarCategoria" type="submit">
+            <i class="ti ti-device-floppy me-1"></i><span id="lblGuardar">Guardar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Template item -->
+<template id="tplItem">
+    <li class="list-group-item drag-item" data-uuid="">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="ph-bold ph-anchor-simple list-handle me-2"></i>
+                <div class="h-40 w-40 b-r-50 overflow-hidden bg-primary me-3">
+                    <i class="ti ti-trophy icono-lista"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold item-titulo">Título</div>
+                    <div class="text-secondary small item-subtitulo">Subtítulo</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary btnEditar">
+                    <i class="ti ti-pencil"></i> Editar
+                </button>
+            </div>
+        </div>
+    </li>
+</template>
+
+<?php $this->inlineScript()->captureStart(); ?>
+(function() {
+    const RUTAS = {
+        listar: (alias) => "<?= rtrim($this->basePath(), '/') ?>/admin/ceo/categorias/listar/" + encodeURIComponent(alias),
+        orden:  "<?= $this->url('admin.ceo.categorias/orden') ?>",
+        store:  "<?= $this->url('admin.ceo.categorias/store') ?>",
+        update: (uuid) => "<?= rtrim($this->basePath(), '/') ?>/admin/ceo/categorias/update/" + encodeURIComponent(uuid),
+    };
+
+    const csrf = ""; // CSRF no activo en api REST simple
+    const lista = document.getElementById('listaCategorias');
+    const tpl   = document.getElementById('tplItem');
+    const empty = document.getElementById('emptyState');
+
+    const alertaSeleccion = document.getElementById('alertaSeleccion');
+    const cabeceraDeporte = document.getElementById('cabeceraDeporte');
+    const btnSeleccionarDeporte = document.getElementById('btnSeleccionarDeporte');
+    const btnCambiarDeporte = document.getElementById('btnCambiarDeporte');
+    const btnAgregar = document.getElementById('btnAgregarCategoria');
+    const modalDeportesEl = document.getElementById('modalDeportes');
+    const modalCategoriaEl = document.getElementById('modalCategoria');
+
+    const deporteNombreEl = document.getElementById('deporteNombre');
+    const deporteAliasEl  = document.getElementById('deporteAlias');
+
+    const iconGrid = document.getElementById('iconGrid');
+    const inputIcono = document.getElementById('icono');
+    const inputTitulo = document.getElementById('titulo');
+    const inputSubtitulo = document.getElementById('subtitulo');
+    const lblGuardar = document.getElementById('lblGuardar');
+    const inputUuid = document.getElementById('categoriaUuid');
+    const formCategoria = document.getElementById('formCategoria');
+
+    let deporteSeleccionado = { alias: null, nombre: null };
+    let modalDeportes, modalCategoria, sortable;
+
+    function extraerClaseIcono(htmlIcono) {
+        if (!htmlIcono || typeof htmlIcono !== 'string') {
+            return null;
+        }
+        // Crea un elemento temporal para parsear la cadena HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlIcono.trim();
+
+        const iconoEl = tempDiv.querySelector('i');
+        if (iconoEl) {
+            // Obtiene todas las clases
+            const clases = Array.from(iconoEl.classList);
+            // Filtra para obtener solo las clases que estÃ¡n en el formato de tu lista
+            // AquÃ­ asumimos que todos tus iconos empiezan con 'ti ti-'
+            const claseIcono = clases.filter(c => c.startsWith('ti-')).join(' ');
+
+            // Para ser mÃ¡s robustos y evitar que se incluya 'text-primary',
+            // Buscamos las dos clases base que definen el icono: 'ti' y 'ti-NOMBRE'
+            // O, si son de Tabler Icons, a menudo son 'ti' y 'ti-icon-name'
+            // Tu lista tiene 'ti ti-trophy'. Buscamos esas dos.
+
+            // Simplificando y asumiendo que el prefijo es 'ti ti-NOMBRE'
+            // Si la cadena de clases contiene 'ti ti-' y el nombre del icono
+            const match = htmlIcono.match(/class="(.*?)"/);
+            if (match && match[1]) {
+                const todasLasClases = match[1].split(' ');
+                // Filtramos las clases para reconstruir la cadena 'ti ti-nombre'
+                const clasesIcono = todasLasClases.filter(clase => clase === 'ti' || clase.startsWith('ti-'));
+                // Eliminamos duplicados y unimos, forzando que empiece por 'ti ti-'
+                if (clasesIcono.includes('ti') && clasesIcono.length > 1) {
+                    return 'ti ' + clasesIcono.filter(c => c !== 'ti').join(' ');
+                }
+            }
+            // Si el parsing fue demasiado complejo, intentamos una soluciÃ³n simple de reemplazo
+            // que se basa en que 'ti ti-book' estÃ¡ dentro de la cadena HTML.
+            // La expresiÃ³n regular: busca 'ti ti-' seguido de cualquier palabra hasta el siguiente espacio o comilla.
+            const simpleMatch = htmlIcono.match(/(ti ti-[a-z0-9-]+)/);
+            if (simpleMatch) {
+                return simpleMatch[1];
+            }
+        }
+        return null;
+    }
+
+    function toggleEmptyState() {
+        const hasItems = lista.children.length > 0;
+        empty.classList.toggle('hidden', hasItems);
+    }
+
+    function limpiarLista() {
+        lista.innerHTML = '';
+        toggleEmptyState();
+    }
+
+    function renderItem(cat) {
+        const li = tpl.content.firstElementChild.cloneNode(true);
+        li.dataset.uuid = cat.uuid;
+        li.querySelector('.item-titulo').textContent = cat.titulo;
+        li.querySelector('.item-subtitulo').textContent = cat.subtitulo || '';
+        // Mostrar icono desde BD o default
+        li.querySelector('.h-40.w-40').innerHTML = (cat.icono || '<i class="ti ti-trophy icono-lista"></i>').replace('text-primary', 'icono-lista');
+        li.querySelector('.btnEditar').addEventListener('click', () => abrirEditar(cat));
+        lista.appendChild(li);
+    }
+
+    async function cargarCategorias(alias) {
+        limpiarLista();
+        try {
+            const res = await fetch(RUTAS.listar(alias), { headers: { 'Accept': 'application/json' }});
+            const data = await res.json();
+            (data.categorias || []).forEach(renderItem);
+            toggleEmptyState();
+            initSortable();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            cerrarCargando();
+        }
+    }
+
+    function initSortable() {
+        if (sortable) sortable.destroy();
+        // Requiere SortableJS ya cargado en el layout
+        sortable = Sortable.create(lista, {
+            handle: '.list-handle',
+            animation: 150,
+            onEnd: guardarOrden
+        });
+    }
+
+    async function guardarOrden() {
+        const orden = Array.from(lista.children).map((li, idx) => ({
+            uuid: li.dataset.uuid,
+            posicion: idx + 1
+        }));
+        try {
+            await fetch(RUTAS.orden, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ orden })
+            });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            cerrarCargando();
+        }
+    }
+
+    function abrirCrear() {
+        inputUuid.value = '';
+        inputTitulo.value = '';
+        inputSubtitulo.value = '';
+        seleccionarIconoUI(null); // limpia selecciÃ³n
+        inputIcono.value = '';
+        lblGuardar.textContent = "Nueva Categoría";
+        document.getElementById('modalCategoriaTitulo').textContent = "Añadir Categoría";
+        limpiarErrores();
+        modalCategoria.show();
+    }
+
+    function abrirEditar(cat) {
+        inputUuid.value = cat.uuid;
+        inputTitulo.value = cat.titulo || '';
+        inputSubtitulo.value = cat.subtitulo || '';
+        const clasePuraIcono = extraerClaseIcono(cat.icono);
+        seleccionarIconoUI(clasePuraIcono);
+        inputIcono.value = clasePuraIcono || ''; 
+        lblGuardar.textContent = "Guardar Cambios";
+        document.getElementById('modalCategoriaTitulo').textContent = "Editar Categoría";
+        limpiarErrores();
+        modalCategoria.show();
+    }
+
+    function limpiarErrores() {
+        ['titulo','subtitulo','icono'].forEach(id => {
+            const input = document.getElementById(id) || {};
+            if (input.classList) input.classList.remove('is-invalid');
+            const err = document.getElementById('error_' + id);
+            if (err) err.textContent = '';
+        });
+    }
+
+    function seleccionarIconoUI(icon) {
+        Array.from(iconGrid.querySelectorAll('.icon-option')).forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.icon === icon);
+        });
+    }
+
+    iconGrid.addEventListener('click', (e) => {
+        const opt = e.target.closest('.icon-option');
+        if (!opt) return;
+        seleccionarIconoUI(opt.dataset.icon);
+        inputIcono.value = opt.dataset.icon;
+    });
+
+    formCategoria.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        limpiarErrores();
+
+        if (!deporteSeleccionado.alias) return;
+
+        const payload = {
+            icono: inputIcono.value,
+            titulo: inputTitulo.value,
+            subtitulo: inputSubtitulo.value,
+            deporte: deporteSeleccionado.alias
+        };
+        const isEdit = !!inputUuid.value;
+        const url = isEdit ? RUTAS.update(inputUuid.value) : RUTAS.store;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.status === 422) {
+                const data = await res.json();
+                const errs = data.errors || {};
+                if (errs.titulo) { inputTitulo.classList.add('is-invalid'); document.getElementById('error_titulo').textContent = errs.titulo[0]; }
+                if (errs.subtitulo) { inputSubtitulo.classList.add('is-invalid'); document.getElementById('error_subtitulo').textContent = errs.subtitulo[0]; }
+                if (errs.icono) { alert(errs.icono[0]); }
+                return;
+            }
+
+            await res.json();
+            await cargarCategorias(deporteSeleccionado.alias);
+            modalCategoria.hide();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            cerrarCargando();
+        }
+    });
+
+    // Abrir selector de deportes
+    btnSeleccionarDeporte.addEventListener('click', () => modalDeportes.show());
+    btnCambiarDeporte.addEventListener('click', () => modalDeportes.show());
+
+    // Elegir deporte
+    modalDeportesEl.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btnElegirDeporte');
+        if (!btn) return;
+        deporteSeleccionado = { alias: btn.dataset.alias, nombre: btn.dataset.nombre };
+        deporteNombreEl.textContent = deporteSeleccionado.nombre;
+        deporteAliasEl.textContent = deporteSeleccionado.alias;
+
+        cabeceraDeporte.classList.remove('hidden');
+        btnAgregar.classList.remove('hidden');
+        alertaSeleccion.classList.add('hidden');
+
+        modalDeportes.hide();
+        await cargarCategorias(deporteSeleccionado.alias);
+    });
+
+    // Agregar nueva
+    btnAgregar.addEventListener('click', abrirCrear);
+
+    // Init modals
+    document.addEventListener('DOMContentLoaded', () => {
+        modalDeportes = new bootstrap.Modal(modalDeportesEl);
+        modalCategoria = new bootstrap.Modal(modalCategoriaEl);
+    });
+})();
+<?php 
+$this->inlineScript()->captureEnd();
+$this->inlineScript()->appendFile($this->basePath('assets/vendor/sortable/Sortable.min.js')); 
+$this->inlineScript()->appendFile($this->basePath('assets/js/draggable.js')); 
+?>

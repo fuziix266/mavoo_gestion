@@ -1,0 +1,1513 @@
+<?php
+/**
+ * principal.phtml - Sistema de Arriendos (Configuración)
+ *
+ * IMPORTANTE: Este archivo NO debe sobrescribir estilos globales del
+ * layout padre (layout.phtml). Usar prefijos únicos en clases.
+ */
+$sistema = $this->sistema ?? (object) [];
+?>
+<style>
+    /* SCOPE-ONLY: prefixed classes */
+    .reservas-wrap { display: flex; min-height: 60vh; background: #F9FAFB; gap: 0; flex-wrap: nowrap; align-items: flex-start; }
+
+    /* ===== SIDEBAR ===== */
+    .reservas-sidebar { width: 260px; background: linear-gradient(180deg, #3730A3 0%, #4F46E5 100%); padding: 1.5rem 0; position: sticky; top: 130px; height: calc(100vh - 130px); overflow-y: auto; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08); flex-shrink: 0; }
+    .sidebar-header { padding: 1rem 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+    .sidebar-header h4 { color: white; font-weight: 700; font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.75rem; }
+    .sidebar-header small { color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; display: block; margin-top: 0.5rem; }
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-menu li { margin: 0; }
+    .nav-menu a { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.5rem; color: rgba(255, 255, 255, 0.75); text-decoration: none; transition: all 0.25s ease; font-weight: 500; font-size: 0.95rem; border-left: 3px solid transparent; }
+    .nav-menu a:hover { background: rgba(255, 255, 255, 0.1); color: white; border-left-color: #F59E0B; }
+    .nav-menu a.active { background: rgba(255, 255, 255, 0.15); color: white; border-left-color: #FBBF24; }
+    .nav-menu i { font-size: 1.25rem; width: 24px; text-align: center; }
+
+    /* ===== CONTENIDO ===== */
+    .reservas-content { flex: 1; padding: 2.5rem; overflow-y: auto; max-width: 1200px; margin: 0 auto; width: 100%; }
+    .reservas-section { display: none; animation: fadeIn 0.3s ease; }
+    .reservas-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== TARJETAS ===== */
+    .modern-card { background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); border: 1px solid #F3F4F6; overflow: hidden; margin-bottom: 2rem; transition: all 0.25s ease; }
+    .modern-card:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-color: #E5E7EB; }
+    .modern-card-header { background: linear-gradient(135deg, #F9FAFB 0%, white 100%); padding: 1.5rem 2rem; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .modern-card-header h5 { margin: 0; color: #1F2937; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .modern-card-header h5 i { color: #4F46E5; font-size: 1.4rem; }
+    .modern-card-body { padding: 2rem; }
+
+    /* ===== FORMULARIOS ===== */
+    .modern-input, .form-control, .form-select { border: 1px solid #E5E7EB; border-radius: 8px; padding: 0.75rem 1rem; transition: all 0.25s ease; font-size: 0.95rem; background-color: white; }
+    .modern-input:focus, .form-control:focus, .form-select:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08); outline: none; }
+    .modern-label { font-weight: 600; color: #1F2937; margin-bottom: 0.5rem; font-size: 0.9rem; display: block; }
+
+    /* ===== BOTONES ===== */
+    .btn-modern { border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600; transition: all 0.25s ease; border: none; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.95rem; }
+    .btn-modern:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); }
+    .btn-modern-primary { background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%); color: white; }
+    .btn-modern-success { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; }
+    .btn-modern-warning { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); color: white; }
+    .btn-modern-danger { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; }
+
+    /* ===== STATUS SWITCH ===== */
+    .status-switch-container { background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid #10B981; padding: 1rem 1.5rem; border-radius: 10px; display: flex; align-items: center; gap: 1rem; }
+    .status-switch-container.inactive { background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); border-color: #EF4444; }
+    .system-status-switch { width: 3.25rem; height: 1.75rem; cursor: pointer; }
+    .status-label-active { color: #10B981; font-weight: 700; font-size: 1rem; }
+    .status-label-inactive { color: #EF4444; font-weight: 700; font-size: 1rem; }
+
+    /* ===== TARJETAS CANCHAS ===== */
+    .cancha-card { background: linear-gradient(135deg, white 0%, #F9FAFB 100%); border: 1px solid #E5E7EB; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; position: relative; transition: all 0.25s ease; }
+    .cancha-card:hover { border-color: #4F46E5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1); }
+    .btn-remove-cancha { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+    /* ===== TABLAS ===== */
+    .table-responsive { overflow-x: auto; border-radius: 8px; }
+    .modern-table { border-collapse: collapse; width: 100%; margin: 0; }
+    .modern-table thead { background: linear-gradient(135deg, #3730A3 0%, #4F46E5 100%); color: white; }
+    .modern-table thead th { padding: 1rem; font-weight: 600; text-align: left; border: none; font-size: 0.9rem; }
+    .modern-table tbody tr { background: white; border-bottom: 1px solid #F3F4F6; transition: all 0.2s ease; }
+    .modern-table tbody tr:hover { background: #F9FAFB; }
+    .modern-table tbody td { padding: 1rem; border: none; font-size: 0.95rem; }
+
+    /* ===== BADGE ===== */
+    .badge-counter { background: linear-gradient(135deg, #818CF8 0%, #4F46E5 100%); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
+    .btn-save-main { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 1.25rem 3rem; border-radius: 10px; font-size: 1.1rem; font-weight: 700; border: none; width: 100%; max-width: 500px; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); cursor: pointer; }
+    .btn-save-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35); }
+    .btn-save-main:active { transform: translateY(0); }
+
+    /* RESPONSIVE */
+    @media (max-width: 992px) { .reservas-sidebar { width: 220px; } .reservas-content { padding: 2rem; } }
+    @media (max-width: 768px) { .reservas-wrap { flex-direction: column; } .reservas-sidebar { width: 100%; height: auto; position: relative; padding: 1rem 0; } .sidebar-header { padding: 1rem 1.5rem; } .nav-menu { display: flex; overflow-x: auto; gap: 0; padding: 0; } .nav-menu li { flex-shrink: 0; } .nav-menu a { white-space: nowrap; padding: 0.75rem 1.25rem; } .reservas-content { padding: 1.5rem; max-width: 100%; } .modern-card-body { padding: 1.5rem; } .modern-card-header { flex-direction: column; align-items: flex-start; gap: 1rem; } .cancha-card { padding: 1.5rem; } }
+    @media (max-width: 480px) { .reservas-content { padding: 1rem; } .modern-card { margin-bottom: 1.5rem; } .modern-card-body, .cancha-card { padding: 1rem; } .btn-modern { padding: 0.625rem 1rem; font-size: 0.875rem; } }
+
+    /* ===== GALERÍA DE IMÁGENES ===== */
+    .upload-area {
+        border: 2px dashed #E5E7EB;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: #F9FAFB;
+    }
+    .upload-area:hover {
+        border-color: #4F46E5;
+        background: rgba(79, 70, 229, 0.02);
+    }
+    .upload-area.dragover {
+        border-color: #4F46E5;
+        background: rgba(79, 70, 229, 0.05);
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .gallery-item {
+        background: white;
+        border: 1px solid #F3F4F6;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+    .gallery-item:hover {
+        border-color: #4F46E5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .gallery-image {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        background: #F9FAFB;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .gallery-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .gallery-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .gallery-item:hover .gallery-actions {
+        opacity: 1;
+    }
+
+    .btn-gallery-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1F2937;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .btn-gallery-action:hover {
+        background: white;
+        transform: scale(1.1);
+    }
+    .btn-gallery-action.btn-delete {
+        color: #EF4444;
+    }
+    .btn-gallery-action i {
+        font-size: 1.25rem;
+    }
+
+    .gallery-info {
+        padding: 0.75rem;
+        background: #F9FAFB;
+        text-align: center;
+    }
+    .gallery-info small {
+        color: #6B7280;
+        font-size: 0.8rem;
+    }
+
+    .empty-gallery {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    /* ===== MODAL GALERÍA CANCHAS ===== */
+    .modal-gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    .modal-gallery-item {
+        position: relative;
+        border: 2px solid #F3F4F6;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: white;
+    }
+
+    .modal-gallery-item:hover {
+        border-color: #4F46E5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        transform: translateY(-3px);
+    }
+
+    .modal-gallery-item.selected {
+        border-color: #10B981;
+        border-width: 3px;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .modal-gallery-item img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .modal-gallery-item .check-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(16, 185, 129, 0.15);
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-gallery-item.selected .check-overlay {
+        display: flex;
+    }
+
+    .modal-gallery-item .check-icon {
+        width: 48px;
+        height: 48px;
+        background: #10B981;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    /* Vista previa cancha */
+    .imagen-preview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        background: #F9FAFB;
+        border-radius: 8px;
+        border: 1px solid #F3F4F6;
+    }
+
+    .imagen-preview .preview-img {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #E5E7EB;
+    }
+
+    .btn-clear-image {
+        padding: 0.75rem 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .gallery-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        .gallery-image {
+            height: 150px;
+        }
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.9); }
+    }
+
+</style>
+
+
+
+
+<div class="reservas-wrap">
+    <!-- Sidebar -->
+    <div class="reservas-sidebar">
+        <div class="sidebar-header">
+            <h4>
+                <i class="ph-duotone ph-tennis-ball"></i>
+                Configuración
+            </h4>
+            <small>Sistema de Arriendo</small>
+        </div>
+
+        <ul class="nav-menu">
+            <li><a href="#" data-section="datos-negocio" class="nav-link-section active"><i class="ph-duotone ph-storefront"></i><span>Datos del Negocio</span></a></li>
+            <li><a href="#" data-section="gestion-canchas" class="nav-link-section"><i class="ph-duotone ph-tennis-ball"></i><span>Gestión de Canchas</span></a></li>
+            <li><a href="#" data-section="amenidades" class="nav-link-section"><i class="ph-duotone ph-star"></i><span>Amenidades</span></a></li>
+            <li><a href="#" data-section="extras" class="nav-link-section"><i class="ph-duotone ph-shopping-bag"></i><span>Extras / Productos</span></a></li>
+            <li><a href="#" data-section="cupones" class="nav-link-section"><i class="ph-duotone ph-ticket"></i><span>Gestión de Cupones</span></a></li>
+            <li><a href="#" data-section="galeria" class="nav-link-section"><i class="ph-duotone ph-images"></i><span>Galería de Imágenes</span></a></li>
+            <li><a href="#" data-section="permisos" class="nav-link-section"><i class="ph-duotone ph-shield-check"></i><span>Permisos</span></a></li>
+            <li><a href="<?= $this->url('mod.arriendo.dashboard') ?>"><i class="ph-duotone ph-chart-line"></i><span>Dashboard Financiero</span></a></li>
+        </ul>
+    </div>
+
+    <!-- Contenido -->
+    <div class="reservas-content">
+        <form action="<?= $this->url('mod.arriendo.principal') ?>" method="POST" id="configForm" class="needs-validation" novalidate>
+            <input type="hidden" name="_token" value="">
+            <?php if(!empty($sistema->id)): ?>
+                <input type="hidden" name="id" value="<?= $sistema->id ?? '' ?>">
+                <input type="hidden" name="uuid" value="<?= $sistema->uuid ?? '' ?>">
+            <?php endif; ?>
+
+            <!-- SECCIÓN 1: DATOS DEL NEGOCIO -->
+            <div class="reservas-section active" id="datos-negocio">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-storefront"></i> Datos del Negocio</h5>
+                        <?php if(!empty($sistema->id)): ?>
+                        <div class="status-switch-container <?= old('is_active', $sistema->is_active ?? 1) ? '' : 'inactive' ?>" id="statusContainer" style="margin-left: auto;">
+                            <div class="form-check form-switch m-0">
+                                <input type="hidden" name="is_active" value="0">
+                                <input class="form-check-input system-status-switch" type="checkbox"
+                                       id="systemActiveSwitch" name="is_active" value="1"
+                                       <?= old('is_active', $sistema->is_active ?? 1) ? 'checked' : '' ?>
+                                       onchange="toggleSystemLabel(this)">
+                                <label class="form-check-label" for="systemActiveSwitch" id="systemStatusLabel">
+                                    <?= old('is_active', $sistema->is_active ?? 1) ? 'Sistema ACTIVO' : 'Sistema DESACTIVADO' ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modern-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="modern-label">Nombre del Negocio <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" name="nombre_negocio" value="<?= htmlspecialchars($sistema->nombre_negocio ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Slug (URL) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="slugInput" name="slug" value="<?= old('slug', $sistema->slug ?? '') ?>" required>
+                                <small class="text-muted d-block mt-1">Solo letras minúsculas y guiones</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modern-label">Hora Inicio <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control modern-input" name="hora_inicio" value="<?= old('hora_inicio', $sistema->hora_inicio ?? '08:00') ?>" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modern-label">Hora Fin <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control modern-input" name="hora_fin" value="<?= old('hora_fin', $sistema->hora_fin ?? '22:00') ?>" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modern-label">Intervalo (min) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control modern-input" name="intervalo_min" value="<?= old('intervalo_min', $sistema->intervalo_min ?? 60) ?>" placeholder="60" min="15" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modern-label">Max Div. Pago <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control modern-input" name="max_div_pago" value="<?= old('max_div_pago', $sistema->max_div_pago ?? 4) ?>" placeholder="4" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Precio Base <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:white; border-color:#E5E7EB;">$</span>
+                                    <input type="number" class="form-control modern-input" name="precio_base" value="<?= old('precio_base', $sistema->precio_base ?? 0) ?>" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Moneda <span class="text-danger">*</span></label>
+                                <select class="form-select modern-input" name="moneda" required>
+                                    <option value="" disabled <?= old('moneda', $sistema->moneda ?? '') ? '' : 'selected' ?>>Seleccione</option>
+                                    <option value="CLP" <?= old('moneda', $sistema->moneda ?? '') == 'CLP' ? 'selected' : '' ?>>CLP - Peso Chileno</option>
+                                    <option value="USD" <?= old('moneda', $sistema->moneda ?? '') == 'USD' ? 'selected' : '' ?>>USD - Dólar</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <?php if(($sistema->url_landing ?? null) || ($sistema->url_moderador ?? null)): ?>
+                        <hr style="margin: 1.5rem 0; border-color: #F3F4F6;">
+                        <h6 style="font-weight: 700; color: #1F2937; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ph-duotone ph-link" style="color: #4F46E5;"></i>
+                            URLs Públicas
+                        </h6>
+                        <div style="display: grid; gap: 1rem;">
+
+                            <?php if($sistema->url_landing ?? null): ?>
+                            <div style="background: #F9FAFB; border-radius: 10px; padding: 1.25rem; border: 1px solid #F3F4F6;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #1F2937; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="ph-duotone ph-storefront" style="color: #10B981;"></i>
+                                            Página de Reservas
+                                        </div>
+                                        <a href="<?= $sistema->url_landing ?? '#' ?>" target="_blank" style="color: #4F46E5; font-size: 0.9rem; word-break: break-all;">
+                                            <?= $sistema->url_landing ?? '' ?>
+                                        </a>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                        <button type="button" class="btn btn-modern btn-modern-outline" onclick="copyUrl('<?= $sistema->url_landing ?? '' ?>')" title="Copiar enlace">
+                                            <i class="ph-duotone ph-copy"></i> Copiar
+                                        </button>
+                                        <button type="button" class="btn btn-modern btn-modern-outline" onclick="downloadQr('<?= $sistema->url_landing ?? '' ?>', 'qr-reservas')" title="Descargar QR">
+                                            <i class="ph-duotone ph-qr-code"></i> QR
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="qr-reservas" style="display:none; margin-top: 1rem; text-align: center;"></div>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if($sistema->url_moderador ?? null): ?>
+                            <div style="background: #F9FAFB; border-radius: 10px; padding: 1.25rem; border: 1px solid #F3F4F6;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #1F2937; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="ph-duotone ph-user-shield" style="color: #F59E0B;"></i>
+                                            Panel de Moderador
+                                        </div>
+                                        <a href="<?= $sistema->url_moderador ?? '#' ?>" target="_blank" style="color: #4F46E5; font-size: 0.9rem; word-break: break-all;">
+                                            <?= $sistema->url_moderador ?? '' ?>
+                                        </a>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                        <button type="button" class="btn btn-modern btn-modern-outline" onclick="copyUrl('<?= $sistema->url_moderador ?? '' ?>')" title="Copiar enlace">
+                                            <i class="ph-duotone ph-copy"></i> Copiar
+                                        </button>
+                                        <button type="button" class="btn btn-modern btn-modern-outline" onclick="downloadQr('<?= $sistema->url_moderador ?? '' ?>', 'qr-moderador')" title="Descargar QR">
+                                            <i class="ph-duotone ph-qr-code"></i> QR
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="qr-moderador" style="display:none; margin-top: 1rem; text-align: center;"></div>
+                            </div>
+                            <?php endif; ?>
+
+                        </div>
+                        <?php endif; ?>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: GESTIÓN DE CANCHAS -->
+            <?php if(!empty($sistema->id)): ?>
+            <div class="reservas-section" id="gestion-canchas">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-tennis-ball"></i> Gestión de Canchas</h5>
+                        <button type="button" class="btn btn-modern btn-modern-primary ms-auto" onclick="addCanchaRow()"><i class="ti ti-plus"></i> Agregar Cancha</button>
+                    </div>
+                    <div class="modern-card-body">
+                        <div id="canchas-container"></div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- SECCIÓN 3: AMENIDADES -->
+            <div class="reservas-section" id="amenidades">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-star"></i> Amenidades</h5>
+                        <button type="button" class="btn btn-modern btn-modern-primary ms-auto" onclick="addAmenityRow()"><i class="ti ti-plus"></i> Agregar</button>
+                    </div>
+                    <div class="modern-card-body">
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">ID/Key</th>
+                                        <th>Nombre</th>
+                                        <th style="width: 20%;">Icono (FA)</th>
+                                        <th style="width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amenities-container"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-2">Ej: fa-wifi, fa-shower, fa-car</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: EXTRAS / PRODUCTOS -->
+            <div class="reservas-section" id="extras">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-shopping-bag"></i> Extras / Productos</h5>
+                        <button type="button" class="btn btn-modern btn-modern-warning ms-auto" onclick="addExtraRow()"><i class="ti ti-plus"></i> Agregar</button>
+                    </div>
+                    <div class="modern-card-body">
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">ID</th>
+                                        <th>Nombre</th>
+                                        <th style="width: 25%;">Precio</th>
+                                        <th style="width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="extras-container"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 5: CUPONES -->
+            <div class="reservas-section" id="cupones">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-ticket"></i> Gestión de Cupones</h5>
+                        <button type="button" class="btn btn-modern btn-modern-warning ms-auto" onclick="addCouponRow()"><i class="ti ti-plus"></i> Agregar</button>
+                    </div>
+                    <div class="modern-card-body">
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%;">Código</th>
+                                        <th style="width: 12%;">Desc. (%)</th>
+                                        <th style="width: 12%;" class="text-center">Usados</th>
+                                        <th style="width: 18%;">Límite Total</th>
+                                        <th style="width: 18%;">Vencimiento</th>
+                                        <th style="width: 12%;">Estado</th>
+                                        <th style="width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cupones-container"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: GALERÍA DE IMÁGENES -->
+            <div class="reservas-section" id="galeria">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-images"></i> Galería de Imágenes</h5>
+                        <span class="badge-counter" id="galeria-counter"><?= count($sistema->galeria_config ?? []) ?>/30</span>
+                    </div>
+                    <div class="modern-card-body">
+                        <!-- Uploader -->
+                        <div class="mb-4">
+                            <label class="modern-label">Subir Nueva Imagen</label>
+                            <div class="upload-area" id="upload-area">
+                                <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" id="upload-placeholder">
+                                    <i class="ph-duotone ph-upload-simple" style="font-size: 3rem; color: #4F46E5;"></i>
+                                    <p style="margin: 1rem 0 0.5rem; font-weight: 600; color: #1F2937;">Haz clic o arrastra una imagen</p>
+                                    <small style="color: #6B7280;">Máximo 15MB - Formatos: JPG, PNG, GIF, WEBP</small>
+                                </div>
+                                <div class="upload-progress" id="upload-progress" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Subiendo...</span>
+                                    </div>
+                                    <p style="margin-top: 1rem; color: #6B7280;">Subiendo imagen...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Galería -->
+                        <div class="gallery-grid" id="gallery-grid">
+                            <?php if(!empty($sistema->galeria_config) && count($sistema->galeria_config) > 0): ?>
+                                <?php foreach($sistema->galeria_config as $imagen): ?>
+                                <div class="gallery-item" data-filename="<?= $imagen['nombre_archivo'] ?>">
+                                    <div class="gallery-image">
+                                        <img src="<?= $imagen['url'] ?>" alt="Imagen galería" loading="lazy">
+                                    </div>
+                                    <div class="gallery-actions">
+                                        <button type="button" class="btn-gallery-action" onclick="copyImageUrl('<?= $imagen['url'] ?>')" title="Copiar URL">
+                                            <i class="ph-duotone ph-copy"></i>
+                                        </button>
+                                        <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('<?= $imagen['nombre_archivo'] ?>')" title="Eliminar">
+                                            <i class="ph-duotone ph-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="gallery-info">
+                                        <small><?= (new DateTime($imagen['fecha_subida'] ?? 'now'))->format('d/m/Y H:i') ?></small>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="empty-gallery" id="empty-gallery">
+                                    <i class="ph-duotone ph-image" style="font-size: 4rem; color: #6B7280; opacity: 0.3;"></i>
+                                    <p style="color: #6B7280; margin-top: 1rem;">No hay imágenes en la galería</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: PERMISOS -->
+            <div class="reservas-section" id="permisos">
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h5><i class="ph-duotone ph-shield-check"></i> Permisos de Moderadores</h5>
+                        <button type="button" class="btn btn-modern btn-modern-primary ms-auto" onclick="openAddModeradorModal()">
+                            <i class="ti ti-plus"></i> Agregar Moderador
+                        </button>
+                    </div>
+                    <div class="modern-card-body">
+                        <p style="color: #6B7280; margin-bottom: 1.5rem;">
+                            Solo los números de teléfono listados aquí podrán acceder al panel de moderador.
+                            Si la lista está vacía, nadie tendrá acceso.
+                        </p>
+                        
+                        <div id="moderadores-list" style="display: grid; gap: 0.75rem;">
+                            <?php if(!empty($sistema->moderadores_permitidos) && count($sistema->moderadores_permitidos) > 0): ?>
+                                <?php foreach($sistema->moderadores_permitidos as $index => $telefono): ?>
+                                <div class="moderador-item" data-phone="<?= $telefono ?>">
+                                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #F3F4F6;">
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 600; font-size: 1.1rem; color: #1F2937;">
+                                                +<?= $telefono ?>
+                                            </div>
+                                            <small style="color: #6B7280;">Moderador autorizado</small>
+                                        </div>
+                                        <button type="button" class="btn btn-modern btn-modern-danger" onclick="removeModerador('<?= $telefono ?>')">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div id="empty-moderadores" style="text-align: center; padding: 3rem 1rem; color: #6B7280;">
+                                    <i class="ph-duotone ph-shield-warning" style="font-size: 4rem; opacity: 0.3;"></i>
+                                    <p style="margin-top: 1rem;">No hay moderadores autorizados</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÓN GUARDAR -->
+            <div class="text-center mt-4 mb-4">
+                <button type="submit" class="btn-save-main"><i class="ti ti-device-floppy me-2"></i> Guardar Configuración</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Galería para Canchas -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="ph-duotone ph-images" style="font-size: 1.5rem;"></i>
+                    Seleccionar desde Galería
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div id="modal-gallery-grid" class="modal-gallery-grid">
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                </div>
+                <div id="modal-empty-gallery" class="text-center py-5" style="display: none;">
+                    <i class="ph-duotone ph-image" style="font-size: 4rem; color: #6B7280; opacity: 0.3;"></i>
+                    <p class="text-muted mt-3">No hay imágenes en la galería</p>
+                    <a href="#" onclick="switchToGallerySection(event)" class="btn btn-modern btn-modern-primary mt-2">
+                        <i class="ph-duotone ph-upload"></i> Ir a subir imágenes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Agregar Moderador -->
+<div class="modal fade" id="modalAddModerador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="ph-duotone ph-shield-check" style="font-size: 1.5rem;"></i>
+                    Agregar Moderador
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <p style="color: #6B7280; margin-bottom: 1.5rem;">
+                    Ingresa el número de teléfono del moderador. Solo números autorizados podrán acceder al panel.
+                </p>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label class="modern-label">País</label>
+                    <select id="country-code" class="form-select modern-input">
+                        <option value="56" selected>🇨🇱 Chile (+56)</option>
+                        <option value="54">🇦🇷 Argentina (+54)</option>
+                        <option value="51">🇵🇪 Perú (+51)</option>
+                        <option value="57">🇨🇴 Colombia (+57)</option>
+                        <option value="52">🇲🇽 México (+52)</option>
+                        <option value="55">🇧🇷 Brasil (+55)</option>
+                        <option value="593">🇪🇨 Ecuador (+593)</option>
+                        <option value="58">🇻🇪 Venezuela (+58)</option>
+                        <option value="598">🇺🇾 Uruguay (+598)</option>
+                        <option value="595">🇵🇾 Paraguay (+595)</option>
+                        <option value="591">🇧🇴 Bolivia (+591)</option>
+                        <option value="1">🇺🇸 Estados Unidos (+1)</option>
+                        <option value="34">🇪🇸 España (+34)</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label class="modern-label">Número de Teléfono</label>
+                    <input type="tel" id="phone-number" class="form-control modern-input" placeholder="912345678" 
+                           pattern="[0-9]*" inputmode="numeric">
+                    <small style="color: #6B7280; display: block; margin-top: 0.5rem;">
+                        Solo números, sin espacios ni guiones
+                    </small>
+                </div>
+                
+                <div style="background: #F9FAFB; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 600; color: #1F2937; margin-bottom: 0.5rem;">
+                        Número completo:
+                    </div>
+                    <div style="font-size: 1.25rem; color: #4F46E5; font-weight: 700;" id="phone-preview">
+                        +56...
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-modern btn-modern-primary" style="width: 100%;" onclick="addModerador()">
+                    <i class="ti ti-check"></i> Agregar Moderador
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="<?= $this->basePath('assets/js/formvalidation.js') ?>"></script>
+<script>
+    // Navegación
+    document.addEventListener('DOMContentLoaded', () => {
+        const navLinks = document.querySelectorAll('.nav-link-section');
+        const sections = document.querySelectorAll('.reservas-section');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                const sectionId = link.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    });
+
+    // Toggle Status
+    function toggleSystemLabel(el) {
+        const label = document.getElementById('systemStatusLabel');
+        const container = document.getElementById('statusContainer');
+        if(el.checked) {
+            label.innerText = 'Sistema ACTIVO';
+            label.className = 'form-check-label status-label-active';
+            container.classList.remove('inactive');
+        } else {
+            label.innerText = 'Sistema DESACTIVADO';
+            label.className = 'form-check-label status-label-inactive';
+            container.classList.add('inactive');
+        }
+    }
+
+    // Datos - Corrección de nombres para que coincidan con la BD
+    let amenitiesData = <?= json_encode($sistema->amenities_config ?? []) ?>;
+    let extrasData = <?= json_encode($sistema->extras_config ?? []) ?>;
+    let canchasData = <?= json_encode(!empty($sistema->canchas) ? array_map(function($c){return (array)$c;}, $sistema->canchas) : []) ?>;
+    let cuponesData = <?= json_encode($sistema->cupones_config ?? []) ?>;
+
+    if(typeof amenitiesData === 'object' && !Array.isArray(amenitiesData)) amenitiesData = Object.values(amenitiesData);
+    if(typeof extrasData === 'object' && !Array.isArray(extrasData)) extrasData = Object.values(extrasData);
+    if(typeof cuponesData === 'object' && !Array.isArray(cuponesData)) cuponesData = Object.values(cuponesData);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderAmenities();
+        renderExtras();
+        renderCupones();
+        setupSlugAutoFormat();
+        if(canchasData.length > 0) renderCanchas();
+    });
+
+    // AMENIDADES: Cambiado name a amenities_config
+    function renderAmenities() {
+        const container = document.getElementById('amenities-container');
+        container.innerHTML = '';
+        amenitiesData.forEach((item, idx) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-control modern-input form-control-sm" name="amenities_config[${idx}][id]" value="${item.id || ''}" placeholder="wifi" required></td>
+                <td><input type="text" class="form-control modern-input form-control-sm" name="amenities_config[${idx}][nombre]" value="${item.nombre || ''}" placeholder="Wi-Fi" required></td>
+                <td><input type="text" class="form-control modern-input form-control-sm" name="amenities_config[${idx}][icon]" value="${item.icon || ''}" placeholder="fa-wifi"></td>
+                <td><button type="button" class="btn btn-sm btn-modern btn-modern-danger" onclick="removeAmenity(${idx})"><i class="ti ti-trash"></i></button></td>
+            `;
+            container.appendChild(row);
+        });
+    }
+    function addAmenityRow() { amenitiesData.push({ id: '', nombre: '', icon: '' }); renderAmenities(); }
+    function removeAmenity(idx) { amenitiesData.splice(idx, 1); renderAmenities(); }
+
+    // EXTRAS: Cambiado name a extras_config
+    function renderExtras() {
+        const container = document.getElementById('extras-container');
+        container.innerHTML = '';
+        extrasData.forEach((item, idx) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-control modern-input form-control-sm" name="extras_config[${idx}][id]" value="${item.id || ''}" placeholder="raqueta" required></td>
+                <td><input type="text" class="form-control modern-input form-control-sm" name="extras_config[${idx}][nombre]" value="${item.nombre || ''}" placeholder="Raqueta" required></td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" style="background:white; border-color:#E5E7EB;">$</span>
+                        <input type="number" class="form-control modern-input form-control-sm" name="extras_config[${idx}][precio]" value="${item.precio || ''}" min="0" required>
+                    </div>
+                </td>
+                <td><button type="button" class="btn btn-sm btn-modern btn-modern-danger" onclick="removeExtra(${idx})"><i class="ti ti-trash"></i></button></td>
+            `;
+            container.appendChild(row);
+        });
+    }
+    function addExtraRow() { extrasData.push({ id: '', nombre: '', precio: '' }); renderExtras(); }
+    function removeExtra(idx) { extrasData.splice(idx, 1); renderExtras(); }
+
+    // CANCHAS
+    function renderCanchas() {
+        const container = document.getElementById('canchas-container');
+        container.innerHTML = '';
+        canchasData.forEach((cancha, idx) => {
+            // Generar HTML de amenities (checkboxes) para esta cancha
+            let amenitiesHtml = '';
+            if (amenitiesData.length > 0) {
+                amenitiesHtml = '<div class="col-12 mt-3"><label class="modern-label mb-2">Características Disponibles</label><div class="d-flex flex-wrap gap-2">';
+                amenitiesData.forEach(am => {
+                    // Verificar si está marcado (manejo seguro de tipos string/int)
+                    const isChecked = (cancha.amenities_ids && cancha.amenities_ids.some(id => String(id) === String(am.id))) ? 'checked' : '';
+                    
+                    amenitiesHtml += `
+                        <div class="form-check border rounded px-3 py-2 bg-white mb-0">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="canchas[${idx}][amenities_ids][]" 
+                                   value="${am.id}" 
+                                   id="am_${idx}_${am.id}" ${isChecked}>
+                            <label class="form-check-label" for="am_${idx}_${am.id}" style="font-size: 0.9rem;">
+                                ${am.icon ? `<i class="fa-solid ${am.icon} me-1 text-primary"></i>` : ''} ${am.nombre}
+                            </label>
+                        </div>
+                    `;
+                });
+                amenitiesHtml += '</div></div>';
+            } else {
+                amenitiesHtml = '<div class="col-12 mt-2"><small class="text-muted f-s-12">No hay amenidades configuradas en el sistema aún.</small></div>';
+            }
+
+            const card = document.createElement('div');
+            card.className = 'cancha-card';
+            card.innerHTML = `
+                <input type="hidden" name="canchas[${idx}][id]" value="${cancha.id || ''}">
+                <button type="button" class="btn btn-remove-cancha btn-modern btn-modern-danger btn-sm" onclick="removeCancha(${idx})"><i class="ti ti-trash"></i></button>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="modern-label">Nombre</label>
+                        <input type="text" class="form-control modern-input" name="canchas[${idx}][nombre]" value="${cancha.nombre || ''}" placeholder="Cancha 1" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="modern-label">Precio Específico</label>
+                        <input type="number" class="form-control modern-input" name="canchas[${idx}][precio_especifico]" value="${cancha.precio_especifico || ''}" placeholder="Opcional">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="modern-label">Imagen (URL)</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control modern-input cancha-imagen-input" 
+                                   name="canchas[${idx}][imagen]" 
+                                   value="${cancha.imagen || ''}" 
+                                   placeholder="https://ejemplo.com/imagen.jpg"
+                                   data-cancha-idx="${idx}">
+                            <button type="button" 
+                                    class="btn btn-modern btn-modern-primary" 
+                                    onclick="openGalleryModal(${idx})"
+                                    style="border-radius: 0 8px 8px 0;">
+                                <i class="ph-duotone ph-images"></i> Galería
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-modern btn-modern-danger btn-clear-image" 
+                                    onclick="clearCanchaImage(${idx})"
+                                    style="border-radius: 8px; margin-left: 0.5rem;"
+                                    title="Limpiar imagen">
+                                <i class="ph-duotone ph-x"></i>
+                            </button>
+                        </div>
+                        <div class="imagen-preview mt-2" id="preview-cancha-${idx}" style="display: none;">
+                            <img src="" alt="Vista previa" class="preview-img">
+                            <span class="badge bg-success ms-2">
+                                <i class="ph-duotone ph-check"></i> Desde galería
+                            </span>
+                        </div>
+                    </div>
+                    ${amenitiesHtml}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+    function addCanchaRow() { canchasData.push({ id: '', nombre: '', precio_especifico: '', imagen: '', amenities_ids: [] }); renderCanchas(); }
+    function removeCancha(idx) { if(confirm('¿Eliminar?')) { canchasData.splice(idx, 1); renderCanchas(); } }
+
+    // CUPONES: CORREGIDO PARA USAR KEYS EN INGLÉS (BD)
+    function renderCupones() {
+        const container = document.getElementById('cupones-container');
+        container.innerHTML = '';
+        cuponesData.forEach((cupom, idx) => {
+            const code = cupom.code || cupom.codigo || '';
+            const discount = cupom.discount || cupom.descuento || '';
+            const used = cupom.used_count || cupom.usado || 0;
+            const limit = cupom.limit || cupom.limite_total || '';
+            const expires = cupom.expires_at || cupom.vencimiento || '';
+            let activeVal = 1;
+            if(cupom.is_active !== undefined) activeVal = cupom.is_active ? 1 : 0;
+            else if(cupom.activo !== undefined) activeVal = cupom.activo;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="form-control modern-input form-control-sm" name="cupones_config[${idx}][code]" value="${code}" placeholder="DESC20" style="text-transform: uppercase;" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control modern-input form-control-sm" name="cupones_config[${idx}][discount]" value="${discount}" min="1" max="100" placeholder="20" required>
+                </td>
+                <td class="text-center">
+                    <span class="badge-counter">${used}</span>
+                    <input type="hidden" name="cupones_config[${idx}][used_count]" value="${used}">
+                </td>
+                <td>
+                    <input type="number" class="form-control modern-input form-control-sm" name="cupones_config[${idx}][limit]" value="${limit}" min="1" placeholder="∞">
+                </td>
+                <td>
+                    <input type="date" class="form-control modern-input form-control-sm" name="cupones_config[${idx}][expires_at]" value="${expires}">
+                </td>
+                <td>
+                    <div class="form-check form-switch d-flex justify-content-center">
+                        <input type="hidden" name="cupones_config[${idx}][is_active]" value="0">
+                        <input class="form-check-input" type="checkbox" value="1" 
+                               name="cupones_config[${idx}][is_active]" 
+                               ${activeVal == 1 ? 'checked' : ''}>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-modern btn-modern-danger" onclick="removeCoupon(${idx})"><i class="ti ti-trash"></i></button>
+                </td>
+            `;
+            container.appendChild(row);
+        });
+    }
+    function addCouponRow() {
+        cuponesData.push({ code: '', discount: '', used_count: 0, limit: '', expires_at: '', is_active: 1 });
+        renderCupones();
+    }
+    function removeCoupon(idx) { cuponesData.splice(idx, 1); renderCupones(); }
+
+    // Slug Auto-Format
+    function setupSlugAutoFormat() {
+        const nameInput = document.querySelector('[name="nombre_negocio"]');
+        const slugInput = document.querySelector('[name="slug"]');
+        if(nameInput && slugInput) {
+            nameInput.addEventListener('input', () => {
+                slugInput.value = nameInput.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            });
+        }
+    }
+
+    // ===== GALERÍA DE IMÁGENES =====
+    const uploadArea = document.getElementById('upload-area');
+    const uploadInput = document.getElementById('image-upload');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const uploadProgress = document.getElementById('upload-progress');
+    const galleryGrid = document.getElementById('gallery-grid');
+    const galeriaCounter = document.getElementById('galeria-counter');
+
+    if (uploadArea && uploadInput) {
+        // Click para seleccionar archivo
+        uploadArea.addEventListener('click', () => uploadInput.click());
+
+        // Drag & Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        // Input change
+        uploadInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleImageUpload(file) {
+        // Validar tipo
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona un archivo de imagen válido');
+            return;
+        }
+
+        // Validar tamaño (15MB)
+        if (file.size > 15 * 1024 * 1024) {
+            alert('La imagen no puede superar los 15MB');
+            return;
+        }
+
+        // Validar límite de 30 imágenes
+        const currentCount = galleryGrid.querySelectorAll('.gallery-item').length;
+        if (currentCount >= 30) {
+            alert('Has alcanzado el límite de 30 imágenes');
+            return;
+        }
+
+        // Mostrar progreso
+        uploadPlaceholder.style.display = 'none';
+        uploadProgress.style.display = 'block';
+
+        // Subir vía AJAX
+        const formData = new FormData();
+        formData.append('image', file);
+
+        fetch('<?= $this->url("mod.arriendo.galeria.upload") ?>', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?= "" ?>'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Agregar imagen a la galería
+                addImageToGallery(data.image);
+                updateGalleryCounter(1);
+                uploadInput.value = '';
+            } else {
+                alert(data.error || 'Error al subir la imagen');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al subir la imagen');
+        })
+        .finally(() => {
+            uploadPlaceholder.style.display = 'block';
+            uploadProgress.style.display = 'none';
+        });
+    }
+
+    function addImageToGallery(imagen) {
+        // Remover mensaje vacío si existe
+        const emptyGallery = document.getElementById('empty-gallery');
+        if (emptyGallery) {
+            emptyGallery.remove();
+        }
+
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
+        galleryItem.setAttribute('data-filename', imagen.nombre_archivo);
+        galleryItem.innerHTML = `
+            <div class="gallery-image">
+                <img src="${imagen.url}" alt="Imagen galería" loading="lazy">
+            </div>
+            <div class="gallery-actions">
+                <button type="button" class="btn-gallery-action" onclick="copyImageUrl('${imagen.url}')" title="Copiar URL">
+                    <i class="ph-duotone ph-copy"></i>
+                </button>
+                <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('${imagen.nombre_archivo}')" title="Eliminar">
+                    <i class="ph-duotone ph-trash"></i>
+                </button>
+            </div>
+            <div class="gallery-info">
+                <small>${imagen.fecha_subida}</small>
+            </div>
+        `;
+        galleryGrid.appendChild(galleryItem);
+
+        // Animación de entrada
+        setTimeout(() => {
+            galleryItem.style.animation = 'fadeIn 0.3s ease';
+        }, 10);
+    }
+
+    function copyImageUrl(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            // Mostrar feedback visual
+            const notification = document.createElement('div');
+            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10B981; color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; animation: fadeIn 0.3s ease;';
+            notification.innerHTML = '<i class="ph-duotone ph-check-circle"></i> URL copiada al portapapeles';
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }).catch(() => {
+            alert('No se pudo copiar la URL');
+        });
+    }
+
+    function deleteImage(filename) {
+        if (!confirm('¿Estás seguro de eliminar esta imagen?')) {
+            return;
+        }
+
+        fetch(`<?= $this->url('mod.arriendo.galeria.delete') ?>/' + encodeURIComponent(filename), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '<?= "" ?>',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remover del DOM
+                const galleryItem = document.querySelector(`.gallery-item[data-filename="${filename}"]`);
+                if (galleryItem) {
+                    galleryItem.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        galleryItem.remove();
+                        updateGalleryCounter(-1);
+
+                        // Mostrar mensaje vacío si no hay imágenes
+                        if (galleryGrid.querySelectorAll('.gallery-item').length === 0) {
+                            galleryGrid.innerHTML = `
+                                <div class="empty-gallery" id="empty-gallery">
+                                    <i class="ph-duotone ph-image" style="font-size: 4rem; color: #6B7280; opacity: 0.3;"></i>
+                                    <p style="color: #6B7280; margin-top: 1rem;">No hay imágenes en la galería</p>
+                                </div>
+                            `;
+                        }
+                    }, 300);
+                }
+            } else {
+                alert(data.error || 'Error al eliminar la imagen');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar la imagen');
+        });
+    }
+
+    function updateGalleryCounter(change) {
+        const counter = document.getElementById('galeria-counter');
+        if (counter) {
+            const current = parseInt(counter.textContent.split('/')[0]);
+            const newCount = current + change;
+            counter.textContent = `${newCount}/30`;
+        }
+    }
+
+    // ===== MODAL GALERÍA PARA CANCHAS =====
+    let currentCanchaIdx = null;
+    const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
+
+    function openGalleryModal(canchaIdx) {
+        currentCanchaIdx = canchaIdx;
+        loadModalGallery();
+        galleryModal.show();
+    }
+
+    function loadModalGallery() {
+        const modalGrid = document.getElementById('modal-gallery-grid');
+        const modalEmpty = document.getElementById('modal-empty-gallery');
+        
+        // Obtener imágenes de la galería principal
+        const galleryItems = document.querySelectorAll('#gallery-grid .gallery-item');
+        
+        if (galleryItems.length === 0) {
+            modalGrid.style.display = 'none';
+            modalEmpty.style.display = 'block';
+            return;
+        }
+        
+        modalGrid.style.display = 'grid';
+        modalEmpty.style.display = 'none';
+        modalGrid.innerHTML = '';
+        
+        galleryItems.forEach((item) => {
+            const img = item.querySelector('.gallery-image img');
+            const url = img.src;
+            const filename = item.dataset.filename;
+            
+            const modalItem = document.createElement('div');
+            modalItem.className = 'modal-gallery-item';
+            modalItem.setAttribute('data-url', url);
+            modalItem.innerHTML = `
+                <img src="${url}" alt="Imagen">
+                <div class="check-overlay">
+                    <div class="check-icon">
+                        <i class="ph-duotone ph-check"></i>
+                    </div>
+                </div>
+            `;
+            
+            modalItem.addEventListener('click', () => selectGalleryImage(url, modalItem));
+            modalGrid.appendChild(modalItem);
+        });
+    }
+
+    function selectGalleryImage(url, modalItem) {
+        if (currentCanchaIdx === null) return;
+        
+        // Marcar visualmente la imagen seleccionada
+        document.querySelectorAll('.modal-gallery-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        modalItem.classList.add('selected');
+        
+        // Esperar un momento para mostrar la selección
+        setTimeout(() => {
+            // Actualizar el input de la cancha
+            const input = document.querySelector(`input[name="canchas[${currentCanchaIdx}][imagen]"]`);
+            if (input) {
+                input.value = url;
+                showCanchaPreview(currentCanchaIdx, url, true);
+            }
+            
+            // Cerrar modal
+            galleryModal.hide();
+        }, 300);
+    }
+
+    function showCanchaPreview(canchaIdx, url, fromGallery = false) {
+        const preview = document.getElementById(`preview-cancha-${canchaIdx}`);
+        
+        if (!preview) return;
+        
+        if (fromGallery && url) {
+            const img = preview.querySelector('.preview-img');
+            img.src = url;
+            preview.style.display = 'flex';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    function clearCanchaImage(canchaIdx) {
+        const input = document.querySelector(`input[name="canchas[${canchaIdx}][imagen]"]`);
+        const preview = document.getElementById(`preview-cancha-${canchaIdx}`);
+        
+        if (input) {
+            input.value = '';
+        }
+        
+        if (preview) {
+            preview.style.display = 'none';
+        }
+    }
+
+    function switchToGallerySection(event) {
+        event.preventDefault();
+        galleryModal.hide();
+        
+        // Cambiar a la sección de galería
+        document.querySelectorAll('.nav-link-section').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('data-section') === 'galeria') {
+                link.classList.add('active');
+            }
+        });
+        
+        document.querySelectorAll('.reservas-section').forEach(section => {
+            section.classList.remove('active');
+            if (section.id === 'galeria') {
+                section.classList.add('active');
+            }
+        });
+    }
+
+    // ===== URLs PÚBLICAS =====
+    function copyUrl(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            // Feedback visual temporal
+            const btn = event.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="ph-duotone ph-check"></i> Copiado';
+            btn.style.color = '#10B981';
+            btn.style.borderColor = '#10B981';
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }, 2000);
+        }).catch(() => {
+            // Fallback para navegadores sin clipboard API
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            alert('Enlace copiado: ' + url);
+        });
+    }
+
+    async function downloadQr(url, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Si ya está visible, ocultar (toggle)
+        if (container.style.display !== 'none') {
+            container.style.display = 'none';
+            return;
+        }
+
+        // Mostrar loading
+        container.style.display = 'block';
+        container.innerHTML = '<div style="padding: 1rem; color: #6B7280;"><i class="ph-duotone ph-spinner" style="animation: spin 1s linear infinite;"></i> Generando QR...</div>';
+
+        try {
+            const response = await fetch('<?= $this->url("mod.arriendo.qr.generate") ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '<?= "" ?>'
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+
+            container.innerHTML = `
+                <img src="${data.qr}" alt="QR Code" style="max-width: 200px; border-radius: 8px;">
+                <br>
+                <a href="${data.qr}" download="qr-${containerId}.png" class="btn btn-modern btn-modern-primary" style="margin-top: 0.75rem; font-size: 0.85rem;">
+                    <i class="ph-duotone ph-download-simple"></i> Descargar QR
+                </a>
+            `;
+        } catch (error) {
+            container.innerHTML = '<div style="color: red; padding: 0.5rem;">Error al generar QR</div>';
+        }
+    }
+
+    // ===== PERMISOS DE MODERADORES =====
+    let moderadoresData = <?= json_encode($sistema->moderadores_permitidos ?? []) ?>;
+
+    // Actualizar preview del teléfono
+    const countryCodeSelect = document.getElementById('country-code');
+    const phoneNumberInput = document.getElementById('phone-number');
+    const phonePreview = document.getElementById('phone-preview');
+
+    if (countryCodeSelect && phoneNumberInput && phonePreview) {
+        function updatePhonePreview() {
+            const code = countryCodeSelect.value;
+            const number = phoneNumberInput.value.replace(/\D/g, ''); // Solo números
+            phonePreview.textContent = number ? `+${code}${number}` : `+${code}...`;
+        }
+
+        countryCodeSelect.addEventListener('change', updatePhonePreview);
+        phoneNumberInput.addEventListener('input', updatePhonePreview);
+    }
+
+    function openAddModeradorModal() {
+        if (phoneNumberInput) phoneNumberInput.value = '';
+        if (countryCodeSelect) countryCodeSelect.value = '56';
+        updatePhonePreview();
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalAddModerador'));
+        modal.show();
+    }
+
+    async function addModerador() {
+        const code = document.getElementById('country-code').value;
+        const number = document.getElementById('phone-number').value.replace(/\D/g, '');
+        
+        if (!number || number.length < 5) {
+            alert('Por favor ingresa un número válido');
+            return;
+        }
+        
+        const fullPhone = code + number;
+        
+        // Verificar si ya existe
+        if (moderadoresData.includes(fullPhone)) {
+            alert('Este número ya está en la lista');
+            return;
+        }
+        
+        // Agregar a la lista
+        moderadoresData.push(fullPhone);
+        
+        // Guardar
+        try {
+            await saveModeradoresPermitidos();
+            renderModeradores();
+            
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalAddModerador'));
+            if (modal) modal.hide();
+            
+            alert('Moderador agregado correctamente');
+        } catch (error) {
+            alert('Error al agregar moderador: ' + error.message);
+            // Revertir
+            moderadoresData = moderadoresData.filter(p => p !== fullPhone);
+        }
+    }
+
+    function removeModerador(phone) {
+        if (!confirm('¿Estás seguro de eliminar este moderador?')) return;
+        
+        moderadoresData = moderadoresData.filter(p => p !== phone);
+        
+        saveModeradoresPermitidos()
+            .then(() => {
+                renderModeradores();
+                alert('Moderador eliminado');
+            })
+            .catch(error => {
+                alert('Error al eliminar: ' + error.message);
+                // Revertir
+                moderadoresData.push(phone);
+            });
+    }
+
+    function renderModeradores() {
+        const container = document.getElementById('moderadores-list');
+        if (!container) return;
+        
+        if (moderadoresData.length === 0) {
+            container.innerHTML = `
+                <div id="empty-moderadores" style="text-align: center; padding: 3rem 1rem; color: #6B7280;">
+                    <i class="ph-duotone ph-shield-warning" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <p style="margin-top: 1rem;">No hay moderadores autorizados</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = moderadoresData.map(phone => `
+            <div class="moderador-item" data-phone="${phone}">
+                <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #F3F4F6;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 1.1rem; color: #1F2937;">
+                            +${phone}
+                        </div>
+                        <small style="color: #6B7280;">Moderador autorizado</small>
+                    </div>
+                    <button type="button" class="btn btn-modern btn-modern-danger" onclick="removeModerador('${phone}')">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function saveModeradoresPermitidos() {
+        const response = await fetch('<?= $this->url("mod.arriendo.permisos.save") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?= "" ?>'
+            },
+            body: JSON.stringify({
+                moderadores: moderadoresData
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar permisos');
+        }
+        
+        return await response.json();
+    }
+
+</script>

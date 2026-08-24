@@ -1,0 +1,213 @@
+<?php
+/**
+ * Estadísticas - Laminas view
+ * Reescrito: sin BOM, sin mojibake, sin sintaxis Blade {!! !!}.
+ *
+ * Variables inyectadas (array/Collection de PHP puro) desde IndexController:
+ *   $tituloCL, $totalUsuarios, $porcConFoto, $porcConWhatsapp, $promWhatsapp,
+ *   $nuevosUsuariosPorMes, $usuariosPorPais, $genero, $sinWhatsapp, $usuariosConWhatsapp,
+ *   $usuarios1, $usuarios2, $usuarios3mas, $usuariosPorEdad.
+ */
+extract($this->vars()->getArrayCopy());
+
+// ---- Normalizar variables para JS (arrays asociativos PHP) ----
+$meses          = isset($nuevosUsuariosPorMes) ? array_keys($nuevosUsuariosPorMes)   : [];
+$nuevos         = isset($nuevosUsuariosPorMes) ? array_values($nuevosUsuariosPorMes) : [];
+
+$paisesData     = $usuariosPorPais ?? [];
+$paises         = [];
+$usuariosPais   = [];
+foreach ($paisesData as $row) {
+    $rowArr = (array) $row;
+    $paises[]       = $rowArr['pais']   ?? 'N/D';
+    $usuariosPais[] = (int) ($rowArr['total'] ?? 0);
+}
+
+$generoLabels   = isset($genero) ? array_keys((array)$genero)   : [];
+$generoData     = isset($genero) ? array_values((array)$genero) : [];
+
+$rangosEdad     = isset($usuariosPorEdad) ? array_keys((array)$usuariosPorEdad)   : [];
+$usuariosPorEdadData = isset($usuariosPorEdad) ? array_values((array)$usuariosPorEdad) : [];
+?>
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h4 class="mb-1"><?= htmlspecialchars($tituloCL ?? 'Estadísticas', ENT_QUOTES, 'UTF-8') ?></h4>
+            <p class="text-muted mb-0">Datos en tiempo real</p>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3">
+        <div class="col-xl-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body kpi-card">
+                    <div>
+                        <p class="kpi-label">Total usuarios</p>
+                        <div class="kpi-value"><?= (int)($totalUsuarios ?? 0) ?></div>
+                    </div>
+                    <span class="bg-primary-100 text-primary p-3 b-r-12">
+                        <i class="ti ti-users fs-3"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body kpi-card">
+                    <div>
+                        <p class="kpi-label">Con foto</p>
+                        <div class="kpi-value"><?= htmlspecialchars((string)($porcConFoto ?? 0), ENT_QUOTES, 'UTF-8') ?>%</div>
+                    </div>
+                    <span class="bg-success-100 text-success p-3 b-r-12">
+                        <i class="ti ti-photo fs-3"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body kpi-card">
+                    <div>
+                        <p class="kpi-label">Con WhatsApp</p>
+                        <div class="kpi-value"><?= htmlspecialchars((string)($porcConWhatsapp ?? 0), ENT_QUOTES, 'UTF-8') ?>%</div>
+                    </div>
+                    <span class="bg-info-100 text-info p-3 b-r-12">
+                        <i class="ti ti-brand-whatsapp fs-3"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body kpi-card">
+                    <div>
+                        <p class="kpi-label">Prom. WhatsApp / usuario</p>
+                        <div class="kpi-value"><?= htmlspecialchars((string)($promWhatsapp ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
+                    </div>
+                    <span class="bg-warning-100 text-warning p-3 b-r-12">
+                        <i class="ti ti-device-mobile fs-3"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Nuevos usuarios por mes</h6></div>
+                <div class="card-body"><div id="chartNuevosPorMes"></div></div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Usuarios por país</h6></div>
+                <div class="card-body"><div id="chartPaises"></div></div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Distribución por género</h6></div>
+                <div class="card-body"><div id="chartGenero"></div></div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Usuarios con WhatsApp</h6></div>
+                <div class="card-body"><div id="chartWhatsappSiNo"></div></div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Cantidad de WhatsApps por usuario</h6></div>
+                <div class="card-body"><div id="chartCantidadWhatsapp"></div></div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card chart-card">
+                <div class="card-header"><h6 class="mb-0">Rangos etarios</h6></div>
+                <div class="card-body"><div id="chartEdades"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/apexcharts/apexcharts.min.js')); ?>
+
+<?php $this->inlineScript()->captureStart(); ?>
+(function () {
+    var meses       = <?= json_encode($meses, JSON_UNESCAPED_UNICODE) ?>;
+    var nuevos      = <?= json_encode($nuevos, JSON_UNESCAPED_UNICODE) ?>;
+    var paises      = <?= json_encode($paises, JSON_UNESCAPED_UNICODE) ?>;
+    var usuariosPais = <?= json_encode($usuariosPais, JSON_UNESCAPED_UNICODE) ?>;
+    var generoLabels = <?= json_encode($generoLabels, JSON_UNESCAPED_UNICODE) ?>;
+    var generoData   = <?= json_encode($generoData, JSON_UNESCAPED_UNICODE) ?>;
+    var whatsappSeries = [<?= (int)($usuariosConWhatsapp ?? 0) ?>, <?= (int)($sinWhatsapp ?? 0) ?>];
+    var buckets = ['1 número', '2 números', '3+ números'];
+    var bucketSeries = [<?= (int)($usuarios1 ?? 0) ?>, <?= (int)($usuarios2 ?? 0) ?>, <?= (int)($usuarios3mas ?? 0) ?>];
+    var rangosEdad = <?= json_encode($rangosEdad, JSON_UNESCAPED_UNICODE) ?>;
+    var usuariosPorEdad = <?= json_encode($usuariosPorEdadData, JSON_UNESCAPED_UNICODE) ?>;
+
+    if (typeof ApexCharts === 'undefined') {
+        console.error('ApexCharts no está cargado');
+        return;
+    }
+
+    new ApexCharts(document.querySelector('#chartNuevosPorMes'), {
+        chart: { type: 'line', height: 320, toolbar: { show: false } },
+        series: [{ name: 'Nuevos', data: nuevos }],
+        xaxis: { categories: meses },
+        stroke: { width: 3 },
+        markers: { size: 4 },
+        grid: { strokeDashArray: 4 }
+    }).render();
+
+    new ApexCharts(document.querySelector('#chartPaises'), {
+        chart: { type: 'bar', height: 360, toolbar: { show: false } },
+        series: [{ name: 'Usuarios', data: usuariosPais }],
+        xaxis: { categories: paises },
+        plotOptions: { bar: { horizontal: true, borderRadius: 6 } },
+        grid: { strokeDashArray: 4 }
+    }).render();
+
+    new ApexCharts(document.querySelector('#chartGenero'), {
+        chart: { type: 'donut', height: 320, toolbar: { show: false } },
+        series: generoData,
+        labels: generoLabels,
+        legend: { position: 'bottom' }
+    }).render();
+
+    new ApexCharts(document.querySelector('#chartWhatsappSiNo'), {
+        chart: { type: 'donut', height: 320, toolbar: { show: false } },
+        series: whatsappSeries,
+        labels: ['Con WhatsApp', 'Sin WhatsApp'],
+        legend: { position: 'bottom' }
+    }).render();
+
+    new ApexCharts(document.querySelector('#chartCantidadWhatsapp'), {
+        chart: { type: 'bar', height: 320, toolbar: { show: false } },
+        series: [{ name: 'Usuarios', data: bucketSeries }],
+        xaxis: { categories: buckets },
+        plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+        grid: { strokeDashArray: 4 }
+    }).render();
+
+    new ApexCharts(document.querySelector('#chartEdades'), {
+        chart: { type: 'bar', height: 320, toolbar: { show: false } },
+        series: [{ name: 'Usuarios', data: usuariosPorEdad }],
+        xaxis: { categories: rangosEdad },
+        plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+        grid: { strokeDashArray: 4 }
+    }).render();
+})();
+<?php $this->inlineScript()->captureEnd(); ?>

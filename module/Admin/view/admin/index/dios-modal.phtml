@@ -1,0 +1,144 @@
+<?php
+/**
+ * dios-modal.phtml - Modal de edición de usuario reutilizable.
+ *
+ * Recibe:
+ *   $usuario  objeto con propiedades: id, name, email, pais_uuid, foto, detalle, whatsapps
+ *   $baseCL   string con el nombre lógico de la ruta base (ej. 'admin.dios.dios')
+ *   $paises   array<{uuid, pais}> - opcional, lista de países disponibles
+ */
+$usuario = $usuario ?? null;
+$baseCL  = $baseCL  ?? '';
+$paises  = $paises  ?? [];
+
+if (!$usuario) return;
+
+$detalle  = $usuario->detalle   ?? (object)['documento' => '', 'genero' => '', 'nacimiento' => null];
+$fotoUrl  = $usuario->foto->mini_url ?? null;
+$whatsapps = $usuario->whatsapps ?? [];
+
+$basePathTrim = rtrim((string) $this->basePath(), '/');
+?>
+<div class="modal fade" id="modal-<?= (int)$usuario->id ?>" tabindex="100"
+     aria-labelledby="modalLabel-<?= (int)$usuario->id ?>" aria-hidden="true">
+    <form method="POST"
+          action="<?= $basePathTrim . '/' . str_replace('.', '/', $baseCL) . '/update/' . (int)$usuario->id ?>"
+          enctype="multipart/form-data">
+
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuario: <?= htmlspecialchars($usuario->name ?? '', ENT_QUOTES, 'UTF-8') ?></h5>
+                    <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body row">
+                    <div class="col-md-6 mb-3">
+                        <label>Nombre</label>
+                        <input type="text" name="name" class="form-control"
+                               value="<?= htmlspecialchars($usuario->name ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control"
+                               value="<?= htmlspecialchars($usuario->email ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>País</label>
+                        <select name="pais_uuid" class="form-select">
+                            <option value="">Seleccionar País</option>
+                            <?php foreach ($paises as $p): ?>
+                                <option value="<?= htmlspecialchars($p['uuid'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                    <?= ($usuario->pais_uuid ?? '') === ($p['uuid'] ?? '') ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($p['pais'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Documento</label>
+                        <input type="text" name="documento" class="form-control"
+                               value="<?= htmlspecialchars($detalle->documento ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Fecha de Nacimiento</label>
+                        <?php
+                            $fechaNac = $detalle->nacimiento ?? null;
+                            $fechaValor = '';
+                            if ($fechaNac) {
+                                try {
+                                    $fechaValor = (new DateTime($fechaNac))->format('Y-m-d');
+                                } catch (\Throwable $e) {
+                                    $fechaValor = '';
+                                }
+                            }
+                        ?>
+                        <input type="date" name="nacimiento" class="form-control" value="<?= $fechaValor ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="genero">Género</label>
+                        <select name="genero" id="genero" class="form-control" required>
+                            <option value="hombre" <?= ($detalle->genero ?? '') === 'hombre' ? 'selected' : '' ?>>Hombre</option>
+                            <option value="mujer"   <?= ($detalle->genero ?? '') === 'mujer'   ? 'selected' : '' ?>>Mujer</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="filepond" class="form-label fw-semibold">Foto de Perfil</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="<?= $fotoUrl ?: $this->basePath('assets/images/avatar/defecto.jpg') ?>"
+                                 alt="Foto actual" width="64" height="64"
+                                 class="rounded-circle border shadow-sm">
+                            <input class="form-control form-control-sm" type="file" name="filepond"
+                                   id="filepond" accept="image/png, image/jpeg, image/gif"
+                                   style="max-width: 280px;">
+                        </div>
+                        <div class="form-text text-muted mt-1">Formatos permitidos: JPG, PNG, GIF</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>WhatsApp Asociado</label>
+                        <?php if (!empty($whatsapps)): ?>
+                            <?php foreach ($whatsapps as $w):
+                                $wid = (int)($w->id ?? 0);
+                                $esDefecto = (bool)($w->pivot->defecto ?? false);
+                            ?>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="whatsapp_defecto"
+                                           id="whatsapp-<?= $wid ?>" value="<?= $wid ?>"
+                                           <?= $esDefecto ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="whatsapp-<?= $wid ?>">
+                                        <?= htmlspecialchars($w->numero ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-muted">No tiene WhatsApp asociado a su perfil.</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Agregar WhatsApp</label>
+                        <input type="text" name="nuevo_whatsapp" class="form-control" placeholder="Ej: 56912345678">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="nuevo_defecto" id="nuevo_defecto">
+                            <label class="form-check-label" for="nuevo_defecto">Marcar como predeterminado</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>

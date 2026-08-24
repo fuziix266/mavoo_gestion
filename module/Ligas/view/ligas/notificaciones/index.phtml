@@ -1,0 +1,346 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+$menuEV = $this->menuEV ?? (object)[
+    'uuid'           => $evento['uuid'] ?? '',
+    'sedes'          => true,
+    'categorias'     => true,
+    'nominas'        => true,
+    'fixture'        => true,
+    'ranking'        => true,
+    'notificaciones' => true,
+    'logs'           => true,
+];
+$notificaciones = $this->notificaciones ?? [];
+$notificacionesPendientes = $this->notificacionesPendientes ?? [];
+$notificacionesEnviadas = $this->notificacionesEnviadas ?? [];
+?>
+<meta name="csrf-token" content="<?= function_exists('csrf_token') ? csrf_token() : '' ?>">
+    <!-- apexcharts css -->
+    <?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+
+
+    <!-- glight css -->
+    <link rel="stylesheet" href="<?= asset('assets/vendor/glightbox/glightbox.min.css') ?>">
+    
+    <!-- Select2 css -->
+    <link rel="stylesheet" type="text/css" href="<?= asset('assets/vendor/select/select2.min.css') ?>">
+    
+    <style>
+    	
+    </style>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xxl-12">
+                    <div class="card-body app-breadcrumb">
+                        <div>
+                            <ol class="breadcrumb  bg-light-secondary p-2">
+															<li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+															<li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+															<li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.notificaciones') ?></li>
+                            </ol>
+                        </div>
+                    </div>
+          	</div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="/assets/deportes/ca_<?= $deporte ?>.jpg" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+            <div class="col-xxl-12">
+                <div class="card-body ">
+                    <div class="row app-form">
+                        <div class="col-xxl-12">
+                            <div class="mt-1 mb-3">
+															<label class="form-label">Evento:</label>
+															<select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+															    <option value=""><?= $evento ? 'Evento seleccionado: ' . $evento['titulo'] : 'Seleccione evento' ?></option>
+															    <?php foreach($eventos as $ev): ?>
+															        <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'uuid' => $ev['uuid'] ?? '']) ?>"
+															            <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>>
+															            <?= $ev['titulo'] ?>
+															        </option>
+															    <?php endforeach; ?>
+															</select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <div class="card">
+                    <div class="card-body">
+												<?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV , 'deporte' => $deporte]) ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xxl-12">
+                <ul class=" box-list mb-4">
+                    <li class="b-s-4-primary">
+                        <h5>Notificaciones</h5>
+<?php
+$ultimaFecha = null;
+if (!empty($notificacionesPendientes)) {
+    $ultimaFecha = is_array($notificacionesPendientes) ? max(array_column($notificacionesPendientes, 'updated_at')) : null;
+}
+if (empty($ultimaFecha) && !empty($notificacionesEnviadas)) {
+    $ultimaFecha = is_array($notificacionesEnviadas) ? max(array_column($notificacionesEnviadas, 'updated_at')) : null;
+}
+?>
+                        <h7><?= __('deporte_padel.ultima_modificacion') ?> <?= ha_pasado($ultimaFecha) ?></h7>
+                    </li>
+                </ul>
+            </div>
+            
+            
+
+        <div class="col-12">
+            <form action="<?= $this->url('ligas.notificaciones', ['deporte' => $deporte, 'accion' => 'obtener', 'uuid' => $evento['uuid'] ?? '']) ?>" method="POST">
+                
+                <button type="submit" class="btn btn-primary mb-3">Obtener Notificaciones</button>
+            </form>
+        </div>
+
+        <!-- Tabla de Notificaciones Pendientes -->
+        <div class="col-xxl-12">
+            <div class="card equal-card">
+                <div class="card-header">
+                    <h5>Notificaciones Pendientes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="myTablePendientes">
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 25%;" class="sort" scope="col">Nombre</th>
+                                        <th style="width: 35%;" class="sort" scope="col">Motivo</th>
+                                        <th style="width: 20%;" class="sort" scope="col">Estado</th>
+                                        <th style="width: 20%;" class="sort" scope="col">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-data-pendientes">
+                                    <?php foreach ($notificacionesPendientes as $notificacion): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex justify-content-left align-items-center">
+                                                    <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2">
+                                                        <img src="https://srv1.cuack.org/assets/images/icons/language/logo4.png" alt="" class="img-fluid">
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="f-s-15 mb-0"><?= $notificacion->user->name ?></h6>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <?php if ($notificacion->plantilla === 'nuevo'): ?>
+                                                <?php else: ?>
+                                                    <?php
+                                                        $partidos = $notificacion->partidos;
+                                                        $notificacionAnterior = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                                            "SELECT * FROM mod_gestion_notificaciones
+                                                              WHERE mod_evento_id = ? AND user_id = ? AND estado = 'notificado'
+                                                              ORDER BY created_at DESC LIMIT 1",
+                                                            [$notificacion->mod_evento_id, $notificacion->user_id ?? null]
+                                                        )->current();
+                                                        $mensaje = 'Se cambia la fecha';
+                                                        if ($notificacionAnterior) {
+                                                            $partidosAntiguos = $notificacionAnterior->partidos;
+                                                            foreach ($partidos as $index => $partido) {
+                                                                $partidoAntiguo = $partidosAntiguos[$index] ?? null;
+                                                                if ($partidoAntiguo && $partido['fecha'] !== $partidoAntiguo['fecha']) {
+                                                                    $mensaje = "Se cambia la fecha de {$partidoAntiguo['fecha']} a {$partido['fecha']} para el partido {$partido['partido_idx']}";
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    ?>
+                                                    <?= $mensaje ?>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <span class="badge text-light-warning fs-6"><?= $notificacion->estado ?></span>
+                                            </td>
+                                            <td>
+                                                <?php if ($notificacion->tipo === 'manual'): ?>
+                                                    <form action="<?= $this->url('ligas.notificaciones', ['deporte' => $deporte, 'accion' => 'enviar', 'uuid' => $evento['uuid'] ?? '']) ?>" method="POST">
+                                                        
+                                                        <button type="submit" class="btn btn-sm btn-success">Enviar Notificación</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php if (!empty($notificacionesPendientes) && count($notificacionesPendientes) > 0): ?>
+                            <form action="<?= $this->url('ligas.notificaciones', ['deporte' => $deporte, 'accion' => 'notificar-todos', 'uuid' => $evento['uuid'] ?? '']) ?>" method="POST" class="mt-3">
+                                
+                                <button type="submit" class="btn btn-primary">Notificar todos</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Notificaciones Enviadas -->
+        <div class="col-xxl-12">
+            <div class="card equal-card">
+                <div class="card-header">
+                    <h5>Notificaciones Enviadas</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="myTableEnviadas">
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 25%;" class="sort" scope="col">Nombre</th>
+                                        <th style="width: 35%;" class="sort" scope="col">Motivo</th>
+                                        <th style="width: 20%;" class="sort" scope="col">Estado</th>
+                                        <th style="width: 20%;" class="sort" scope="col">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-data-enviadas">
+                                    <?php foreach ($notificacionesEnviadas as $notificacion): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex justify-content-left align-items-center">
+                                                    <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2">
+                                                        <img src="https://srv1.cuack.org/assets/images/icons/language/logo4.png" alt="" class="img-fluid">
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="f-s-15 mb-0"><?= $notificacion->user->name ?></h6>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <?php if ($notificacion->plantilla === 'nuevo'): ?>
+                                                    Notificación inicial del Fixture
+                                                <?php else: ?>
+                                                    <?php
+                                                        $partidos = $notificacion->partidos;
+                                                        $notificacionAnterior = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                                            "SELECT * FROM mod_gestion_notificaciones
+                                                              WHERE mod_evento_id = ? AND user_id = ? AND estado = 'notificado'
+                                                                AND created_at < ?
+                                                              ORDER BY created_at DESC LIMIT 1",
+                                                            [$notificacion->mod_evento_id, $notificacion->user_id ?? null, $notificacion->created_at ?? null]
+                                                        )->current();
+                                                        $mensaje = 'Se cambia la fecha';
+                                                        if ($notificacionAnterior) {
+                                                            $partidosAntiguos = $notificacionAnterior->partidos;
+                                                            foreach ($partidos as $index => $partido) {
+                                                                $partidoAntiguo = $partidosAntiguos[$index] ?? null;
+                                                                if ($partidoAntiguo && $partido['fecha'] !== $partidoAntiguo['fecha']) {
+                                                                    $mensaje = "Se cambia la fecha de {$partidoAntiguo['fecha']} a {$partido['fecha']} para el partido {$partido['partido_idx']}";
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    ?>
+                                                    <?= $mensaje ?>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <span class="badge text-light-success fs-6"><?= $notificacion->estado ?></span>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        </div>
+    </div>
+
+
+
+
+    <!-- apexcharts js-->
+    <?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/jquery/jquery.min.js')); ?>
+
+    <script>
+        $(document).ready(function () {
+            // Botón Obtener Notificaciones
+            $('#obtenerNotificaciones').click(function () {
+                $.ajax({
+                    url: '<?= $this->url('ligas.notificaciones', ['deporte' => 'padel', 'accion' => 'obtener', 'uuid' => $evento['uuid'] ?? '']) ?>',
+                    method: 'POST',
+                    data: {
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Éxito: ' + response.message);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error: Ocurrió un error al procesar la solicitud');
+                    }
+                });
+            });
+
+            // Botón Enviar Notificación
+            $('.enviar-notificacion').click(function () {
+                const id = $(this).data('id');
+                $.ajax({
+                    url: '<?= $this->url("ligas.notificaciones", ["deporte" => "padel", "accion" => "enviar-individual", "uuid" => "UUID_PLACEHOLDER"]) ?>'.replace("UUID_PLACEHOLDER", id),
+                    method: 'POST',
+                    data: {
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Éxito: ' + response.message);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error: Ocurrió un error al procesar la solicitud');
+                    }
+                });
+            });
+
+            // Botón Notificar Todos
+            $('#notificarTodos').click(function () {
+                $.ajax({
+                    url: '<?= $this->url('ligas.notificaciones', ['deporte' => 'padel', 'accion' => 'notificar-todos', 'uuid' => $evento['uuid'] ?? '']) ?>',
+                    method: 'POST',
+                    data: {
+                        _token: '<?= csrf_token() ?>'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Éxito: ' + response.message);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error: Ocurrió un error al procesar la solicitud');
+                    }
+                });
+            });
+        });
+    </script>
+</script>

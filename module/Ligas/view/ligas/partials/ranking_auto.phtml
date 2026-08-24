@@ -1,0 +1,13 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+?>
+
+<?php if(isset($nomina->detalles[1])): ?>
+    <i class="ti ti-star" style="font-size: 20px; color: gold;"></i> <?= $nomina->detalles[0]->ranking + $nomina->detalles[1]->ranking ?>
+<?php else: ?>
+    <i class="ti ti-star" style="font-size: 20px; color: gold;"></i> <?= $nomina->detalles[0]->ranking ?>
+<?php endif; ?>

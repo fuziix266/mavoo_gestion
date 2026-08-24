@@ -1,0 +1,103 @@
+:root {
+    --bg-dark: #0f0f1a; --sidebar: #151525; --border: #2a2a40;
+    --neon: #00fefe; --primary: #0000fe; --white: #eee;
+    --danger: #ff0055; --success: #00ff88;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--white); height: 100vh; overflow: hidden; }
+.admin-layout { display: flex; height: 100%; }
+
+/* Sidebar */
+.sidebar { width: 250px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; overflow-y: auto; }
+.admin-logo { font-size: 1.5rem; font-weight: bold; margin-bottom: 2rem; text-align: center; }
+.nav-label { color: #555; font-size: 0.75rem; font-weight: bold; margin: 15px 0 5px 10px; letter-spacing: 1px; }
+.nav-btn { display: block; width: 100%; text-align: left; background: none; border: none; color: #889; padding: 10px 15px; font-size: 0.95rem; cursor: pointer; transition: 0.2s; border-radius: 8px; margin-bottom: 2px; }
+.nav-btn:hover, .nav-btn.active { background: rgba(0,254,254,0.1); color: var(--neon); }
+.nav-btn i { margin-right: 10px; width: 20px; text-align: center; }
+.return-link { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center; }
+.return-link a { color: var(--white); text-decoration: none; font-size: 0.9rem; }
+
+/* Content */
+.content { flex: 1; padding: 2rem; overflow-y: auto; position: relative; }
+.admin-section { display: none; animation: fadeIn 0.3s; }
+.admin-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+
+/* Tables & Grids */
+.grid-wrapper { overflow-x: auto; background: var(--sidebar); border-radius: 10px; padding: 1rem; margin-bottom: 2rem; }
+.schedule-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+.schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 10px; text-align: center; }
+.schedule-table th { background: #0a0a12; color: var(--neon); position: sticky; top: 0; z-index: 10; }
+.cell-booked { background: rgba(0,0,254,0.2); color: var(--white); cursor: pointer; position: relative; }
+.cell-free { color: var(--success); cursor: pointer; } 
+.cell-free:hover { background: rgba(0, 255, 136, 0.1); }
+.paid-icon { position: absolute; top: 2px; right: 5px; color: var(--success); font-size: 0.8rem; }
+
+/* CRM & Analytics Styles */
+.crm-table td { font-size: 0.9rem; }
+.btn-whatsapp { background: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.8rem; }
+
+.analytics-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
+.chart-card { background: var(--sidebar); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border); }
+.chart-card.wide { grid-column: 1 / -1; }
+.chart-card h3 { margin-top: 0; color: var(--neon); margin-bottom: 1rem; }
+
+/* Heatmap Grid */
+.heatmap-grid { display: grid; grid-template-columns: 50px repeat(7, 1fr); gap: 2px; margin-top: 1rem; }
+.hm-cell { padding: 10px; text-align: center; font-size: 0.8rem; border-radius: 4px; background: #0a0a12; }
+.hm-header { font-weight: bold; color: #889; }
+.hm-data { color: white; transition: 0.2s; }
+.hm-data:hover { transform: scale(1.1); z-index: 2; border: 1px solid white; }
+.heatmap-legend { display: flex; gap: 15px; font-size: 0.8rem; color: #889; margin-bottom: 10px; }
+.dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 5px; }
+.dot.low { background: rgba(0, 0, 254, 0.2); } .dot.med { background: rgba(0, 0, 254, 0.5); } .dot.high { background: rgba(0, 0, 254, 0.9); }
+
+/* Occupancy Bars */
+.bars-vertical-container { display: flex; justify-content: space-around; align-items: flex-end; height: 200px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+.v-bar-group { display: flex; flex-direction: column; align-items: center; width: 15%; height: 100%; justify-content: flex-end; }
+.v-bar { width: 100%; background: var(--primary); border-radius: 5px 5px 0 0; transition: height 1s; position: relative; min-height: 2px; }
+.v-bar span { position: absolute; top: -20px; width: 100%; text-align: center; font-size: 0.8rem; font-weight: bold; }
+.v-label { margin-top: 10px; font-size: 0.8rem; color: #889; text-align: center; }
+
+/* Forms & UI */
+.admin-form { max-width: 600px; background: var(--sidebar); padding: 1.5rem; border-radius: 10px; }
+.form-group { margin-bottom: 1rem; }
+.form-group input, .neon-input { width: 100%; padding: 10px; background: #0a0a12; border: 1px solid var(--border); color: white; border-radius: 5px; outline: none; }
+.neon-input:focus { border-color: var(--neon); }
+.btn-save, .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+.btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+.neon-select { background: #0a0a12; color: white; border: 1px solid var(--neon); padding: 8px 15px; border-radius: 5px; }
+
+/* Modals */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: #1a1a2e; border: 1px solid var(--neon); padding: 2rem; border-radius: 10px; position: relative; max-height: 90vh; overflow-y: auto; width: 95%; max-width: 500px; }
+.close-modal { position: absolute; top: 10px; right: 20px; font-size: 28px; cursor: pointer; color: #fff; }
+
+/* Balance Styles */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.kpi-card { background: var(--sidebar); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
+.progress-container { display: flex; height: 30px; background: #0a0a12; border-radius: 15px; overflow: hidden; margin-top: 10px; }
+.progress-bar { display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+.card-bar { background: linear-gradient(90deg, #0000fe, #0088fe); } .cash-bar { background: linear-gradient(90deg, #00cc66, #00ff88); color: #004400; }
+
+/* Amenities Selector */
+.amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+.amenity-option { background: #0a0a12; border: 1px solid #333; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; opacity: 0.6; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.amenity-option.selected { border-color: var(--neon); opacity: 1; background: rgba(0,254,254,0.1); color: var(--neon); }
+
+/* List Editors */
+.list-item { display: flex; gap: 1rem; margin-bottom: 0.5rem; align-items: center; background: #0a0a12; padding: 10px; border-radius: 5px; }
+.amenity-row { display: grid; grid-template-columns: 50px 1fr 1fr 40px; gap: 10px; align-items: center; background: #0a0a12; padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+.icon-preview { font-size: 1.5rem; text-align: center; color: var(--neon); }
+.admin-court-card { background: var(--sidebar); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+.admin-modal-content { max-width: 400px; text-align: center; }
+.court-modal-size { max-width: 500px; text-align: left; }
+.modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 1.5rem; }
+.btn-action { padding: 12px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.btn-reserve { background-color: var(--primary); }
+.btn-block { background-color: #ff9900; color: black; }
+.btn-cancel { background-color: var(--danger); }
+.btn-pay { background-color: var(--success); }

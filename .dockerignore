@@ -1,0 +1,51 @@
+.git/
+.github/
+.gitattributes
+
+# Dependencias
+vendor/
+node_modules/
+
+# Cache de Laminas
+data/cache/*
+!data/cache/.gitkeep
+
+# Cache de herramientas
+/.phpcs-cache
+/.phpunit.cache
+/.psalm-cache
+/.phpunit.result.cache
+
+# Configuracion local de desarrollo (con secretos / paths locales)
+config/development.config.php
+config/autoload/local.php
+config/autoload/*.local.php
+config/autoload/*.local-development.php
+
+# Entorno
+.env
+.env.example
+.env.local
+.env.*.local
+
+# Logs y temporales
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentacion y debug
+README.md
+LICENSE.md
+COPYRIGHT.md

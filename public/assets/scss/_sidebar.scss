@@ -1,0 +1,109 @@
+/* Estilos personalizados para el sidebar */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+$primary-gradient: linear-gradient(180deg, #1e3a8a, #3b82f6);
+$secondary-gradient: linear-gradient(180deg, #6b7280, #9ca3af);
+$active-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(147, 197, 253, 0.1));
+$hover-bg: rgba(59, 130, 246, 0.15);
+$font-family: 'Poppins', sans-serif;
+
+.horizontal-sidebar {
+    font-family: $font-family;
+    background: $primary-gradient;
+    color: #ffffff;
+    width: 250px;
+    height: 100vh;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    .app-logo {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-profile {
+        h6 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        p {
+            font-size: 12px;
+        }
+    }
+
+    .app-nav {
+        padding: 10px 0;
+
+        .main-nav {
+            li {
+                margin: 5px 0;
+                a {
+                    font-size: 14px;
+                    color: #d1d5db;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+
+                    svg {
+                        width: 18px;
+                        height: 18px;
+                    }
+
+                    &:hover {
+                        background: $hover-bg;
+                        color: #ffffff;
+                    }
+
+                    &.active {
+                        background: $active-bg;
+                        color: #ffffff;
+                        font-weight: 500;
+                    }
+                }
+
+                .collapse {
+                    ul {
+                        padding-left: 30px;
+                        li {
+                            a {
+                                font-size: 13px;
+                                padding: 8px 20px;
+                                color: #d1d5db;
+
+                                &:hover, &.active {
+                                    background: $hover-bg;
+                                    color: #ffffff;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            .menu-title {
+                font-size: 12px;
+                color: #9ca3af;
+                padding: 10px 20px;
+                text-transform: uppercase;
+            }
+        }
+    }
+
+    .menu-navs {
+        span {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: $hover-bg;
+            }
+        }
+    }
+}

@@ -1,0 +1,1217 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+$menuEV = $this->menuEV ?? (object)[
+    'uuid'           => $evento['uuid'] ?? '',
+    'sedes'          => true,
+    'categorias'     => true,
+    'nominas'        => true,
+    'fixture'        => true,
+    'ranking'        => true,
+    'notificaciones' => true,
+    'logs'           => true,
+];
+$categorias = $this->categorias ?? [];
+$nominas = $this->nominas ?? [];
+?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/select/select2.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/glightbox/glightbox.min.css')); ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <div>
+                    <ol class="breadcrumb bg-light-secondary p-2">
+                        <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+                        <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.nominas') ?></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card-body">
+                <div class="row app-form">
+                    <div class="col-xxl-12">
+                        <div class="mt-1 mb-3">
+                            <label class="form-label">Evento:</label>
+                            <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
+                                <?php foreach($eventos as $ev): ?>
+                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV, 'deporte' => $deporte]) ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <ul class="box-list mb-4">
+                <li class="b-s-4-primary">
+                    <h5><?= __('deporte_padel.nominas') ?></h5>
+                    <?php
+                        $ultimaFecha = date('Y-m-d H:i:s'); // Faked for migration stabilization
+                    ?>
+                    <h7><?= __('deporte_padel.ultima_modificacion') ?> <?= $ultimaFecha ?></h7>
+                </li>
+            </ul>
+        </div>
+        <div class="col-xxl-12">
+            <div class="row">
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <button class="nuevo-usuario" style="font-size: 14px; padding: 8px 16px; color: white; background-color: #007bff; border: none; border-radius: 4px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#modalRegistrarJugador">
+        <?= __('deporte_padel.registrar_jugador') ?>
+    </button>
+</div>
+            </div>
+        </div>
+<div class="modal fade" id="modalRegistrarJugador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formRegistrarJugador">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><?= __('deporte_padel.registrar_nuevo_jugador') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nuevoNombreJugador" class="form-label fw-bold"><?= __('deporte_padel.nombre') ?> *</label>
+                        <input type="text" class="form-control" id="nuevoNombreJugador" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="paisUuidJugador" class="form-label fw-bold"><?= __('deporte_padel.pais') ?> *</label>
+                        <select class="form-select" id="paisUuidJugador" required>
+                            <?php foreach($paises as $pais): ?>
+                                <option value="<?= $pais['uuid'] ?>"><?= $pais['pais'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="documentoJugador" class="form-label"><?= __('deporte_padel.documento') ?></label>
+                        <input type="text" class="form-control" id="documentoJugador">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nuevoTelefonoJugador" class="form-label"><?= __('deporte_padel.telefono') ?></label>
+                        <input type="text" class="form-control" id="nuevoTelefonoJugador" placeholder="Ej: 123456789">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nuevoEmailJugador" class="form-label fw-bold"><?= __('deporte_padel.correo_electronico') ?> *</label>
+                        <input type="email" class="form-control" id="nuevoEmailJugador" required placeholder="ejemplo@correo.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nacimientoJugador" class="form-label fw-bold"><?= __('deporte_padel.fecha_nacimiento') ?> *</label>
+                        <input type="date" class="form-control" id="nacimientoJugador" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold"><?= __('deporte_padel.genero') ?> *</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="generoJugador" id="generoHombre" value="hombre" required>
+                            <label class="form-check-label" for="generoHombre"><?= __('deporte_padel.hombre') ?></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="generoJugador" id="generoMujer" value="mujer" required>
+                            <label class="form-check-label" for="generoMujer"><?= __('deporte_padel.mujer') ?></label>
+                        </div>
+                    </div>
+                    <div id="alertasMatches" class="alert alert-warning d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+				<!-- Modal Inscribir Usuarios -->
+				<div class="modal fade" id="modalInscribirUsuarios" tabindex="-1" aria-labelledby="modalInscribirUsuariosLabel" aria-hidden="true">
+				    <div class="modal-dialog">
+				        <div class="modal-content">
+				            <form id="formInscribirUsuarios" method="POST">
+				                
+				                <input type="hidden" name="mod_gestion_categoria_uuid" id="campoCategoriaUuid">
+				                <input type="hidden" name="nomina_uuid" id="campoNominaUuid">
+				                <div class="modal-header">
+				                    <h5 class="modal-title" id="modalInscribirUsuariosLabel"><?= ($evento['modalidad'] ?? '') === 'Dobles' ? __('deporte_padel.inscribir_jugadores') : __('deporte_padel.inscribir_jugador') ?></h5>
+				                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				                </div>
+				                <div class="modal-body">
+				                    <?php for ($i = 1; $i <= (($evento['modalidad'] ?? 'Singles') === 'Dobles' ? 2 : 1); $i++): ?>
+				                        <label for="usuario_id_<?= $i ?>">Usuario <?= $i ?></label>
+				                        <select id="usuario_id_<?= $i ?>" name="usuarios_uuids[]" class="select2-ajax form-select mb-3"></select>
+				                    <?php endfor; ?>
+				                </div>
+				                <div class="modal-footer">
+				                    <button type="submit" class="btn btn-outline-primary"><i class="ti ti-check"></i> <?= __('deporte_padel.confirmar') ?></button>
+				                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cancelar') ?></button>
+				                </div>
+				            </form>
+				        </div>
+				    </div>
+				</div>
+        <?php foreach ($categorias as $categoria): ?>
+            <div class="col-xxl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-left align-items-center">
+                            <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2"><?= $categoria->categoriaLista->icono ?></div>
+                            <div>
+                                <h6 class="f-s-15 mb-0"><?= $categoria->categoriaLista->titulo ?></h6>
+                                <p class="text-secondary f-s-13 mb-0"><?= $categoria->categoriaLista->subtitulo ?></p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 30px;">
+                                <div style="padding-left: 15px; padding-right: 15px;"><i class="ti ti-info-circle f-s-18 me-2 text-info"></i> Inscritos</div>
+                                <div style="border-top: 1px solid #ccc; margin-top: 5px; padding-top: 5px; text-align: center;"><strong><?= $categoria->inscritos ?></strong></div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 10px;">
+                                <div style="padding-left: 15px; padding-right: 15px;"><i class="ti ti-info-circle f-s-18 me-2 text-info"></i> Límite</div>
+                                <div style="border-top: 1px solid #ccc; margin-top: 5px; padding-top: 5px; text-align: center;"><strong><?= $categoria->limite ?></strong></div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; margin-left: 10px;">
+                                <div style="padding-left: 15px; padding-right: 15px;"><i class="ti ti-info-circle f-s-18 me-2 text-info"></i> A Considerar</div>
+                                <div style="border-top: 1px solid #ccc; margin-top: 5px; padding-top: 5px; text-align: center;"><strong><?= $categoria->a_considerar ?></strong></div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 30px;">
+                                <button class="btn m-1 btn-outline-info btn-inscribir" data-categoria-uuid="<?= $categoria->uuid ?>" data-bs-toggle="modal" data-bs-target="#modalInscribirUsuarios">
+                                    <i class="ti ti-plus"></i> <span><?= __('deporte_padel.inscribir_jugador') ?></span>
+                                </button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 10px;">
+                                <button class="btn m-1 btn-outline-info btn-ordenar-ranking" data-categoria-uuid="<?= $categoria->uuid ?>">
+                                    <i class="ti ti-sort-descending"></i> <span><?= __('deporte_padel.ordenar_ranking') ?></span>
+                                </button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 10px;">
+                                <button class="btn m-1 btn-outline-info btn-ordenar-random" data-categoria-uuid="<?= $categoria->uuid ?>">
+                                    <i class="ti ti-arrows-random"></i> <span><?= __('deporte_padel.ordenar_aleatorio') ?></span>
+                                </button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 10px;">
+                                <button class="btn btn-outline-success btn-exportar-excel" onclick="window.location.href='<?= $this->url('ligas.nominas', ['deporte' => $deporte, 'accion' => 'exportar-excel', 'categoria_uuid' => $categoria->uuid]) ?>'">
+                                    <i class="ti ti-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-12" style="margin-bottom: 30px;">
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <?php if (!empty($categoria['nominas'])): ?>
+                                    <table class="table table-bottom-border table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" style="text-align: center;">#</th>
+                                                <th scope="col"><?= __('deporte_padel.jugadores') ?></th>
+                                                <th scope="col"><?= __('deporte_padel.identificacion') ?></th>
+                                                <th scope="col"><?= __('deporte_padel.telefono') ?></th>
+                                                <th scope="col"><?= __('deporte_padel.correo') ?></th>
+                                                <th scope="col"><?= __('deporte_padel.marcas') ?></th>
+                                                <th scope="col"><?= __('deporte_padel.opciones') ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?= $this->partial('sistema.mod.padel.gestion.partials.nomina_tabla', ['nomina' => $categoria->nominas]) ?>
+                                        </tbody>
+                                    </table>
+                                <?php else: ?>
+                                    <div class="alert text-center" style="background-color: #f9f9f9; color: #6c757d;"><?= __('deporte_padel.sin_inscripciones') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        
+        
+        
+<div class="col-xxl-12">
+    <div class="card equal-card">
+        <div class="card-body p-0">
+            <div id="marcasTable">
+                <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                    <h5><?= __('deporte_padel.marcas') ?></h5>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarMarcaModal"><?= __('deporte_padel.agregar_marca') ?></button>
+                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#opcionesAvanzadasModal"><?= __('deporte_padel.opciones_avanzadas') ?></button>
+                    </div>
+                </div>
+                <div class="overflow-auto app-scroll">
+                    <table class="table table-bottom-border list-table-data align-middle mb-0">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <th style="width: 20%;"><?= __('deporte_padel.titulo') ?></th>
+                                <th style="width: 40%;"><?= __('deporte_padel.opciones') ?></th>
+                                <th style="width: 15%;"><?= __('deporte_padel.estado') ?></th>
+                                <th style="width: 25%;"><?= __('deporte_padel.acciones') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody id="marcas-data"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Marca -->
+<div class="modal fade" id="agregarMarcaModal" tabindex="-1" aria-labelledby="agregarMarcaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarMarcaLabel"><?= __('deporte_padel.agregar_marca') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAgregarMarca">
+                    <input type="hidden" name="evento_uuid" value="<?= ($evento['uuid'] ?? '') ?>">
+                    <div class="mb-3">
+                        <label class="form-label"><?= __('deporte_padel.titulo') ?></label>
+                        <input type="text" name="titulo" class="form-control" maxlength="200" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= __('deporte_padel.opciones') ?></label>
+                        <div id="opciones-lista-agregar" class="mb-2"></div>
+                        <div class="input-group">
+                            <input type="text" id="nueva-opcion-agregar" class="form-control" placeholder="Nombre de la opción">
+                            <select id="nuevo-estilo-agregar" class="form-select">
+                                <option value="success">Success <span class="badge marca-toggle text-outline-success"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="secondary">Secondary <span class="badge marca-toggle text-outline-secondary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="primary">Primary <span class="badge marca-toggle text-outline-primary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="danger">Danger <span class="badge marca-toggle text-outline-danger"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="warning">Warning <span class="badge marca-toggle text-outline-warning"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="info">Info <span class="badge marca-toggle text-outline-info"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="light">Light <span class="badge marca-toggle text-outline-light"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="dark">Dark <span class="badge marca-toggle text-outline-dark"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="link">Link <span class="badge marca-toggle text-outline-link"><?= __('deporte_padel.ejemplo') ?></span></option>
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="agregarOpcion('agregar')">Agregar opción</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="formulario" class="form-check-input"> <?= __('deporte_padel.formulario') ?>
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="obligatorio" class="form-check-input"> <?= __('deporte_padel.obligatorio') ?>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar') ?></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Marca -->
+<div class="modal fade" id="editarMarcaModal" tabindex="-1" aria-labelledby="editarMarcaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarMarcaLabel"><?= __('deporte_padel.editar_marca') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarMarca">
+                    <input type="hidden" name="uuid">
+                    <div class="mb-3">
+                        <label class="form-label"><?= __('deporte_padel.titulo') ?></label>
+                        <input type="text" name="titulo" class="form-control" maxlength="200" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= __('deporte_padel.opciones') ?></label>
+                        <div id="opciones-lista-editar" class="mb-2"></div>
+                        <div class="input-group">
+                            <input type="text" id="nueva-opcion-editar" class="form-control" placeholder="Nombre de la opción">
+                            <select id="nuevo-estilo-editar" class="form-select">
+                                <option value="success">Success <span class="badge marca-toggle text-outline-success"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="secondary">Secondary <span class="badge marca-toggle text-outline-secondary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="primary">Primary <span class="badge marca-toggle text-outline-primary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="danger">Danger <span class="badge marca-toggle text-outline-danger"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="warning">Warning <span class="badge marca-toggle text-outline-warning"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="info">Info <span class="badge marca-toggle text-outline-info"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="light">Light <span class="badge marca-toggle text-outline-light"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="dark">Dark <span class="badge marca-toggle text-outline-dark"><?= __('deporte_padel.ejemplo') ?></span></option>
+                                <option value="link">Link <span class="badge marca-toggle text-outline-link"><?= __('deporte_padel.ejemplo') ?></span></option>
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="agregarOpcion('editar')">Agregar opción</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="formulario" class="form-check-input"> <?= __('deporte_padel.formulario') ?>
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="obligatorio" class="form-check-input"> <?= __('deporte_padel.obligatorio') ?>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar') ?></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Opciones Avanzadas -->
+<div class="modal fade" id="opcionesAvanzadasModal" tabindex="-1" aria-labelledby="opcionesAvanzadasLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="opcionesAvanzadasLabel"><?= __('deporte_padel.opciones_avanzadas') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <button class="btn btn-danger mb-3" onclick="confirmResetGeneral('<?= ($evento['uuid'] ?? '') ?>')"><?= __('deporte_padel.reset_general') ?></button>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><?= __('deporte_padel.titulo') ?></th>
+                            <th><?= __('deporte_padel.acciones') ?></th>
+                        </tr>
+                    </thead>
+                    <tbody id="opciones-avanzadas-data"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+        
+        
+        
+        <div class="modal fade" id="modalEditarNombre" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formEditarNombre">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.editar_nombre_usuario') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="nominaUuidEditar">
+                            <input type="hidden" id="userUuidEditar">
+                            <div class="mb-3">
+                                <label for="nuevoNombre" class="form-label"><?= __('deporte_padel.nombre') ?></label>
+                                <input type="text" class="form-control" id="nuevoNombre">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal fade" id="modalRankingManual" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formRankingManual">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.asignar_ranking_manual') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="nominaUuidRanking">
+                            <div class="mb-3">
+                                <label for="nuevoRanking" class="form-label"><?= __('deporte_padel.ranking_manual') ?></label>
+                                <input type="number" class="form-control" id="nuevoRanking" min="0">
+                            </div>
+                            <div class="alert alert-warning"><?= __('deporte_padel.alerta_ranking_manual') ?></div>
+                        </div>
+                        <div class="modal-footer d-flex justify-content-between">
+                            <button type="button" id="btnRankingAuto" class="btn btn-outline-secondary"><?= __('deporte_padel.establecer_calculo_automatico') ?></button>
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal fade" id="modalEditarIdentificacion" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formEditarIdentificacion">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.editar_identificacion_usuario') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="userUuidIdentificacion">
+                            <input type="hidden" id="nominaUuidIdentificacion">
+                            <div class="mb-3">
+                                <label for="paisUuidEditar" class="form-label"><?= __('deporte_padel.pais') ?></label>
+                                <select class="form-select" id="paisUuidEditar">
+                                    <?php foreach($paises as $pais): ?>
+                                        <option value="<?= $pais['uuid'] ?>"><?= $pais['pais'] ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="documentoEditar" class="form-label"><?= __('deporte_padel.documento') ?></label>
+                                <input type="text" class="form-control" id="documentoEditar">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal fade" id="modalEditarNumero" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formEditarNumero">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.editar_numero_telefonico') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="numeroUserUuid">
+                            <input type="hidden" id="numeroNominaUuid">
+                            <input type="text" class="form-control" id="nuevoNumero" placeholder="Ingrese el número">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal fade" id="modalEditarEmail" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formEditarEmail">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.editar_correo_electronico') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="emailUserUuid">
+                            <input type="hidden" id="emailNominaUuid">
+                            <input type="email" class="form-control" id="nuevoEmail" placeholder="ejemplo@correo.com">
+                            <div class="alert alert-warning"><?= __('deporte_padel.alerta_cambio_correo') ?></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal fade" id="modalRestricciones" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formRestricciones">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= __('deporte_padel.seleccionar_restricciones') ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="restriccionesUserUuid">
+                            <input type="hidden" id="restriccionesNominaUuid">
+                            <div id="listaRestricciones"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.confirmar') ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="<?= $this->basePath('assets/vendor/apexcharts/apexcharts.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets/vendor/glightbox/glightbox.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets/vendor/select/select2.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets/js/select.js') ?>"></script>
+
+<script>
+	
+$('#formRegistrarJugador').on('submit', function (e) {
+    e.preventDefault();
+    const formData = {
+        nombre: $('#nuevoNombreJugador').val(),
+        pais_uuid: $('#paisUuidJugador').val(),
+        documento: $('#documentoJugador').val(),
+        telefono: $('#nuevoTelefonoJugador').val(),
+        email: $('#nuevoEmailJugador').val(),
+        nacimiento: $('#nacimientoJugador').val(),
+        genero: $('input[name="generoJugador"]:checked').val(),
+        _token: '<?= csrf_token() ?>'
+    };
+
+    if (!formData.nombre || !formData.pais_uuid || !formData.email || !formData.nacimiento || !formData.genero) {
+        alert('<?= __('deporte_padel.campos_obligatorios') ?>');
+        return;
+    }
+
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'verificar-jugador', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+        method: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                agregarJugador(formData);
+            } else if (response.tipo === 'identificacion' || response.tipo === 'email') {
+                const msg = `${response.mensaje}\nNombre: ${response.detalles.nombre}\nEmail: ${response.detalles.email}`;
+                alert(msg);
+                // Reabre modal para reintento (limpia campos opcionales si necesario)
+                $('#modalRegistrarJugador').modal('show');
+            } else if (response.tipo === 'confirmacion') {
+                let html = `<strong>${response.mensaje}</strong><ul>`;
+                response.matches.forEach(match => {
+                    html += `<li>Nombre: ${match.nombre} | Email: ${match.email}</li>`;
+                });
+                html += `</ul><button id="confirmarAgregar" class="btn btn-secondary mt-2">Agregar nuevo usuario de todos modos</button>`;
+                $('#alertasMatches').html(html).removeClass('d-none');
+                $('#confirmarAgregar').on('click', function () {
+                    agregarJugador(formData);
+                });
+            }
+        },
+        error: function (xhr) {
+            const errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '<?= __('deporte_padel.error_general') ?>';
+            alert(errorMessage);
+        }
+    });
+});
+
+function agregarJugador(formData) {
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'agregar-jugador', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+        method: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                $('#modalRegistrarJugador').modal('hide');
+                location.reload();
+            }
+        },
+        error: function (xhr) {
+            const errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '<?= __('deporte_padel.error_agregar') ?>';
+            alert(errorMessage);
+            cerrarCargando();
+        }
+    });
+}
+	
+function escapeHtml(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+function abrirEditarMarcaDesdeBoton(btn) {
+    const marcaData = JSON.parse(btn.getAttribute('data-marca'));
+    abrirEditarMarca(
+        marcaData.uuid,
+        marcaData.titulo,
+        marcaData.opciones,
+        marcaData.estilo,
+        marcaData.elegido,
+        marcaData.formulario,
+        marcaData.obligatorio
+    );
+}
+
+function cargarMarcas() {
+    fetch('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'marcas-listar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('marcas-data');
+            tbody.innerHTML = '';
+            data.marcas.forEach(marca => {
+                const isActive = Array.isArray(data.marcas_activas) ? data.marcas_activas.includes(marca.uuid) : Object.values(data.marcas_activas).includes(marca.uuid);
+                // Limpiar espacios en opciones
+                const opcionesLimpias = marca.marca.opciones.map(op => op.trim());
+                const marcaData = {
+                    uuid: marca.uuid,
+                    titulo: marca.marca.Titulo,
+                    opciones: opcionesLimpias,
+                    estilo: marca.marca.estilo,
+                    elegido: marca.marca.elegido ?? null,
+                    formulario: marca.formulario,
+                    obligatorio: marca.obligatorio
+                };
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${marca.marca.Titulo}</td>
+                        <td>${opcionesLimpias.join(', ')}</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleMarca('${marca.uuid}')">
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" data-marca='${JSON.stringify(marcaData).replace(/'/g, "\\'")}' onclick="abrirEditarMarcaDesdeBoton(this)"><?= __('deporte_padel.editar') ?></button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmEliminarMarca('${marca.uuid}')"><?= __('deporte_padel.eliminar') ?></button>
+                        </td>
+                    </tr>`;
+            });
+            const opcionesTbody = document.getElementById('opciones-avanzadas-data');
+            opcionesTbody.innerHTML = '';
+            data.marcas.forEach(marca => {
+                const isActive = Array.isArray(data.marcas_activas) ? data.marcas_activas.includes(marca.uuid) : Object.values(data.marcas_activas).includes(marca.uuid);
+                if (isActive) {
+                    opcionesTbody.innerHTML += `
+                        <tr>
+                            <td>${marca.marca.Titulo}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="confirmResetMarca('${marca.uuid}')"><?= __('deporte_padel.reset') ?></button>
+                                <button class="btn btn-sm btn-success" onclick="confirmAplicarMarca('${marca.uuid}')"><?= __('deporte_padel.aplicar') ?></button>
+                            </td>
+                        </tr>`;
+                }
+            });
+        });
+}
+
+function toggleMarca(uuid) {
+    if (confirm('<?= __('deporte_padel.confirmar_cambio_estado') ?>')) {
+        fetch('<?= url("mod/padel/gestion/nominas/marcas/toggle") ?>/' + uuid, { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?= csrf_token() ?>' } })
+            .then(response => response.json())
+            .then(data => { cargarMarcas(); });
+    }
+}
+
+function confirmResetMarca(uuid) {
+    if (confirm('<?= __('deporte_padel.confirmar_reset_marca') ?>')) {
+        fetch('<?= url("mod/padel/gestion/nominas/marcas/reset") ?>/' + uuid, { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?= csrf_token() ?>' } })
+            .then(response => response.json())
+            .then(data => { alert(data.success); window.location.reload(); });
+    }
+}
+
+function confirmAplicarMarca(uuid) {
+    if (confirm('<?= __('deporte_padel.confirmar_aplicar_marca') ?>')) {
+        fetch('<?= url("mod/padel/gestion/nominas/marcas/aplicar") ?>/' + uuid, { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?= csrf_token() ?>' } })
+            .then(response => response.json())
+            .then(data => { alert(data.success); window.location.reload(); });
+    }
+}
+
+function confirmEliminarMarca(uuid) {
+    if (confirm('<?= __('deporte_padel.confirmar_eliminar_marca') ?>')) {
+        fetch('<?= url("mod/padel/gestion/nominas/marcas/eliminar") ?>/' + uuid, { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?= csrf_token() ?>' } })
+            .then(response => response.json())
+            .then(data => { cargarMarcas(); });
+    }
+}
+
+function confirmResetGeneral(uuid) {
+    if (confirm('<?= __('deporte_padel.confirmar_reset_general') ?>')) {
+        fetch('<?= url("mod/padel/gestion/nominas/marcas/reset-general") ?>/' + uuid, { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?= csrf_token() ?>' } })
+            .then(response => response.json())
+            .then(data => { alert(data.success); window.location.reload(); });
+    }
+}
+
+function agregarOpcion(tipo) {
+    const input = document.getElementById(`nueva-opcion-${tipo}`);
+    const select = document.getElementById(`nuevo-estilo-${tipo}`);
+    const lista = document.getElementById(`opciones-lista-${tipo}`);
+    const opcion = input.value.trim();
+    const estilo = select.value;
+    if (opcion) {
+        const index = lista.children.length;
+        lista.innerHTML += `
+            <div class="input-group mb-2" data-index="${index}">
+                <input type="text" class="form-control" value="${opcion}" readonly>
+                <span class="input-group-text badge marca-toggle text-outline-${estilo}"><?= __('deporte_padel.ejemplo') ?></span>
+                <select class="form-select" onchange="actualizarBadge(this, '${tipo}')">
+                    <option value="success" ${estilo === 'success' ? 'selected' : ''}>Success <span class="badge marca-toggle text-outline-success"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="secondary" ${estilo === 'secondary' ? 'selected' : ''}>Secondary <span class="badge marca-toggle text-outline-secondary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="primary" ${estilo === 'primary' ? 'selected' : ''}>Primary <span class="badge marca-toggle text-outline-primary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="danger" ${estilo === 'danger' ? 'selected' : ''}>Danger <span class="badge marca-toggle text-outline-danger"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="warning" ${estilo === 'warning' ? 'selected' : ''}>Warning <span class="badge marca-toggle text-outline-warning"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="info" ${estilo === 'info' ? 'selected' : ''}>Info <span class="badge marca-toggle text-outline-info"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="light" ${estilo === 'light' ? 'selected' : ''}>Light <span class="badge marca-toggle text-outline-light"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="dark" ${estilo === 'dark' ? 'selected' : ''}>Dark <span class="badge marca-toggle text-outline-dark"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="link" ${estilo === 'link' ? 'selected' : ''}>Link <span class="badge marca-toggle text-outline-link"><?= __('deporte_padel.ejemplo') ?></span></option>
+                </select>
+                <div class="input-group-text">
+                    <input type="checkbox" class="form-check-input mt-0" name="elegido-${tipo}" value="${index}" onchange="actualizarElegido('${tipo}')">
+                    <label class="form-check-label ms-2"><?= __('deporte_padel.defecto') ?></label>
+                </div>
+                <button type="button" class="btn btn-outline-danger" onclick="eliminarOpcion(this, '${tipo}')">Eliminar</button>
+            </div>`;
+        input.value = '';
+        select.value = 'success';
+        actualizarElegido(tipo);
+    }
+}
+
+function eliminarOpcion(btn, tipo) {
+    btn.parentElement.remove();
+    actualizarElegido(tipo);
+}
+
+function actualizarBadge(select, tipo) {
+    const badge = select.parentElement.querySelector('.badge');
+    const estilo = select.value;
+    badge.className = `input-group-text badge marca-toggle text-outline-${estilo}`;
+    badge.innerText = '<?= __('deporte_padel.ejemplo') ?>';
+}
+
+function actualizarElegido(tipo) {
+    const checkboxes = document.querySelectorAll(`#opciones-lista-${tipo} input[name="elegido-${tipo}"]`);
+    checkboxes.forEach((cb, index) => {
+        cb.value = index;
+        if (cb.checked) {
+            checkboxes.forEach(other => {
+                if (other !== cb) other.checked = false;
+            });
+        }
+    });
+}
+
+function abrirEditarMarca(uuid, titulo, opciones, estilo, elegido, formulario, obligatorio) {
+    const form = document.getElementById('formEditarMarca');
+    const lista = document.getElementById('opciones-lista-editar');
+    form.uuid.value = uuid;
+    form.titulo.value = titulo;
+    form.formulario.checked = formulario;
+    form.obligatorio.checked = obligatorio;
+    lista.innerHTML = '';
+    opciones.forEach((opcion, index) => {
+        lista.innerHTML += `
+            <div class="input-group mb-2" data-index="${index}">
+                <input type="text" class="form-control" value="${opcion}" readonly>
+                <span class="input-group-text badge marca-toggle text-outline-${estilo[index]}"><?= __('deporte_padel.ejemplo') ?></span>
+                <select class="form-select" onchange="actualizarBadge(this, 'editar')">
+                    <option value="success" ${estilo[index] === 'success' ? 'selected' : ''}>Success <span class="badge marca-toggle text-outline-success"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="secondary" ${estilo[index] === 'secondary' ? 'selected' : ''}>Secondary <span class="badge marca-toggle text-outline-secondary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="primary" ${estilo[index] === 'primary' ? 'selected' : ''}>Primary <span class="badge marca-toggle text-outline-primary"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="danger" ${estilo[index] === 'danger' ? 'selected' : ''}>Danger <span class="badge marca-toggle text-outline-danger"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="warning" ${estilo[index] === 'warning' ? 'selected' : ''}>Warning <span class="badge marca-toggle text-outline-warning"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="info" ${estilo[index] === 'info' ? 'selected' : ''}>Info <span class="badge marca-toggle text-outline-info"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="light" ${estilo[index] === 'light' ? 'selected' : ''}>Light <span class="badge marca-toggle text-outline-light"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="dark" ${estilo[index] === 'dark' ? 'selected' : ''}>Dark <span class="badge marca-toggle text-outline-dark"><?= __('deporte_padel.ejemplo') ?></span></option>
+                    <option value="link" ${estilo[index] === 'link' ? 'selected' : ''}>Link <span class="badge marca-toggle text-outline-link"><?= __('deporte_padel.ejemplo') ?></span></option>
+                </select>
+                <div class="input-group-text">
+                    <input type="checkbox" class="form-check-input mt-0" name="elegido-editar" value="${index}" ${elegido === index ? 'checked' : ''} onchange="actualizarElegido('editar')">
+                    <label class="form-check-label ms-2"><?= __('deporte_padel.defecto') ?></label>
+                </div>
+                <button type="button" class="btn btn-outline-danger" onclick="eliminarOpcion(this, 'editar')">Eliminar</button>
+            </div>`;
+    });
+    new bootstrap.Modal(document.getElementById('editarMarcaModal')).show();
+}
+
+document.getElementById('formAgregarMarca').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const opcionesLista = document.getElementById('opciones-lista-agregar').children;
+    const opciones = [];
+    const estilo = [];
+    let elegido = null;
+    for (let i = 0; i < opcionesLista.length; i++) {
+        const input = opcionesLista[i].querySelector('input[type="text"]').value;
+        const select = opcionesLista[i].querySelector('select').value;
+        const checkbox = opcionesLista[i].querySelector('input[type="checkbox"]');
+        opciones.push(input);
+        estilo.push(select);
+        if (checkbox.checked) elegido = i;
+    }
+    if (!formData.get('titulo')) {
+        alert('<?= __('deporte_padel.titulo_requerido') ?>');
+        return;
+    }
+    if (opciones.length === 0) {
+        alert('<?= __('deporte_padel.opciones_requeridas') ?>');
+        return;
+    }
+    const data = {
+        evento_uuid: formData.get('evento_uuid'),
+        opciones: opciones,
+        estilo: estilo,
+        elegido: elegido,
+        titulo: formData.get('titulo'),
+        formulario: formData.get('formulario') === 'on',
+        obligatorio: formData.get('obligatorio') === 'on',
+    };
+    fetch('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'marcas-guardar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?= csrf_token() ?>' },
+        body: JSON.stringify(data)
+    })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.success);
+            document.getElementById('agregarMarcaModal').querySelector('.btn-close').click();
+            window.location.reload();
+        });
+});
+
+document.getElementById('formEditarMarca').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const opcionesLista = document.getElementById('opciones-lista-editar').children;
+    const opciones = [];
+    const estilo = [];
+    let elegido = null;
+    for (let i = 0; i < opcionesLista.length; i++) {
+        const input = opcionesLista[i].querySelector('input[type="text"]').value;
+        const select = opcionesLista[i].querySelector('select').value;
+        const checkbox = opcionesLista[i].querySelector('input[type="checkbox"]');
+        opciones.push(input);
+        estilo.push(select);
+        if (checkbox.checked) elegido = i;
+    }
+    if (!formData.get('titulo')) {
+        alert('<?= __('deporte_padel.titulo_requerido') ?>');
+        return;
+    }
+    if (opciones.length === 0) {
+        alert('<?= __('deporte_padel.opciones_requeridas') ?>');
+        return;
+    }
+    const data = {
+        opciones: opciones,
+        estilo: estilo,
+        elegido: elegido,
+        titulo: formData.get('titulo'),
+        formulario: formData.get('formulario') === 'on',
+        obligatorio: formData.get('obligatorio') === 'on',
+    };
+    fetch('<?= url("mod/padel/gestion/nominas/marcas/editar") ?>/' + formData.get('uuid'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?= csrf_token() ?>' },
+        body: JSON.stringify(data)
+    })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editarMarcaModal').querySelector('.btn-close').click();
+            cargarMarcas();
+        });
+});
+
+document.addEventListener('DOMContentLoaded', cargarMarcas);
+</script>
+
+<script>
+$(document).on('click', '.btn-inscribir', function () {
+    const categoriaUuid = $(this).data('uuid');
+    $('#campoCategoriaUuid').val(categoriaUuid);
+    const $form = $('#modalInscribirUsuarios').find('form');
+    $form.attr('action', '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'inscribir', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>');
+    $form.find('input[name="nomina_uuid"]').remove();
+    $('#usuario_id_1').val(null).trigger('change');
+    $('#usuario_id_2').val(null).trigger('change');
+});
+$(document).on('click', '.btn-ordenar-ranking, .btn-ordenar-random', function () {
+    const categoriaUuid = $(this).data('categoria-uuid');
+    const tipo = $(this).hasClass('btn-ordenar-ranking') ? 'ranking' : 'random';
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'ordenar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: { categoria_uuid: categoriaUuid, tipo: tipo, _token: '<?= csrf_token() ?>' },
+        success: function (response) {
+            if (response.success) location.reload();
+            else alert('<?= __('deporte_padel.error_ordenar_nomina') ?>');
+        },
+        error: function () { alert('<?= __('deporte_padel.error_procesar_ordenamiento') ?>'); }
+    });
+});
+$(document).on('click', '.delete-btn', function () {
+    if (!confirm('<?= __('deporte_padel.confirmar_eliminar_registro') ?>')) return;
+    const nominaUuid = $(this).data('nomina-uuid');
+    const categoriaUuid = $(this).data('categoria-uuid');
+    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'borrar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        nomina_uuid: nominaUuid, mod_gestion_categoria_uuid: categoriaUuid, _token: '<?= csrf_token() ?>'
+    }, function () { location.reload(); });
+});
+$(document).on('click', '.btn-editar-restricciones', function () {
+    const nominaUuid = $(this).data('nomina-uuid');
+    const userUuid = $(this).data('user-uuid');
+    $('#restriccionesUserUuid').val(userUuid);
+    $('#restriccionesNominaUuid').val(nominaUuid);
+    $.get('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'obt_rstr', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        nomina_uuid: nominaUuid, user_uuid: userUuid
+    }, function (response) {
+        const total = response.restricciones.length;
+        const porColumna = Math.ceil(total / 3);
+        let html = '<div class="row">';
+        for (let i = 0; i < 3; i++) {
+            html += '<div class="col">';
+            const inicio = i * porColumna;
+            const fin = Math.min(inicio + porColumna, total);
+            for (let j = inicio; j < fin; j++) {
+                const r = response.restricciones[j];
+                const checked = response.seleccionadas.includes(r.id) ? 'checked' : '';
+                html += `
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" value="${r.id}" id="restriccion-${r.id}" ${checked}>
+                        <label class="form-check-label" for="restriccion-${r.id}">${r.hora_inicio}</label>
+                    </div>
+                `;
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+        $('#listaRestricciones').html(html);
+    });
+});
+$('#formRestricciones').on('submit', function (e) {
+    e.preventDefault();
+    const seleccionadas = [];
+    const nominaUuid = $('#restriccionesNominaUuid').val();
+    $('#listaRestricciones input:checked').each(function () { seleccionadas.push($(this).val()); });
+    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'g_rstr', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        nomina_uuid: $('#restriccionesNominaUuid').val(), user_uuid: $('#restriccionesUserUuid').val(),
+        restricciones: seleccionadas, _token: '<?= csrf_token() ?>'
+    }, function () {
+        $('#modalRestricciones').modal('hide');
+        const $boton = $(`.btn-editar-restricciones[data-user-uuid="${$('#restriccionesUserUuid').val()}"][data-nomina-uuid="${$('#restriccionesNominaUuid').val()}"]`);
+        $(`#restricciones-count-${nominaUuid}`).text(seleccionadas.length);
+        cerrarCargando();
+    });
+});
+$(document).on('click', '.marca-toggle, .text-light-secondary', function () {
+    const $badge = $(this);
+    const userUuid = $badge.closest('.marcas-usuario').data('user-uuid');
+    const nominaUuid = $badge.data('nomina-uuid');
+    const index = $badge.data('index');
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_marca', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: { user_uuid: userUuid, nomina_uuid: nominaUuid, index: index, _token: '<?= csrf_token() ?>' },
+        success: function (response) {
+            $badge.text(response.texto);
+            $badge.removeClass().addClass('badge marca-toggle text-outline-' + response.estilo);
+        },
+        error: function () { alert('<?= __('deporte_padel.error_actualizar_marca') ?>'); }
+    });
+});
+$(document).on('click', '.btn-editar-numero', function () {
+    $('#numeroUserUuid').val($(this).data('user-uuid'));
+    $('#numeroNominaUuid').val($(this).data('nomina-uuid'));
+    $('#nuevoNumero').val($(this).data('numero') ?? '');
+});
+$(document).on('click', '.btn-editar-email', function () {
+    $('#emailUserUuid').val($(this).data('user-uuid'));
+    $('#emailNominaUuid').val($(this).data('nomina-uuid'));
+    $('#nuevoEmail').val($(this).data('email') ?? '');
+});
+$('#formEditarNumero').on('submit', function (e) {
+    e.preventDefault();
+    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_tel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        user_uuid: $('#numeroUserUuid').val(), nomina_uuid: $('#numeroNominaUuid').val(),
+        numero: $('#nuevoNumero').val(), _token: '<?= csrf_token() ?>'
+    }, function (response) {
+        $('#modalEditarNumero').modal('hide');
+        $('.numero-texto[data-user-uuid="' + response.user_uuid + '"]').text(response.numero ?? 'No registra');
+        cerrarCargando();
+    });
+});
+$('#formEditarEmail').on('submit', function (e) {
+    e.preventDefault();
+    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_mail', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+        user_uuid: $('#emailUserUuid').val(), nomina_uuid: $('#emailNominaUuid').val(),
+        email: $('#nuevoEmail').val(), _token: '<?= csrf_token() ?>'
+    }, function (response) {
+        $('#modalEditarEmail').modal('hide');
+        $('.email-texto[data-user-uuid="' + response.user_uuid + '"]').text(response.email ?? 'No registra');
+        cerrarCargando();
+    });
+});
+$(document).on('click', '.btn-editar-identificacion', function () {
+    $('#nominaUuidIdentificacion').val($(this).data('nomina-uuid'));
+    $('#userUuidIdentificacion').val($(this).data('user-uuid'));
+    $('#documentoEditar').val($(this).data('documento') ?? '');
+    $('#paisUuidEditar').val($(this).data('pais-uuid') ?? '');
+});
+$('#formEditarIdentificacion').on('submit', function (e) {
+    e.preventDefault();
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_ident', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: {
+            nomina_uuid: $('#nominaUuidIdentificacion').val(), user_uuid: $('#userUuidIdentificacion').val(),
+            pais_uuid: $('#paisUuidEditar').val(), documento: $('#documentoEditar').val(), _token: '<?= csrf_token() ?>'
+        },
+        success: function (response) {
+            $('#modalEditarIdentificacion').modal('hide');
+            const contenedor = $(`.identificacion[data-user-uuid="${response.user_uuid}"]`);
+            contenedor.find('.documento-texto').text(response.documento ?? 'No registra');
+            if (response.pais_sigla) {
+                contenedor.find('.bandera-pais').attr('src', `https://flagcdn.com/h20/${response.pais_sigla.toLowerCase()}.png`);
+            } else {
+                contenedor.find('.bandera-pais').remove();
+            }
+            cerrarCargando();
+        },
+        error: function (xhr) {
+            const errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '<?= __('deporte_padel.error_actualizar_identificacion') ?>';
+            alert(errorMessage);
+            cerrarCargando();
+        }
+    });
+});
+$(document).on('click', '.btn-editar-ranking-manual', function () {
+    $('#nominaUuidRanking').val($(this).data('nomina-uuid'));
+    $('#nuevoRanking').val($(this).data('ranking') ?? '');
+});
+$('#formRankingManual').on('submit', function (e) {
+    e.preventDefault();
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_rnk', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: {
+            nomina_uuid: $('#nominaUuidRanking').val(), rankingt_manual: $('#nuevoRanking').val(), _token: '<?= csrf_token() ?>'
+        },
+        success: function (response) {
+            $('#modalRankingManual').modal('hide');
+            const $element = $(`.ranking-visual[data-nomina-uuid="${response.nomina_uuid}"]`);
+            $element.html(`<i class="ti ti-star" style="font-size: 20px; color: red;"></i> ${response.rankingt_manual}`);
+            cerrarCargando();
+        },
+        error: function () { alert('<?= __('deporte_padel.error_actualizar_ranking') ?>'); }
+    });
+});
+$('#btnRankingAuto').on('click', function () {
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_rnk', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: {
+            nomina_uuid: $('#nominaUuidRanking').val(), rankingt_manual: null, _token: '<?= csrf_token() ?>'
+        },
+        success: function (response) {
+            $('#modalRankingManual').modal('hide');
+            const $element = $(`.ranking-visual[data-nomina-uuid="${response.nomina_uuid}"]`);
+            $element.html(response.rankingt_auto_html);
+            cerrarCargando();
+        },
+        error: function () { alert('<?= __('deporte_padel.error_restaurar_ranking_auto') ?>'); }
+    });
+});
+$(document).on('click', '.btn-editar-nombre', function () {
+    $('#nominaUuidEditar').val($(this).data('nomina-uuid'));
+    $('#userUuidEditar').val($(this).data('user-uuid'));
+    $('#nuevoNombre').val($(this).data('nombre-actual'));
+});
+$('#formEditarNombre').on('submit', function (e) {
+    e.preventDefault();
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_nombre', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: {
+            nomina_uuid: $('#nominaUuidEditar').val(), user_uuid: $('#userUuidEditar').val(),
+            nombre: $('#nuevoNombre').val(), _token: '<?= csrf_token() ?>'
+        },
+        success: function () {
+            $('#modalEditarNombre').modal('hide');
+            $(`.nombre-usuario[data-user-uuid="${$('#userUuidEditar').val()}"]`).text($('#nuevoNombre').val());
+            cerrarCargando();
+        },
+        error: function () { alert('<?= __('deporte_padel.error_actualizar_nombre') ?>'); }
+    });
+});
+let nominaOrigenId = null;
+$(document).on('click', '.btn-reordenar', function () {
+    nominaOrigenId = $(this).data('nomina-id');
+    $('.btn-reordenar').each(function () {
+        $(this).html('<i class="ti ti-arrows-vertical text-secondary" style="font-size: 20px;"></i>');
+        $(this).prop('disabled', false);
+        $(this).removeClass('btn-reordenar-destino').addClass('btn-reordenar');
+    });
+    $('.btn-reordenar').each(function () {
+        const posibleDestinoId = $(this).data('nomina-id');
+        if (posibleDestinoId !== nominaOrigenId) {
+            $(this).html('<i class="ti ti-arrows-diff text-success" style="font-size: 20px;"></i>');
+            $(this).removeClass('btn-reordenar').addClass('btn-reordenar-destino');
+        } else {
+            $(this).prop('disabled', true);
+        }
+    });
+});
+$(document).on('click', '.btn-reordenar-destino', function () {
+    const nominaDestinoId = $(this).data('nomina-id');
+    if (nominaOrigenId === nominaDestinoId) {
+        console.warn('No se puede mover sobre sí mismo.');
+        return;
+    }
+    $.ajax({
+        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'mover', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        data: { origen_id: nominaOrigenId, destino_id: nominaDestinoId, _token: '<?= csrf_token() ?>' },
+        success: function () { location.reload(); },
+        error: function () { alert('<?= __('deporte_padel.error_reordenar_nomina') ?>'); }
+    });
+});
+$('#modalInscribirUsuarios').on('shown.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const categoriaUuid = button.data('categoria-uuid');
+    const nominaUuid = button.data('nomina-uuid');
+    const usuarios = button.data('usuarios') || [];
+
+    // Setear valores en los inputs hidden
+    $('#campoCategoriaUuid').val(categoriaUuid);
+    $('#campoNominaUuid').val(nominaUuid);
+
+    // Cambiar la acción del formulario según si es agregar o editar
+    const form = $('#formInscribirUsuarios');
+    const url = nominaUuid ? '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'editar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>' : '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'inscribir', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>';
+    form.attr('action', url);
+
+    // Limpiar y reinicializar Select2
+    $('.select2-ajax').each(function () {
+        $(this).val(null).trigger('change');
+        $(this).select2('destroy');
+    });
+
+    // Prellenar selects para editar
+    if (nominaUuid && usuarios.length > 0) {
+        usuarios.forEach((usuario, index) => {
+            const select = $(`#usuario_id_${index + 1}`);
+            const option = new Option(usuario.text, usuario.id, true, true);
+            select.append(option).trigger('change');
+        });
+    }
+
+    // Inicializar Select2
+    $('.select2-ajax').select2({
+        dropdownParent: $('#modalInscribirUsuarios'),
+        placeholder: '<?= __("dios.js1") ?>',
+        minimumInputLength: 2,
+        ajax: {
+            url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'buscar_usuario', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+            		const categoriaUuid = button.data('categoria-uuid');
+                return { q: params.term, page: params.page || 1, mod_gestion_categoria_uuid: categoriaUuid };
+            },
+            processResults: function (data, params) {
+                params.page = params.page || 1;
+                return { results: data.results, pagination: { more: data.more } };
+            },
+            cache: true
+        },
+        language: {
+            inputTooShort: function () { return "<?= __('dios.js2') ?>"; },
+            searching: function () { return "<?= __('dios.js3') ?>"; },
+            noResults: function () { return "<?= __('dios.js4') ?>"; },
+            loadingMore: function () { return "<?= __('dios.js5') ?>"; }
+        }
+    });
+});
+
+</script>

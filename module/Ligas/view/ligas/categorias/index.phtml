@@ -1,0 +1,691 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+$menuEV = $this->menuEV ?? (object)[
+    'uuid'           => $evento['uuid'] ?? '',
+    'sedes'          => true,
+    'categorias'     => true,
+    'nominas'        => true,
+    'fixture'        => true,
+    'ranking'        => true,
+    'notificaciones' => true,
+    'logs'           => true,
+];
+$categorias = $this->categorias ?? [];
+?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/glightbox/glightbox.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/select/select2.min.css')); ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.categorias_y_reglas') ?></li>
+                </ol>
+            </div>
+        </div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card-body">
+                <div class="row app-form">
+                    <div class="col-xxl-12">
+                        <div class="mt-1 mb-3">
+                            <label class="form-label"><?= __('deporte_padel.evento') ?></label>
+                            <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
+                                <?php foreach($eventos as $ev): ?>
+                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>"
+                                            <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>>
+                                        <?= $ev['titulo'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV, 'deporte' => $deporte]) ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <ul class="box-list mb-4">
+                <li class="b-s-4-primary">
+                    <h5><?= __('deporte_padel.categorias_y_reglas') ?></h5>
+                    <h7><?= __('deporte_padel.ultima_modificacion') ?> <?= $ultimaModificacion ?? 'Nunca' ?></h7>
+                </li>
+            </ul>
+        </div>
+        <div class="col-xxl-10">
+            <div class="card equal-card">
+                <div class="card-body p-0">
+                    <div id="myTable">
+                        <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                            <?php
+                                function colorHexAleatorio() {
+                                    return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+                                }
+                            ?>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarCategoria">
+                                <?= __('deporte_padel.agregar_categoria') ?>
+                            </button>
+                            <div class="modal fade" id="modalAgregarCategoria" tabindex="-1" aria-labelledby="modalAgregarCategoriaLabel" aria-hidden="true">
+                                <?php if($evento): ?>
+                                <form method="POST" action="<?= $this->url('ligas.categorias', ['deporte' => $deporte, 'accion' => 'nuevacat', 'uuid' => $evento['uuid']]) ?>">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title"><?= __('deporte_padel.agregar_categoria') ?></h5>
+                                                <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cancelar') ?>"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><?= __('deporte_padel.seleccione_categoria') ?></label>
+                                                    <select name="categoria" class="form-select" required>
+                                                        <?php foreach($categoriasOrdenadas ?? [] as $catBase): ?>
+                                                            <option value="<?= $catBase['uuid'] ?>"
+                                                                    <?php if(in_array($catBase['uuid'], $usadas ?? [])): ?> disabled <?php endif; ?>>
+                                                                <?= $catBase['titulo'] ?> - <?= $catBase['subtitulo'] ?>
+                                                                <?php if(in_array($catBase['uuid'], $usadas ?? [])): ?> (Ya asignada) <?php endif; ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><?= __('deporte_padel.color') ?></label>
+                                                    <input type="color" name="color" class="form-control" value="<?= colorHexAleatorio() ?>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><?= __('deporte_padel.limite_participantes') ?></label>
+                                                    <input type="number" name="limite" class="form-control" min="0" value="0" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><?= __('deporte_padel.a_considerar') ?></label>
+                                                    <input type="number" name="a_considerar" class="form-control" min="3" value="3" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar') ?></button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cancelar') ?></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                <?php endif; ?>
+                            </div>
+                            <form class="app-form app-icon-form" action="#">
+                                <div class="position-relative">
+                                    <input type="search" class="form-control search" placeholder="Buscar..." aria-label="Search">
+                                    <i class="ti ti-search text-dark"></i>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 1%;" class="sort" data-sort="employee" scope="col"></th>
+                                        <th style="width: 15%;" class="sort" data-sort="employee" scope="col">Categoría</th>
+                                        <th style="width: 15%;" class="sort" data-sort="contact" scope="col">Inscritos</th>
+                                        <th style="width: 15%;" class="sort" data-sort="date" scope="col">Límite</th>
+                                        <th style="width: 15%;" class="sort" data-sort="status" scope="col">A considerar</th>
+                                        <th style="width: 15%;" class="sort" data-sort="action" scope="col">Estructura</th>
+                                        <th style="width: 15%;" class="sort" data-sort="action" scope="col">Reglas</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-data">
+                                    <?php foreach($categorias as $cat): ?>
+                                        <tr>
+                                        		<td>
+																								<button type="button" <?php if($cat['inscritos'] == 0): ?> data-categoria-uuid="<?= $cat['uuid'] ?>" <?php endif; ?>
+																								        class="btn btn-light-danger icon-btn b-r-4 btn-eliminar-categoria"
+																								        <?php if($cat['inscritos'] != 0): ?> disabled <?php endif; ?>>
+																								    <i class="ti ti-trash <?php if($cat['inscritos'] != 0): ?> text-muted <?php else: ?> text-danger <?php endif; ?>"></i>
+																								</button>
+                                        		</td>
+                                            <td>
+                                                <div class="d-flex justify-content-left align-items-center">
+                                                    <div class="h-30 w-45 d-flex-center overflow-hidden me-2">
+                                                        <input type="color" class="form-control color-input" value="<?= $cat['color'] ?>" data-id="<?= $cat['id'] ?>">
+                                                    </div>
+                                                    <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2">
+                                                        <?= $cat['icono'] ?? '' ?>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="f-s-15 mb-0"><?= $cat['titulo'] ?></h6>
+                                                        <p class="text-secondary f-s-13 mb-0"><?= $cat['subtitulo'] ?? '' ?></p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="contact">
+                                                <span class="badge text-light-success fs-6"><?= $cat['inscritos'] ?></span>
+                                            </td>
+                                            <td class="date">
+                                                <span class="badge text-light-success fs-6"><?= $cat['limite'] ?></span>
+                                                <button type="button" class="btn btn-light-success icon-btn b-r-4"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalEditarCategoria"
+                                                        onclick="abrirModalEdicion(<?= $cat['id'] ?>, <?= $cat['limite'] ?>, <?= $cat['a_considerar'] ?>)">
+                                                    <i class="ti ti-edit text-success"></i>
+                                                </button>
+                                            </td>
+                                            <td class="date">
+                                                <span class="badge text-light-success fs-6"><?= $cat['a_considerar'] ?></span>
+                                                <button type="button" class="btn btn-light-success icon-btn b-r-4"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalEditarCategoria"
+                                                        onclick="abrirModalEdicion(<?= $cat['id'] ?>, <?= $cat['limite'] ?>, <?= $cat['a_considerar'] ?>)">
+                                                    <i class="ti ti-edit text-success"></i>
+                                                </button>
+                                            </td>
+                                            <td class="date">
+                                                <span class="badge text-light-success fs-6"><?= $cat['estructura'] ?? 'N/A' ?></span>
+                                                <button type="button" class="btn btn-light-success icon-btn b-r-4"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalEstructura"
+                                                        onclick="abrirModalEstructura(<?= $cat['id'] ?>, <?= $cat['a_considerar'] ?>)">
+                                                    <i class="ti ti-edit text-success"></i>
+                                                </button>
+                                            </td>
+                                            <td class="edit">
+                                                <button class="btn btn-sm btn-success" onclick="mostrarReglas(<?= $cat['id'] ?>)">
+                                                    Mostrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-labelledby="modalEditarCategoriaLabel" aria-hidden="true">
+                            <form method="POST" action="" id="formEditarCategoria">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title"><?= __('deporte_padel.editar_categoria') ?></h5>
+                                            <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cancelar') ?>"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" name="categoria_id" id="categoria_id_modal">
+                                            <div class="mb-3">
+                                                <label class="form-label"><?= __('deporte_padel.limite_participantes') ?></label>
+                                                <input type="number" name="limite" id="limite_modal" class="form-control" min="0">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label"><?= __('deporte_padel.a_considerar') ?></label>
+                                                <input type="number" name="a_considerar" id="a_considerar_modal" class="form-control" min="3">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar_cambios') ?></button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cancelar') ?></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal fade" id="modalEstructura" tabindex="-1" aria-labelledby="modalEstructuraLabel" aria-hidden="true">
+                            <form method="POST" action="" id="formEstructura">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title"><?= __('deporte_padel.seleccionar_estructura') ?></h5>
+                                            <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cancelar') ?>"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!-- Nuevo campo oculto para la selección dinámica -->
+                                            <input type="hidden" name="custom_clasificados_value" id="customClasificadosValue">
+                                            
+                                            <!-- Contenedor para estructuras y selector dinámico -->
+                                            <div id="contenedorEstructuras"></div>
+                                            
+                                            <!-- Contenedor para el selector dinámico de Clasificados (se rellena con JS) -->
+                                            <div id="dynamicClasificadosSelector" class="mt-3" style="display:none;">
+                                                <label for="clasificadosSelect" class="form-label">Selecciona cuantos clasifican al PlayOff:</label>
+                                                <select id="clasificadosSelect" class="form-select"></select>
+                                                <p class="text-secondary mt-1">El número de partidos de PlayOff será: <span id="playoffMatchesCount">1</span></p>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.guardar') ?></button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cancelar') ?></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal fade" id="modalReglas" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><?= __('deporte_padel.reglas_juego') ?></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body" id="modalContenidoReglas">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-pagination">
+                            <ul class="pagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-2">
+            <div class="card">
+                <span class="bg-<?= ($total_bloques ?? 0 == 0 || ($total_bloques ?? 0) < ($total_requerido ?? 0)) ? 'danger' : 'primary' ?> h-50 w-50 d-flex-center rounded-circle m-auto eshop-icon-box">
+                    <i class="ph ph-stack f-s-24"></i>
+                </span>
+                <div class="card-body eshop-cards">
+                    <span class="ripple-effect"></span>
+                    <div class="overflow-hidden">
+                        <h3 class="text-primary mb-0"><?= $total_bloques ?? 0 ?></h3>
+                        <p class="mg-b-35 f-w-600 text-dark-800 txt-ellipsis-1"><?= __('deporte_padel.bloques_creados') ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <span class="bg-<?= ($total_bloques ?? 0) < ($total_requerido ?? 0) ? 'danger' : 'primary' ?> h-50 w-50 d-flex-center rounded-circle m-auto eshop-icon-box">
+                    <i class="ph ph-chart-bar f-s-24"></i>
+                </span>
+                <div class="card-body eshop-cards">
+                    <span class="ripple-effect"></span>
+                    <div class="overflow-hidden">
+                        <h3 class="text-primary mb-0"><?= $total_requerido ?? 0 ?></h3>
+                        <p class="mg-b-35 f-w-600 text-dark-800 txt-ellipsis-1"><?= __('deporte_padel.bloques_requeridos') ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+				<div class="col-xxl-10">
+				    <div class="card hover-effect card-primary">
+				        <div class="card-body">
+				            <i class="ti ti-alarm icon-bg"></i>
+				            <h6><?= __('deporte_padel.categorias_disponibles') ?></h6>
+				            <p><?= __('deporte_padel.categorias_disponibles_descripcion') ?></p>
+				        </div>
+				    </div>
+				</div>
+				<div class="col-xxl-10">
+				    <div class="card equal-card">
+				        <div class="card-body p-0">
+				            <div id="myTableDisponibles">
+				                <div class="list-table-header d-flex justify-content-sm-between mb-3">
+				                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarCategoriaDisponible" onclick="cargarCategoriasDisponibles()">
+				                        <?= __('deporte_padel.agregar_categoria') ?>
+				                    </button>
+				                    <form class="app-form app-icon-form" action="#">
+				                        <div class="position-relative">
+				                            <input type="search" class="form-control search" placeholder="<?= __('deporte_padel.buscar') ?>" aria-label="Search">
+				                            <i class="ti ti-search text-dark"></i>
+				                        </div>
+				                    </form>
+				                </div>
+				                <div class="overflow-auto app-scroll">
+				                    <table class="table table-bottom-border list-table-data align-middle mb-0">
+				                        <thead>
+				                            <tr class="app-sort">
+				                                <th style="width: 40%;" class="sort" data-sort="titulo" scope="col"><?= __('deporte_padel.titulo') ?></th>
+				                                <th style="width: 40%;" class="sort" data-sort="subtitulo" scope="col"><?= __('deporte_padel.subtitulo') ?></th>
+				                                <th style="width: 20%;" class="sort" data-sort="action" scope="col"><?= __('deporte_padel.acciones') ?></th>
+				                            </tr>
+				                        </thead>
+				                        <tbody class="list" id="t-data-disponibles">
+				                            <?php foreach($categoriasDisponibles ?? [] as $cat): ?>
+				                                <tr>
+				                                    <td>
+				                                        <div class="d-flex justify-content-left align-items-center">
+				                                            <div class="h-30 w-30 d-flex-center b-r-50 overflow-hidden me-2">
+				                                                <?= $cat['icono'] ?? '' ?>
+				                                            </div>
+				                                            <div>
+				                                                <h6 class="f-s-15 mb-0"><?= $cat['titulo'] ?></h6>
+				                                            </div>
+				                                        </div>
+				                                    </td>
+				                                    <td><?= $cat['subtitulo'] ?? '' ?></td>
+				                                    <td>
+				                                        <button type="button" class="btn btn-light-danger icon-btn b-r-4" onclick="eliminarAcceso(<?= $cat['id'] ?>)">
+				                                            <i class="ti ti-trash text-danger"></i>
+				                                        </button>
+				                                    </td>
+				                                </tr>
+				                            <?php endforeach; ?>
+				                        </tbody>
+				                    </table>
+				                </div>
+				                <div class="modal fade" id="modalAgregarCategoriaDisponible" tabindex="-1" aria-labelledby="modalAgregarCategoriaDisponibleLabel" aria-hidden="true">
+				                    <div class="modal-dialog">
+				                        <div class="modal-content">
+				                            <div class="modal-header">
+				                                <h5 class="modal-title"><?= __('deporte_padel.agregar_categoria') ?></h5>
+				                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= __('deporte_padel.cancelar') ?>"></button>
+				                            </div>
+				                            <div class="modal-body" id="contenedorCategoriasDisponibles">
+				                                <!-- Contenido cargado por JS -->
+				                            </div>
+				                            <div class="modal-footer">
+				                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cancelar') ?></button>
+				                            </div>
+				                        </div>
+				                    </div>
+				                </div>
+				                <div class="list-pagination">
+				                    <ul class="pagination"></ul>
+				                </div>
+				            </div>
+				        </div>
+				    </div>
+				</div>
+    </div>
+</div>
+
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/apexcharts/apexcharts.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/glightbox/glightbox.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/vendor/select/select2.min.js')); ?>
+<?php $this->inlineScript()->appendFile($this->basePath('assets/js/select.js')); ?>
+
+<script>
+const URL_ELIMINAR = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'eliminar-categoria', 'uuid' => 'UUID_PLACEHOLDER']) ?>";
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.btn-eliminar-categoria[data-categoria-uuid]').forEach(boton => {
+        boton.addEventListener('click', function () {
+            const uuid = this.getAttribute('data-categoria-uuid');
+            if (confirm('<?= __('deporte_padel.seguro_eliminar_categoria') ?>')) {
+                fetch(URL_ELIMINAR.replace('UUID_PLACEHOLDER', uuid), {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': 'csrf_disabled'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('<?= __('deporte_padel.error_procesar_solicitud') ?>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('<?= __('deporte_padel.error_procesar_solicitud') ?>');
+                });
+            }
+        });
+    });
+});
+function cargarCategoriasDisponibles() {
+    fetch("<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'disponibles', 'uuid' => ($evento['uuid'] ?? '')]) ?>")
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('contenedorCategoriasDisponibles');
+            container.innerHTML = '';
+            data.forEach(cat => {
+                container.innerHTML += `
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="${cat.id}" id="cat${cat.id}">
+                        <label class="form-check-label" for="cat${cat.id}">
+                            ${cat.titulo} - ${cat.subtitulo}
+                        </label>
+                    </div>
+                `;
+            });
+            container.innerHTML += '<button type="button" class="btn btn-primary" onclick="agregarSeleccionadas()">Agregar Seleccionadas</button>';
+        });
+}
+function agregarSeleccionadas() {
+    const seleccionados = Array.from(document.querySelectorAll('#contenedorCategoriasDisponibles input:checked')).map(input => input.value);
+    if (seleccionados.length === 0) return;
+    if (confirm('¿Agregar estas categorías?')) {
+        seleccionados.forEach(id => {
+            fetch("<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'agregar-acceso', 'uuid' => ($evento['uuid'] ?? '')]) ?>", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': 'csrf'},
+                body: JSON.stringify({categoria_lista_id: id})
+            }).then(() => location.reload());
+        });
+    }
+}
+function eliminarAcceso(id) {
+    if (confirm('¿Eliminar esta categoría?')) {
+        let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'eliminar-acceso', 'uuid' => ($evento['uuid'] ?? '')]) ?>";
+        fetch(baseUrl + '/' + id, {
+            method: 'DELETE',
+            headers: {'X-CSRF-TOKEN': 'csrf'}
+        }).then(() => location.reload());
+    }
+}
+function abrirModalEdicion(id, limite, a_considerar) {
+    let baseUpdate = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'actcat', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    document.getElementById('formEditarCategoria').action = baseUpdate;
+    document.getElementById('categoria_id_modal').value = id;
+    document.getElementById('limite_modal').value = limite;
+    document.getElementById('a_considerar_modal').value = a_considerar;
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.color-input').forEach(function(input) {
+        input.addEventListener('change', function () {
+            const color = this.value;
+            const id = this.dataset.id;
+            let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'updateColor', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+            fetch(baseUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': 'csrf'
+                },
+                body: JSON.stringify({ color })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.style.borderColor = data.color;
+                }
+            });
+        });
+    });
+    
+    // Lógica para actualizar el valor dinámico al cambiar el selector
+    const select = document.getElementById('clasificadosSelect');
+    if (select) {
+        select.addEventListener('change', function() {
+            const selectedValue = parseInt(this.value);
+            // Actualizar el valor oculto
+            document.getElementById('customClasificadosValue').value = selectedValue;
+            // Actualizar el conteo de partidos de PlayOff
+            document.getElementById('playoffMatchesCount').textContent = selectedValue > 1 ? (selectedValue - 1) : 0;
+            
+            // Re-chequear el radio button asociado al formato Liga + Playoff
+            const checkedRadio = document.querySelector('input[name="estructura_letra"]:checked');
+            if (checkedRadio) {
+                // Forzar la actualización visual del resumen si es necesario, aunque con la lógica de envío no es estrictamente necesario.
+                const infoInput = document.querySelector(`input[name="estructura_info_${checkedRadio.value}"]`);
+                if (infoInput) {
+                    try {
+                        let item = JSON.parse(infoInput.value);
+                        item.Clasificados = selectedValue;
+                        item['Partidos Playoff'] = selectedValue - 1;
+                        item['Total Partidos'] = item['Partidos Fase'] + (selectedValue - 1);
+                        infoInput.value = JSON.stringify(item);
+                        
+                        // Actualizar el resumen visible para el usuario (opcional pero recomendado)
+                        const label = checkedRadio.nextElementSibling;
+                        let resumen = `<strong>${checkedRadio.value}) ${item.Formato}</strong><br>`;
+                        resumen += `Fase Regular: Liga Única (${item.Rondas === 2 ? 'Ida y Vuelta' : 'Solo Ida'}) con ${item['Partidos Fase']} partidos.<br>`;
+                        resumen += `Clasificados al Playoff: ${item.Clasificados}<br>`;
+                        resumen += `Partidos Playoff: ${item['Partidos Playoff']}<br>`;
+                        resumen += `Total de partidos: ${item['Total Partidos']}`;
+                        label.innerHTML = resumen;
+                    } catch (e) {
+                        console.error("Error al parsear JSON:", e);
+                    }
+                }
+            }
+        });
+    }
+    
+    // Listener para cambiar la visibilidad del selector dinámico
+    document.getElementById('contenedorEstructuras').addEventListener('change', function(event) {
+        if (event.target.name === 'estructura_letra') {
+            const letra = event.target.value;
+            const infoInput = document.querySelector(`input[name="estructura_info_${letra}"]`);
+            if (infoInput) {
+                try {
+                    const item = JSON.parse(infoInput.value);
+                    const isDynamic = item.DynamicPlayoff === true;
+                    const selectorDiv = document.getElementById('dynamicClasificadosSelector');
+                    
+                    if (isDynamic) {
+                        selectorDiv.style.display = 'block';
+                        const n = item['Total Participantes'];
+                        setupClasificadosSelect(n, item.Clasificados);
+                        // Disparar el cambio para inicializar el campo oculto y el conteo
+                        document.getElementById('clasificadosSelect').dispatchEvent(new Event('change'));
+                    } else {
+                        selectorDiv.style.display = 'none';
+                        document.getElementById('customClasificadosValue').value = '';
+                    }
+                } catch (e) {
+                    console.error("Error al parsear JSON en cambio de radio:", e);
+                }
+            }
+        }
+    });
+});
+
+function setupClasificadosSelect(total, initialK) {
+    const select = document.getElementById('clasificadosSelect');
+    select.innerHTML = '';
+    
+    // Generar opciones de 2 hasta N, favoreciendo potencias de 2 (2, 4, 8, 16...)
+    let options = [];
+    let k = 2;
+    while (k <= total) {
+        options.push(k);
+        k *= 2;
+    }
+    // Asegurar que si N no es potencia de 2, la opción N esté presente si no lo está.
+    if (!options.includes(total)) {
+        options.push(total);
+    }
+    
+    // Eliminar duplicados y ordenar
+    options = [...new Set(options)].sort((a, b) => a - b);
+    
+    // Construir el dropdown
+    options.forEach(k_val => {
+        if (k_val >= 2) {
+            const option = document.createElement('option');
+            option.value = k_val;
+            option.textContent = `${k_val} Clasificados`;
+            select.appendChild(option);
+        }
+    });
+    
+    // Seleccionar el valor inicial o el más cercano a 2
+    select.value = initialK > 1 ? initialK : (options.length > 0 ? options[0] : 2);
+}
+
+function mostrarReglas(id) {
+    let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'reglas', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    fetch(baseUrl)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('modalContenidoReglas').innerHTML = data.html;
+            const modal = new bootstrap.Modal(document.getElementById('modalReglas'));
+            modal.show();
+        })
+        .catch(() => {
+            document.getElementById('modalContenidoReglas').innerHTML = '<p class="text-danger"><?= __('deporte_padel.no_cargar_reglas') ?></p>';
+        });
+}
+
+function abrirModalEstructura(id, a_considerar) {
+    let baseUrlGuardar = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'guardarestructura', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    document.getElementById('formEstructura').action = baseUrlGuardar;
+    
+    // Limpiar selector dinámico y valor oculto al abrir
+    document.getElementById('dynamicClasificadosSelector').style.display = 'none';
+    document.getElementById('customClasificadosValue').value = '';
+    
+    let baseUrlCalcular = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'calcularestructuras', 'uuid' => '0']) ?>".replace('/0', '/' + a_considerar);
+    fetch(baseUrlCalcular)
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('contenedorEstructuras');
+            container.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const letra = String.fromCharCode(65 + index);
+                let resumen = `<strong>${letra}) ${item.Formato}</strong><br>`;
+
+                if (item.Formato.includes('Liga')) {
+                    const rondas = item.Rondas === 2 ? 'Ida y Vuelta' : 'Solo Ida';
+                    resumen += `Fase Regular: Liga Única (${rondas}) con ${item['Partidos Fase']} partidos.<br>`;
+                    
+                    if (item.DynamicPlayoff) {
+                        resumen += `Clasificados al Playoff: <span class="badge bg-warning text-dark">SELECCIÓN DINÁMICA</span> (${item.Clasificados}+ equipos)<br>`;
+                    } else if (item.Formato.includes('PlayOff')) {
+                        resumen += `Clasificados al Playoff: ${item.Clasificados}<br>`;
+                    } else {
+                        resumen += `Participantes Totales: ${item['Total Participantes']}<br>`;
+                    }
+                    resumen += `Partidos Playoff: ${item['Partidos Playoff']}<br>`;
+                    resumen += `Total de partidos: ${item['Total Partidos']}`;
+
+                } else { // Formato de Grupos o Solo Playoff (Lógica Existente)
+                    if (item.G3 > 0) resumen += `Grupos de 3: ${item.G3}<br>`;
+                    if (item.G4A > 0) resumen += `Grupos de 4 (4 fechas): ${item.G4A}<br>`;
+                    if (item.G4B > 0) resumen += `Grupos de 4 (6 fechas): ${item.G4B}<br>`;
+                    if (item['Partidos Fase'] > 0) resumen += `Partidos en fase de grupos: ${item['Partidos Fase']}<br>`;
+                    
+                    if (item.Formato === 'Solo Playoff') {
+                        resumen += `Playoff de ${item.Clasificados} participantes.<br>`;
+                    } else {
+                        resumen += `Clasificados al Playoff: ${item.Clasificados}<br>`;
+                    }
+                    resumen += `Partidos Playoff: ${item['Partidos Playoff']}<br>`;
+                    resumen += `Total de partidos: ${item['Total Partidos']}`;
+                }
+
+
+                container.innerHTML += `
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="estructura_letra" value="${letra}" id="op${index}" required>
+                        <label class="form-check-label" for="op${index}">
+                            ${resumen}
+                        </label>
+                        <input type="hidden" name="estructura_info_${letra}" value='${JSON.stringify(item)}' data-dynamic="${item.DynamicPlayoff}">
+                    </div>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error("Error al cargar estructuras:", err);
+            document.getElementById('contenedorEstructuras').innerHTML = '<p class="text-danger"><?= __('deporte_padel.no_cargar_reglas') ?></p>';
+        });
+}
+</script>
+

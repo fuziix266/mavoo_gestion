@@ -1,0 +1,264 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+?>
+
+<?php foreach($nomina as $index => $n): ?>
+    <tr>
+        <td style="height:100px; vertical-align:middle; text-align:center;">
+            <div style="display:inline-flex; align-items:center; justify-content:center;">
+                <span><?= $n->orden ?></span>
+                <button class="btn-reordenar" style="background:none; border:none; padding:0;" data-nomina-id="<?= $n->id ?>" data-orden-actual="<?= $n->orden ?>" title="<?= __('deporte_padel.mover') ?>">
+                    <i class="ti ti-arrows-vertical text-secondary" style="font-size:20px;"></i>
+                </button>
+            </div>
+        </td>
+        <?php
+            $userA = user_lookup('uuid', $n->usuarios_uuids[0] ?? null);
+            $idA = $n->usuarios_uuids[0] == ($n->detalles[0]->user_uuid ?? null) ? 0 : 1;
+            $userB = !empty($n->usuarios_uuids[1]) ? user_lookup('uuid', $n->usuarios_uuids[1]) : null;
+            $idB = !empty($n->usuarios_uuids[1]) ? ($n->usuarios_uuids[1] == ($n->detalles[1]->user_uuid ?? null) ? 1 : 0) : null;
+            $userA = $userA ? (object) $userA : null;
+            $userB = $userB ? (object) $userB : null;
+        ?>
+        <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <ul class="avatar-group justify-content-start mb-0" style="list-style:none; padding-left:0; margin:0;">
+                    <li class="h-35 w-35 d-flex b-r-50 overflow-hidden text-bg-primary me-1">
+                        <?php
+                            $miniUrl = $userA ? foto_perfil_mini((int) $userA->id) : null;
+                            $foto = $miniUrl ?? asset('assets/images/avatar/defecto.jpg');
+                        ?>
+                        <img src="<?= $foto ?>" alt="avatar" class="img-fluid">
+                    </li>
+                    <?php if(!empty($userB)): ?>
+                        <?php
+                            $miniUrl = $userB ? foto_perfil_mini((int) $userB->id) : null;
+                            $foto = $miniUrl ?? asset('assets/images/avatar/defecto.jpg');
+                        ?>
+                        <li class="h-35 w-35 d-flex b-r-50 overflow-hidden text-bg-success" data-bs-toggle="tooltip" data-bs-title="">
+                            <img src="<?= $foto ?>" alt="avatar" class="img-fluid">
+                        </li>
+                    <?php endif; ?>
+                </ul>
+                <div style="display:flex; flex-direction:column; justify-content:center; border-left:1px solid #ccc; padding-left:10px;">
+                    <div>
+                        <?php if ($userA->id < 5450 || $userA->id > 5459): ?><button class="btn-editar-nombre" style="background:none; border:none; padding:0;" data-nomina-uuid="<?= $n->uuid ?>" data-user-uuid="<?= $userA->uuid ?>" data-nombre-actual="<?= $userA->name ?>" data-bs-toggle="modal" data-bs-target="#modalEditarNombre">
+                            <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                        </button><?php endif; ?>
+                        <?php
+                            $cantidadPresencias = mod_nomina_count_for_uuid($userA->uuid);
+                        ?>
+                        <?php if($cantidadPresencias > 1): ?>
+                            <span class="badge text-bg-primary badge-notification" title="<?= __('deporte_padel.categorias_diferentes', ['count' => $cantidadPresencias]) ?>"><?= $cantidadPresencias ?></span>
+                        <?php endif; ?>
+                        <span class="nombre-usuario" data-user-uuid="<?= $userA->uuid ?>"><?= $userA->name ?></span>
+                    </div>
+                    <?php if(!empty($userB)): ?>
+                        <div>
+                            <?php if ($userB->id < 5450 || $userB->id > 5459): ?><button class="btn-editar-nombre" style="background:none; border:none; padding:0;" data-nomina-uuid="<?= $n->uuid ?>" data-user-uuid="<?= $userB->uuid ?>" data-nombre-actual="<?= $userB->name ?>" data-bs-toggle="modal" data-bs-target="#modalEditarNombre">
+                                <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                            </button><?php endif; ?>
+                            <?php
+                                $cantidadPresencias = mod_nomina_count_for_uuid($userB->uuid);
+                            ?>
+                            <?php if($cantidadPresencias > 1): ?>
+                                <span class="badge text-bg-primary badge-notification" title="<?= __('deporte_padel.categorias_diferentes', ['count' => $cantidadPresencias]) ?>"><?= $cantidadPresencias ?></span>
+                            <?php endif; ?>
+                            <span class="nombre-usuario" data-user-uuid="<?= $userB->uuid ?>"><?= $userB->name ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+                    <div><i class="ti ti-star" style="font-size:15px; color:gold;"></i> <?= $n->detalles[$idA]->ranking ?></div>
+                    <?php if(!empty($userB)): ?>
+                        <div style="border-top:1px solid #ccc; margin-top:5px; padding-top:5px;"><i class="ti ti-star" style="font-size:15px; color:gold;"></i> <?= $n->detalles[$idB]->ranking ?></div>
+                    <?php endif; ?>
+                </div>
+                <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+                    <div>
+                        <span class="ranking-visual" data-nomina-uuid="<?= $n->uuid ?>">
+                            <?php if(!is_null($n->rankingt_manual)): ?>
+                                <i class="ti ti-star" style="font-size:20px; color:red;"></i> <?= $n->rankingt_manual ?>
+                            <?php else: ?>
+                                <?php if(isset($n->detalles[$idB])): ?>
+                                    <i class="ti ti-star" style="font-size:20px; color:gold;"></i> <?= $n->detalles[$idA]->ranking + $n->detalles[$idB]->ranking ?>
+                                <?php else: ?>
+                                    <i class="ti ti-star" style="font-size:20px; color:gold;"></i> <?= $n->detalles[$idA]->ranking ?>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </span>
+                        <button style="background:none; border:none; padding:0;" class="btn-editar-ranking-manual" data-nomina-uuid="<?= $n->uuid ?>" data-ranking="<?= $n->rankingt_manual ?>" data-bs-toggle="modal" data-bs-target="#modalRankingManual">
+                            <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+                <div class="d-flex align-items-center gap-2">
+                    <?php if ($userA->id < 5450 || $userA->id > 5459): ?><button class="btn-editar-identificacion" style="background:none; border:none; padding:0;" data-nomina-uuid="<?= $n->uuid ?>" data-user-uuid="<?= $userA->uuid ?>" data-documento="<?= $n->detalles[$idA]->documento ?>" data-pais-uuid="<?= $n->detalles[$idA]->pais_uuid ?>" data-bs-toggle="modal" data-bs-target="#modalEditarIdentificacion">
+                        <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                    </button><?php endif; ?>
+                    <div class="identificacion" data-user-uuid="<?= $userA->uuid ?>">
+                        <?php if(!is_null($n->detalles[$idA]->pais_uuid)): ?>
+                            <img class="bandera-pais me-1" src="https://flagcdn.com/h20/<?= strtolower($userA->pais->sigla) ?>.png" alt="bandera" width="20">
+                        <?php else: ?>
+                            <img class="bandera-pais me-1" src="" width="20">
+                        <?php endif; ?>
+                        <span class="documento-texto">
+                            <?php if(!is_null($n->detalles[$idA]->documento)): ?>
+                                <?= $n->detalles[$idA]->documento ?>
+                            <?php else: ?>
+                                <span class="badge text-light-secondary"><?= __('deporte_padel.no_registra') ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+                <?php if(isset($userB)): ?>
+                    <div class="d-flex align-items-center gap-2" style="border-top:1px solid #ccc; margin-top:5px; padding-top:5px;">
+                        <?php if ($userB->id < 5450 || $userB->id > 5459): ?><button class="btn-editar-identificacion" style="background:none; border:none; padding:0;" data-nomina-uuid="<?= $n->uuid ?>" data-user-uuid="<?= $userB->uuid ?>" data-documento="<?= $n->detalles[$idB]->documento ?>" data-pais-uuid="<?= $n->detalles[$idB]->pais_uuid ?>" data-bs-toggle="modal" data-bs-target="#modalEditarIdentificacion">
+                            <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                        </button><?php endif; ?>
+                        <div class="identificacion" data-user-uuid="<?= $userB->uuid ?>">
+                            <?php if(!is_null($n->detalles[$idB]->pais_uuid)): ?>
+                                <img class="bandera-pais me-1" src="https://flagcdn.com/h20/<?= strtolower($userB->pais->sigla) ?>.png" alt="bandera" width="20">
+                            <?php else: ?>
+                                <img class="bandera-pais me-1" src="" width="20">
+                            <?php endif; ?>
+                            <span class="documento-texto">
+                                <?php if(!is_null($n->detalles[$idB]->documento)): ?>
+                                    <?= $n->detalles[$idB]->documento ?>
+                                <?php else: ?>
+                                    <span class="badge text-light-secondary"><?= __('deporte_padel.no_registra') ?></span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </td>
+        <td>
+            <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+                <div class="d-flex align-items-center gap-2">
+                    <?php if ($userA->id < 5450 || $userA->id > 5459): ?><button class="btn-editar-numero" style="background:none; border:none; padding:0;" data-user-uuid="<?= $userA->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-numero="<?= $n->detalles[$idA]->numero ?>" data-bs-toggle="modal" data-bs-target="#modalEditarNumero">
+                        <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                    </button><?php endif; ?>
+                    <span class="numero-texto" data-user-uuid="<?= $userA->uuid ?>">
+                        <?= isset($n->detalles[$idA]->numero) ? '+' . $n->detalles[$idA]->numero : '<span class="badge text-light-secondary">' . __('deporte_padel.no_registra') . '</span>' ?>
+                    </span>
+                </div>
+                <?php if(isset($userB)): ?>
+                    <div class="d-flex align-items-center gap-2" style="border-top:1px solid #ccc; margin-top:5px; padding-top:5px;">
+                        <?php if ($userB->id < 5450 || $userB->id > 5459): ?><button class="btn-editar-numero" style="background:none; border:none; padding:0;" data-user-uuid="<?= $userB->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-numero="<?= $n->detalles[$idB]->numero ?>" data-bs-toggle="modal" data-bs-target="#modalEditarNumero">
+                            <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                        </button><?php endif; ?>
+                        <span class="numero-texto" data-user-uuid="<?= $userB->uuid ?>">
+                            <?= isset($n->detalles[$idB]->numero) ? '+' . $n->detalles[$idB]->numero : '<span class="badge text-light-secondary">' . __('deporte_padel.no_registra') . '</span>' ?>
+                        </span>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </td>
+        <td>
+            <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+                <div class="d-flex align-items-center gap-2">
+                    <?php if ($userA->id < 5450 || $userA->id > 5459): ?><button class="btn-editar-email" style="background:none; border:none; padding:0;" data-user-uuid="<?= $userA->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-email="<?= $n->detalles[$idA]->email ?>" data-bs-toggle="modal" data-bs-target="#modalEditarEmail">
+                        <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                    </button>
+                    <span class="email-texto" data-user-uuid="<?= $userA->uuid ?>">
+                        <?= $n->detalles[$idA]->email ?? '<span class="badge text-light-secondary">' . __('deporte_padel.no_registra') . '</span>' ?>
+                    </span><?php else: ?>
+                    <span class="badge text-light-secondary"><?= __('deporte_padel.no_registra') ?></span>
+                    <?php endif; ?>
+                </div>
+                <?php if(isset($userB)): ?>
+                    <div class="d-flex align-items-center gap-2" style="border-top:1px solid #ccc; margin-top:5px; padding-top:5px;">
+                        <?php if ($userB->id < 5450 || $userB->id > 5459): ?><button class="btn-editar-email" style="background:none; border:none; padding:0;" data-user-uuid="<?= $userB->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-email="<?= $n->detalles[$idB]->email ?>" data-bs-toggle="modal" data-bs-target="#modalEditarEmail">
+                            <i class="ti ti-pencil" style="font-size:15px; color:black;"></i>
+                        </button>
+                        <span class="email-texto" data-user-uuid="<?= $userB->uuid ?>">
+                            <?= $n->detalles[$idB]->email ?? '<span class="badge text-light-secondary">' . __('deporte_padel.no_registra') . '</span>' ?>
+                        </span><?php else: ?>
+		                    <span class="badge text-light-secondary"><?= __('deporte_padel.no_registra') ?></span>
+		                    <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </td>
+<td>
+    <div style="display:flex; flex-direction:column; justify-content:center; padding-left:0;">
+        <div class="marcas-usuario" data-user-uuid="<?= $userA->uuid ?>">
+        	<?php if ($userA->id < 5450 || $userA->id > 5459): ?>
+            <?php foreach($n->detalles[$idA]->marcas as $index => $marca): ?>
+                <?php
+                    $elegido = $marca['elegido'];
+                ?>
+                <?php if(!is_null($elegido)): ?>
+                    <span class="badge marca-toggle text-outline-<?= $marca['estilo'][$elegido] ?>" data-user-uuid="<?= $userA->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-index="<?= $index ?>" style="cursor:pointer;">
+                        <?= $marca['opciones'][$elegido] ?>
+                    </span>
+                <?php else: ?>
+                    <span class="badge marca-toggle text-light-secondary" data-user-uuid="<?= $userA->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-index="<?= $index ?>" style="cursor:pointer;">
+                        <?= $marca['Titulo'] ?>
+                    </span>
+                <?php endif; ?>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+        <?php if(isset($userB)): ?>
+            <div class="marcas-usuario" data-user-uuid="<?= $userB->uuid ?>" style="border-top:1px solid #ccc; margin-top:5px; padding-top:5px;">
+            	<?php if ($userB->id < 5450 || $userB->id > 5459): ?>
+                <?php foreach($n->detalles[$idB]->marcas as $index => $marca): ?>
+                    <?php
+                        $elegido = $marca['elegido'];
+                    ?>
+                    <?php if(!is_null($elegido)): ?>
+                        <span class="badge marca-toggle text-outline-<?= $marca['estilo'][$elegido] ?>" data-user-uuid="<?= $userB->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-index="<?= $index ?>" style="cursor:pointer;">
+                            <?= $marca['opciones'][$elegido] ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="badge marca-toggle text-light-secondary" data-user-uuid="<?= $userB->uuid ?>" data-nomina-uuid="<?= $n->uuid ?>" data-index="<?= $index ?>" style="cursor:pointer;">
+                            <?= $marca['Titulo'] ?>
+                        </span>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</td>
+        <td>
+            <?php
+                $usuariosFormateados = collect($n->usuarios_uuids)->map(function($uuid) {
+                    $user = user_lookup('uuid', $uuid);
+                    return $user ? ['id' => $user->uuid, 'text' => $user->name . ' (' . $user->email . ')'] : null;
+                })->filter()->values();
+            ?>
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-light-success icon-btn b-r-4 btn-editar-usuarios flex-fill" data-nomina-uuid="<?= $n->uuid ?>" data-categoria-uuid="<?= $categoria->uuid ?>" data-usuarios='@json($usuariosFormateados)' data-bs-toggle="modal" data-bs-target="#modalInscribirUsuarios">
+                    <i class="ti ti-edit text-success"></i>
+                </button>
+                <button type="button" class="btn btn-light-danger icon-btn b-r-4 delete-btn flex-fill" data-nomina-uuid="<?= $n->uuid ?>" data-categoria-uuid="<?= $categoria->uuid ?>">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </div>
+            <?php
+                $restricciones = $evento['sedes']->flatMap(fn($sede) => $sede->restricciones->where('activo', true));
+                $cantRestricciones = count($n->restricciones ?? []);
+            ?>
+            <?php if($restricciones->count() > 0): ?>
+                <div class="mt-1 d-flex">
+                    <button type="button" class="btn btn-warning btn-sm w-100 btn-editar-restricciones d-flex align-items-center justify-content-center" style="background:#FFFFFF;" data-nomina-uuid="<?= $n->uuid ?>" data-user-uuid="<?= $userA->uuid ?>" data-bs-toggle="modal" data-bs-target="#modalRestricciones" title="<?= __('deporte_padel.restricciones') ?>">
+                        <i class="ti ti-alert-triangle fs-5 me-1"></i>
+                        <span id="restricciones-count-<?= $n->uuid ?>" class="badge bg-dark"><?= $cantRestricciones ?></span>
+                    </button>
+                </div>
+            <?php endif; ?>
+        </td>
+    </tr>
+<?php endforeach; ?>

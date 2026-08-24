@@ -1,0 +1,572 @@
+<?php
+$deporte = $this->deporte;
+$evento = $this->evento;
+$eventos = $this->eventos;
+$ultimoAjuste = $this->ultimoAjuste;
+$paises = $this->paises;
+$menuEV = $this->menuEV ?? (object)[
+    'uuid'           => $evento['uuid'] ?? '',
+    'sedes'          => true,
+    'categorias'     => true,
+    'nominas'        => true,
+    'fixture'        => true,
+    'ranking'        => true,
+    'notificaciones' => true,
+    'logs'           => true,
+];
+$asociacion = $this->asociacion ?? null;
+$rankings = $this->rankings ?? [];
+$categorias = $this->categorias ?? [];
+?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/select/select2.min.css')); ?>
+<?php $this->headLink()->appendStylesheet($this->basePath('assets/vendor/glightbox/glightbox.min.css')); ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <div>
+                    <ol class="breadcrumb bg-light-secondary p-2">
+                        <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i> <?= ucfirst($deporte) ?></a></li>
+                        <li class="breadcrumb-item"><a href="<?= $this->url('ligas.ajustes', ['deporte' => $deporte]) ?>"><i class="fa-solid fa-clipboard-list me-1"></i> <?= __('deporte_padel.gestion_evento') ?></a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><i class="fa-solid fa-sliders me-1"></i> <?= __('deporte_padel.ranking') ?></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12" style="position: relative; overflow: hidden; border-radius: 15px;">
+            <img src="<?= asset('assets/deportes/ca_' . $deporte . '.jpg') ?>" style="width: 100%; height: 110px;  object-fit: cover; filter: brightness(0.7) contrast(1.1);" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(240, 237, 237, 0.4) 0%, rgba(134, 134, 134, 0.1) 50%, rgba(255, 255, 255, 0.6) 100%);"></div>
+            <div style="position: absolute; top: 25px; right: 25px; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); padding: 12px 24px; border-radius: 25px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <span style="font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; color: #333; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); letter-spacing: 1px;"><?= ucfirst($deporte) ?></span>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card-body">
+                <div class="row app-form">
+                    <div class="col-xxl-12">
+                        <div class="mt-1 mb-3">
+                            <label class="form-label"><?= __('deporte_padel.evento') ?></label>
+                            <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
+                                <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
+                                <?php foreach($eventos as $ev): ?>
+                                <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>>
+                                    <?= $ev['titulo'] ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <?= $this->partial('ligas/partials/menuh', ['menuEV' => $menuEV , 'deporte' => $deporte]) ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <ul class="box-list mb-4">
+                <li class="b-s-4-primary">
+                    <h5><?= __('deporte_padel.ranking') ?></h5>
+                    <h6><?= __('deporte_padel.ultima_modificacion') ?> <?= date('Y-m-d H:i:s') ?></h6>
+                </li>
+            </ul>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card equal-card" style="border: none; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;">
+                <div class="card-header" style="background: transparent; border: none; padding: 24px; position: relative;">
+                    <?php
+                    $ranking = null;
+                    if ($asociacion && $asociacion->ranking_uuid) {
+                    $ranking = $rankings->firstWhere('uuid', $asociacion->ranking_uuid);
+                    }
+                    ?>
+                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+                    <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                    <?php if ($ranking): ?>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+                            <span style="font-size: 24px;">🏆</span>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;"><?= __('deporte_padel.ranking_asociado') ?></p>
+                            <h6 style="margin: 4px 0 0 0; color: white; font-size: 20px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2);"><?= $ranking->nombre_ranking ?></h6>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); border: 2px dashed rgba(255,255,255,0.3);">
+                            <span style="font-size: 24px; opacity: 0.6;">📊</span>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;"><?= __('deporte_padel.ranking') ?></p>
+                            <h6 style="margin: 4px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.2);"><?= __('deporte_padel.no_ranking_asociado') ?></h6>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card equal-card">
+                <div class="card-body p-0">
+                    <?php if (!empty($rankings)): ?>
+                    <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                        <div>
+                            <?php if (!$asociacion): ?>
+                            <button type="button" class="btn btn-primary btn-asociar-ranking" data-bs-toggle="modal" data-bs-target="#asociarRankingModal"><?= __('deporte_padel.asociar_ranking') ?></button>
+                            <?php else: ?>
+                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'aplicar', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
+                                
+                                <button type="submit" class="btn btn-success btn-aplicar-ranking"><?= __('deporte_padel.actualizar_puntuacion') ?></button>
+                            </form>
+                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'desasociar', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
+                                
+                                <button type="submit" class="btn btn-danger btn-desasociar-ranking"><?= __('deporte_padel.quitar_asociacion_ranking') ?></button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($asociacion): ?>
+                        <form class="app-form app-icon-form" action="#">
+                            <div class="position-relative">
+                                <input type="search" class="form-control search-ranking" placeholder="<?= __('deporte_padel.buscar') ?>" aria-label="Search">
+                                <i class="ti ti-search text-dark"></i>
+                            </div>
+                        </form>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($asociacion): ?>
+                    <div class="overflow-auto app-scroll">
+                        <table class="table table-bottom-border list-table-data align-middle mb-0">
+                            <thead>
+                                <tr class="app-sort">
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.usuario') ?></th>
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.categoria') ?></th>
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.fase') ?></th>
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.resultado') ?></th>
+                                    <th style="width: 10%;" class="sort" scope="col"><?= __('deporte_padel.puntos') ?></th>
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.categoria_manual') ?></th>
+                                    <th style="width: 10%;" class="sort" scope="col"><?= __('deporte_padel.puntos_manual') ?></th>
+                                    <th style="width: 15%;" class="sort" scope="col"><?= __('deporte_padel.acciones') ?></th>
+                                </tr>
+                            </thead>
+                            <tbody class="list" id="t-data-ranking">
+                                <?php foreach (\Mavoo\Model\MavooDb::getAdapter()->query("SELECT * FROM mod_ranking WHERE evento_id = ? ORDER BY puntos DESC", [$evento['id'] ?? null])->toArray() as $rank): ?>
+                                <tr data-uuid="<?= $rank->uuid ?>" data-categoria_manual="<?= $rank->categoria_manual ?>" data-puntos_manual="<?= $rank->puntos_manual ?>">
+                                    <td>
+                                        <div class="d-flex justify-content-left align-items-center">
+                                            <div>
+                                                <h6 class="f-s-15 mb-0"><!--<?= $rank->user_id ?>--><?= user_find($rank->user_id)['name'] ?? 'N/A' ?></h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        $catMod = \Mavoo\Model\MavooDb::getAdapter()->query(
+                                            "SELECT categoria FROM mod_gestion_categorias WHERE id = ?",
+                                            [$rank->categoria_id ?? null]
+                                        )->current();
+                                        $categoriaUuid = $catMod['categoria'] ?? '';
+                                        $categoria = mod_gestion_lookup('mod_gestion_categorias_listas', 'uuid', $categoriaUuid);
+                                        ?>
+                                        <?= $categoria ? ($categoria->titulo . ' ' . $categoria->subtitulo) : 'N/A' ?>
+                                    </td>
+                                    <td><?= $rank->fase ?? 'N/A' ?></td>
+                                    <td><?= $rank->resultado ?? 'N/A' ?></td>
+                                    <td><?= $rank->puntos ?? 'N/A' ?></td>
+                                    <td>
+                                        <?php
+                                        $categoria_manual = mod_gestion_lookup('mod_gestion_categorias_listas', 'id', $rank->categoria_manual ?? null);
+                                        ?>
+                                        <?= $categoria_manual ? ($categoria_manual->titulo . ' ' . $categoria_manual->subtitulo) : 'N/A' ?>
+                                    </td>
+                                    <td><?= $rank->puntos_manual ?? 'N/A' ?></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success edit-manual-btn" data-bs-toggle="modal" data-bs-target="#editManualModal"><?= __('deporte_padel.editar') ?></button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="list-pagination">
+                        <ul class="pagination"></ul>
+                    </div>
+                    <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-xxl-12">
+            <div class="card equal-card">
+                <div class="card-header">
+                    <h5><?= __('deporte_padel.rankings_creados') ?></h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="myTable">
+                        <div class="list-table-header d-flex justify-content-sm-between mb-3">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#rankingModal" data-mode="add"><?= __('deporte_padel.agregar') ?></button>
+                            <?php if (!empty($rankings)): ?>
+                            <form class="app-form app-icon-form" action="#">
+                                <div class="position-relative">
+                                    <input type="search" class="form-control search" placeholder="<?= __('deporte_padel.buscar') ?>" aria-label="Search">
+                                    <i class="ti ti-search text-dark"></i>
+                                </div>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (!empty($rankings)): ?>
+                        <div class="overflow-auto app-scroll">
+                            <table class="table table-bottom-border list-table-data align-middle mb-0">
+                                <thead>
+                                    <tr class="app-sort">
+                                        <th style="width: 15%;" class="sort" data-sort="nombre" scope="col"><?= __('deporte_padel.nombre_ranking') ?></th>
+                                        <th style="width: 45%;" class="sort" data-sort="puntos" scope="col"><?= __('deporte_padel.puntos') ?></th>
+                                        <th style="width: 20%;" class="sort" data-sort="url" scope="col"><?= __('deporte_padel.url') ?></th>
+                                        <th style="width: 20%;" class="sort" data-sort="action" scope="col"><?= __('deporte_padel.acciones') ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list" id="t-data">
+                                    <?php foreach ($rankings as $ranking): ?>
+                                    <tr data-uuid="<?= $ranking->uuid ?>" data-nombre="<?= $ranking->nombre_ranking ?>" data-inscribirse="<?= $ranking->puntos_inscribirse ?>" data-jugar_partido="<?= $ranking->puntos_jugar_partido ?>" data-fase_grupos="<?= $ranking->puntos_fase_grupos ?>" data-32avos="<?= $ranking->puntos_32avos ?>" data-16avos="<?= $ranking->puntos_16avos ?>" data-8vos="<?= $ranking->puntos_8vos ?>" data-cuartos="<?= $ranking->puntos_cuartos ?>" data-semis="<?= $ranking->puntos_semis ?>" data-subcampeon="<?= $ranking->puntos_subcampeon ?>" data-ganador="<?= $ranking->puntos_ganador ?>">
+                                        <td><?= $ranking->nombre_ranking ?></td>
+                                        <td>
+                                            <ul class="list-unstyled mb-0">
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.inscribirse') ?>: <?= $ranking->puntos_inscribirse ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.jugar_partido_tabla') ?>: <?= $ranking->puntos_jugar_partido ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.fase_grupos') ?>: <?= $ranking->puntos_fase_grupos ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.treintaidosavos') ?>: <?= $ranking->puntos_32avos ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.dieciseisavos') ?>: <?= $ranking->puntos_16avos ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.octavos') ?>: <?= $ranking->puntos_8vos ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.cuartos') ?>: <?= $ranking->puntos_cuartos ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.semis') ?>: <?= $ranking->puntos_semis ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.subcampeon') ?>: <?= $ranking->puntos_subcampeon ?></span></li>
+                                                <li><span class="badge bg-light text-dark"><?= __('deporte_padel.ganador') ?>: <?= $ranking->puntos_ganador ?></span></li>
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <?php if ($ranking->url_token): ?>
+                                            <input type="text" value="https://info.mavoo.org/ranking/<?= $ranking->url_token ?>/" readonly class="form-control form-control-sm">
+                                            <button class="btn btn-sm btn-primary copy-url-btn mt-1" data-url="https://info.mavoo.org/ranking/<?= $ranking->url_token ?>/"><?= __('deporte_padel.copiar') ?></button>
+                                            <?php else: ?>
+                                            N/A
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success edit-btn" data-bs-toggle="modal" data-bs-target="#rankingModal" data-mode="edit"><?= __('deporte_padel.editar') ?></button>
+                                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'destroy', 'uuid' => ($evento['uuid'] ?? ''), 'id' => $ranking->uuid]) ?>" method="POST" style="display: inline;">
+                                                
+                                                
+                                                <button type="submit" class="btn btn-sm btn-danger btn-eliminar-ranking" data-nombre="<?= $ranking->nombre_ranking ?>"><?= __('deporte_padel.eliminar') ?></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="list-pagination">
+                            <ul class="pagination"></ul>
+                        </div>
+                        <?php else: ?>
+                        <div class="text-center p-3">
+                            <?= __('deporte_padel.no_rankings_activos') ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="rankingModal" tabindex="-1" aria-labelledby="rankingModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="rankingForm" method="POST">
+                        
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="rankingModalLabel"><?= __('deporte_padel.agregar_ranking') ?></h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="ranking_uuid" name="ranking_uuid">
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.nombre_ranking') ?></label>
+                                <input class="form-control" type="text" id="nombre_ranking" name="nombre_ranking" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.puntos_inscribirse') ?></label>
+                                <input class="form-control" type="number" id="puntos_inscribirse" name="puntos_inscribirse" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.jugar_partido') ?></label>
+                                <input class="form-control" type="number" id="puntos_jugar_partido" name="puntos_jugar_partido" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.jugar_fase_grupos') ?></label>
+                                <input class="form-control" type="number" id="puntos_fase_grupos" name="puntos_fase_grupos" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.llega_32avos') ?></label>
+                                <input class="form-control" type="number" id="puntos_32avos" name="puntos_32avos" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.llega_16avos') ?></label>
+                                <input class="form-control" type="number" id="puntos_16avos" name="puntos_16avos" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.llega_8vos') ?></label>
+                                <input class="form-control" type="number" id="puntos_8vos" name="puntos_8vos" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.llega_cuartos') ?></label>
+                                <input class="form-control" type="number" id="puntos_cuartos" name="puntos_cuartos" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.llega_semis') ?></label>
+                                <input class="form-control" type="number" id="puntos_semis" name="puntos_semis" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.subcampeon_final') ?></label>
+                                <input class="form-control" type="number" id="puntos_subcampeon" name="puntos_subcampeon" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.ganador_final') ?></label>
+                                <input class="form-control" type="number" id="puntos_ganador" name="puntos_ganador" min="0" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn"><?= __('deporte_padel.guardar') ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="asociarRankingModal" tabindex="-1" aria-labelledby="asociarRankingModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="asociarRankingForm" method="POST" action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'asociar', 'uuid' => ($evento['uuid'] ?? '')]) ?>">
+                        
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="asociarRankingModalLabel"><?= __('deporte_padel.asociar_ranking') ?></h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.seleccionar_ranking') ?></label>
+                                <select class="form-control" name="ranking_uuid" required>
+                                    <option value=""><?= __('deporte_padel.seleccione_un_ranking') ?></option>
+                                    <?php foreach ($rankings as $ranking): ?>
+                                    <option value="<?= $ranking->uuid ?>"><?= $ranking->nombre_ranking ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.categorias') ?></label>
+                                <?php foreach (($evento['categorias'] ?? []) as $categoria): ?>
+                                <?php
+                                $categoria_uuid = is_object($categoria) ? ($categoria->categoria ?? '') : ($categoria['categoria'] ?? '');
+                                $categoria_id = is_object($categoria) ? ($categoria->id ?? '') : ($categoria['id'] ?? '');
+                                $categoria_lista = mod_gestion_lookup('mod_gestion_categorias_listas', 'uuid', $categoria_uuid);
+                                ?>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="categorias[]" value="<?= $categoria_id ?>" id="categoria_<?= $categoria_id ?>">
+                                    <label class="form-check-label" for="categoria_<?= $categoria_id ?>"><?= $categoria_lista ? ($categoria_lista->titulo . ' ' . $categoria_lista->subtitulo) : 'N/A' ?></label>
+                                    <select class="form-control mt-1" name="porcentajes[]">
+                                        <option value="<?= $categoria_id ?>_1.0">100%</option>
+                                        <option value="<?= $categoria_id ?>_0.5">50%</option>
+                                    </select>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                            <button type="submit" class="btn btn-primary btn-asociar-ranking"><?= __('deporte_padel.asociar_ranking') ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="editManualModal" tabindex="-1" aria-labelledby="editManualModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="editManualForm" method="POST">
+                        
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="editManualModalLabel"><?= __('deporte_padel.editar_ranking_manual') ?></h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.categoria_manual') ?></label>
+                                <select class="form-control" name="categoria_manual">
+                                    <option value=""><?= __('deporte_padel.seleccione_categoria') ?></option>
+                                    <?php foreach ($categorias as $cate): ?>
+                                    <option value="<?= $cate->id ?>" <?= old('categoria_manual') == $cate->id ? 'selected' : '' ?>>
+                                        <?= $cate->titulo . ' ' . $cate->subtitulo ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= __('deporte_padel.puntos_manual') ?></label>
+                                <input type="number" class="form-control" name="puntos_manual" min="0" value="<?= old('puntos_manual') ?>">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= __('deporte_padel.cerrar') ?></button>
+                            <button type="submit" class="btn btn-primary"><?= __('deporte_padel.actualizar') ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="<?= $this->basePath('assets/vendor/apexcharts/apexcharts.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets//vendor/glightbox/glightbox.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets/vendor/select/select2.min.js') ?>"></script>
+<script src="<?= $this->basePath('assets/js/select.js') ?>"></script>
+<?php
+$baseRankingEdit = $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => 'UUID_PLACEHOLDER']);
+$baseRankingDelete = $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'delete', 'uuid' => 'UUID_PLACEHOLDER']);
+?>
+<script>
+const RANKING_EDIT_URL = <?= json_encode($baseRankingEdit) ?>;
+const RANKING_DELETE_URL = <?= json_encode($baseRankingDelete) ?>;
+</script>
+<script>
+    const searchInput = document.querySelector('.search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const filter = searchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#t-data tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+    const searchInputRanking = document.querySelector('.search-ranking');
+    if (searchInputRanking) {
+        searchInputRanking.addEventListener('input', function() {
+            const filter = searchInputRanking.value.toLowerCase();
+            const rows = document.querySelectorAll('#t-data-ranking tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+    document.querySelectorAll('.btn-eliminar-ranking').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const nombre = this.getAttribute('data-nombre');
+            let message = "<?= __('deporte_padel.confirm_eliminar_ranking') ?>";
+            if (confirm(message.replace(':nombre', nombre))) {
+                form.submit();
+            }
+        });
+    });
+    document.querySelectorAll('.btn-aplicar-ranking').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            if (confirm("<?= __('deporte_padel.confirm_aplicar_ranking') ?>")) {
+                cargando();
+                form.submit();
+            }
+        });
+    });
+    document.querySelectorAll('.btn-desasociar-ranking').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            if (confirm("<?= __('deporte_padel.confirm_desasociar_ranking') ?>")) {
+                cargando();
+                form.submit();
+            }
+        });
+    });
+    const asociarRankingForm = document.getElementById('asociarRankingForm');
+    if (asociarRankingForm) {
+        asociarRankingForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm("<?= __('deporte_padel.confirm_asociar_ranking') ?>")) {
+                cargando();
+                this.submit();
+            }
+        });
+    }
+    const editManualModal = document.getElementById('editManualModal');
+    if (editManualModal) {
+        editManualModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const row = button.closest('tr');
+            const form = editManualModal.querySelector('form');
+            const rankingUuid = row.dataset.uuid;
+            form.action = '<?= $this->url('ligas.ranking', ['deporte' => $deporte ?? 'padel', 'accion' => 'manual', 'uuid' => $evento['uuid'] ?? '']) ?>/:ranking_uuid'.replace(':ranking_uuid', rankingUuid);
+            form.querySelector('select[name="categoria_manual"]').value = row.dataset.categoria_manual || '';
+            form.querySelector('input[name="puntos_manual"]').value = row.dataset.puntos_manual || '';
+        });
+    }
+    const rankingModal = document.getElementById('rankingModal');
+    if (rankingModal) {
+        rankingModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const form = rankingModal.querySelector('#rankingForm');
+            const modalTitle = rankingModal.querySelector('.modal-title');
+            const submitBtn = rankingModal.querySelector('#submitBtn');
+            if (button.dataset.mode === 'edit') {
+                modalTitle.textContent = "<?= __('deporte_padel.editar_ranking') ?>";
+                submitBtn.textContent = "<?= __('deporte_padel.actualizar') ?>";
+                form.action = RANKING_EDIT_URL.replace('UUID_PLACEHOLDER', button.closest('tr').dataset.uuid);
+                form.querySelector('#ranking_uuid').value = button.closest('tr').dataset.uuid;
+                form.querySelector('#nombre_ranking').value = button.closest('tr').dataset.nombre;
+                form.querySelector('#puntos_inscribirse').value = button.closest('tr').dataset.inscribirse;
+                form.querySelector('#puntos_jugar_partido').value = button.closest('tr').dataset.jugar_partido;
+                form.querySelector('#puntos_fase_grupos').value = button.closest('tr').dataset.fase_grupos;
+                form.querySelector('#puntos_32avos').value = button.closest('tr').dataset['32avos'];
+                form.querySelector('#puntos_16avos').value = button.closest('tr').dataset['16avos'];
+                form.querySelector('#puntos_8vos').value = button.closest('tr').dataset['8vos'];
+                form.querySelector('#puntos_cuartos').value = button.closest('tr').dataset.cuartos;
+                form.querySelector('#puntos_semis').value = button.closest('tr').dataset.semis;
+                form.querySelector('#puntos_subcampeon').value = button.closest('tr').dataset.subcampeon;
+                form.querySelector('#puntos_ganador').value = button.closest('tr').dataset.ganador;
+            } else {
+                modalTitle.textContent = "<?= __('deporte_padel.agregar_ranking') ?>";
+                submitBtn.textContent = "<?= __('deporte_padel.guardar') ?>";
+                form.action = '<?= $this->url('ligas.ranking', ['deporte' => $deporte ?? 'padel', 'accion' => 'store', 'uuid' => $evento['uuid'] ?? '']) ?>';
+                form.querySelector('#ranking_uuid').value = '';
+                form.querySelector('#nombre_ranking').value = 'Nuevo Ranking';
+                form.querySelector('#puntos_inscribirse').value = '0';
+                form.querySelector('#puntos_jugar_partido').value = '0';
+                form.querySelector('#puntos_fase_grupos').value = '10';
+                form.querySelector('#puntos_32avos').value = '30';
+                form.querySelector('#puntos_16avos').value = '60';
+                form.querySelector('#puntos_8vos').value = '125';
+                form.querySelector('#puntos_cuartos').value = '250';
+                form.querySelector('#puntos_semis').value = '500';
+                form.querySelector('#puntos_subcampeon').value = '750';
+                form.querySelector('#puntos_ganador').value = '1000';
+            }
+        });
+    }
+    document.querySelectorAll('.copy-url-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(() => {
+                alert("<?= __('deporte_padel.url_copiada') ?>");
+            });
+        });
+    });
+</script>
+
+

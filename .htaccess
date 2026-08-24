@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # PRIMERO: Si la URL no tiene el prefijo del proyecto, redirigir
+    # para que el navegador actualice la URL. Esta es la regla principal
+    # que asegura que todos los enlaces generados por el Url helper
+    # de Laminas funcionen correctamente.
+    RewriteCond %{REQUEST_URI} !^/mavoo_gestion/gestion_laminas/public/ [NC]
+    RewriteCond %{REQUEST_URI} !^/mavoo_gestion/gestion_laminas/(composer|bin|node_modules|vendor)
+    RewriteRule ^(.*)$ /mavoo_gestion/gestion_laminas/public/$1 [R=301,L]
+
+    RewriteBase /mavoo_gestion/gestion_laminas/
+
+    # Si el archivo o directorio existe dentro de public/, servir directamente
+    RewriteCond %{DOCUMENT_ROOT}/mavoo_gestion/gestion_laminas/public/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/mavoo_gestion/gestion_laminas/public/$1 -d
+    RewriteRule ^(.+)$ public/$1 [L]
+
+    # Todo lo demás va a public/index.php
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>

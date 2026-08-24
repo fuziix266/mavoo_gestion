@@ -1,0 +1,350 @@
+<?php
+/**
+ * Vista: Dashboard Principal
+ * Equivalente a: resources/views/dashboard/principal.blade.php de Laravel
+ * 
+ * Variables disponibles (inyectadas por DashboardController):
+ * @var array $identity        Datos del usuario logueado
+ * @var array $roles           Lista de roles del usuario
+ * @var array $permissions     Lista de permisos del usuario
+ * @var array|null $totalUsers, $newUsersLast30Days, etc. (para dios)
+ * @var array|null $padel, $tenis, $pickleball  (para moderadores de deporte)
+ */
+
+$this->headTitle('Dashboard');
+
+// Agregar Chart.js en el head
+$this->headScript()->appendFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js');
+$this->headScript()->appendFile('https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.12/dayjs.min.js');
+// FontAwesome
+$this->headLink()->appendStylesheet($this->basePath('assets/vendor/fontawesome/css/all.css'));
+$this->headLink()->appendStylesheet($this->basePath('assets/vendor/apexcharts/apexcharts.css'));
+
+// Helpers de roles y permisos
+$hasRole   = fn(string $r) => in_array($r, $roles ?? [], true);
+$isAllowed = fn(string $p) => $hasRole('dios') || in_array($p, $permissions ?? [], true);
+?>
+
+<div class="container-fluid">
+
+    <!-- ============================
+         SECCIÓN ROL: DIOS
+         ============================ -->
+    <?php if ($hasRole('dios')): ?>
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><i class="fa-solid fa-crown me-1"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page">Rol: Dios</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 mb-3">
+            <h3>Administración del Sistema</h3>
+            <p class="text-muted">Visión de alto nivel sobre la salud y actividad de la base de usuarios del sistema.</p>
+        </div>
+
+        <!-- Widget: Total Usuarios -->
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-primary h-45 w-45 d-flex-center">
+                            <i class="fa-solid fa-user-group f-s-18"></i>
+                        </span>
+                    </div>
+                    <span class="bg-primary h-45 w-45 d-flex-center b-r-50">
+                        <i class="fa-solid fa-users f-s-24"></i>
+                    </span>
+                    <div class="mt-3">
+                        <h4 class="text-dark"><?= number_format((int)($totalUsers ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 txt-ellipsis-1">Total de Usuarios Registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget: Nuevos Usuarios 30 Días -->
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card bg-success project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-success h-45 w-45 d-flex-center">
+                            <i class="fa-solid fa-arrow-trend-up f-s-18"></i>
+                        </span>
+                    </div>
+                    <span class="bg-white h-45 w-45 d-flex-center b-r-50">
+                        <i class="fa-solid fa-user-plus text-success f-s-24"></i>
+                    </span>
+                    <div class="mt-3">
+                        <h4 class="text-white"><?= number_format((int)($newUsersLast30Days ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 text-white txt-ellipsis-1">Usuarios Nuevos (Últimos 30 días)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget: Sin Datos -->
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card bg-danger project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-danger h-45 w-45 d-flex-center">
+                            <i class="fa-solid fa-circle-exclamation f-s-18"></i>
+                        </span>
+                    </div>
+                    <span class="bg-white h-45 w-45 d-flex-center b-r-50">
+                        <i class="fa-solid fa-database text-danger f-s-24"></i>
+                    </span>
+                    <div class="mt-3">
+                        <h4 class="text-white"><?= number_format((int)($usersWithoutDetail ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 text-white txt-ellipsis-1">Usuarios sin Registro Detalle</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico: Distribución por Género -->
+        <div class="col-lg-6 col-xxl-6">
+            <div class="card equal-card">
+                <div class="card-header"><h5>Distribución de Usuarios por Género</h5></div>
+                <div class="card-body">
+                    <p class="text-muted">Base de datos: <code>users_detalle</code>. Proporción de datos demográficos.</p>
+                    <div class="d-flex justify-content-center h-400">
+                        <canvas id="genderDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla: Resumen por Género -->
+        <div class="col-lg-6 col-xxl-6">
+            <div class="card equal-card">
+                <div class="card-header"><h5>Resumen de Distribución de Género</h5></div>
+                <div class="card-body">
+                    <ul class="box-list client-list">
+                        <?php
+                        $genderDataArr = $genderData ?? [];
+                        $totalCount    = array_sum(array_column($genderDataArr, 'count'));
+                        foreach ($genderDataArr as $gender):
+                            $iconClass = match($gender['label']) {
+                                'Masculino'  => 'fa-mars text-primary',
+                                'Femenino'   => 'fa-venus text-danger',
+                                'Otro'       => 'fa-genderless text-info',
+                                'Sin Datos'  => 'fa-circle-exclamation text-warning',
+                                default      => 'fa-question-circle text-secondary',
+                            };
+                            $pct = $totalCount > 0 ? round(($gender['count'] / $totalCount) * 100, 1) : 0;
+                        ?>
+                        <li class="d-flex align-items-center justify-content-between">
+                            <div class="h-45 w-45 d-flex-center b-r-12 overflow-hidden bg-primary-200 flex-shrink-0">
+                                <i class="fa-solid <?= $iconClass ?> f-s-24"></i>
+                            </div>
+                            <div class="ms-2 flex-grow-1">
+                                <p class="mb-0 f-w-500 f-s-16 txt-ellipsis-1"><?= $this->escapeHtml($gender['label']) ?></p>
+                                <p class="mb-0 f-s-12 text-muted txt-ellipsis-1">Usuarios: <?= number_format((int)$gender['count'], 0, ',', '.') ?></p>
+                            </div>
+                            <span class="badge <?= $gender['label'] === 'Sin Datos' ? 'bg-warning text-dark' : 'bg-primary' ?>">
+                                <?= $pct ?>%
+                            </span>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+
+    <!-- ============================
+         SECCIÓN MODERADORES DE DEPORTE
+         ============================ -->
+    <?php
+    $sportConfigs = [
+        'padel'      => ['permission' => 'moderador padel gestion',      'name' => 'Pádel',      'icon' => 'fa-solid fa-ranking-star'],
+        'tenis'      => ['permission' => 'moderador tenis gestion',      'name' => 'Tenis',      'icon' => 'fa-solid fa-trophy'],
+        'pickleball' => ['permission' => 'moderador pickleball gestion', 'name' => 'Pickleball', 'icon' => 'fa-solid fa-circle-dot'],
+    ];
+
+    foreach ($sportConfigs as $slug => $config):
+        if (!$isAllowed($config['permission'])) continue;
+        $sportData = $$slug ?? null;
+        if ($sportData === null) continue;
+    ?>
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><i class="<?= $config['icon'] ?> me-1"></i></li>
+                    <li class="breadcrumb-item active">Rol: Moderador <?= $config['name'] ?></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 mb-3">
+            <h3>Gestión de Eventos de <?= $config['name'] ?></h3>
+            <p class="text-muted">Resumen ejecutivo del estado actual de los eventos, inscripciones y distribución de categorías.</p>
+        </div>
+
+        <!-- Widgets Deporte -->
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-primary h-45 w-45 d-flex-center"><i class="fa-solid fa-calendar-days f-s-18"></i></span>
+                    </div>
+                    <span class="bg-primary h-45 w-45 d-flex-center b-r-50"><i class="fa-solid fa-calendar-check f-s-24"></i></span>
+                    <div class="mt-3">
+                        <h4 class="text-dark"><?= number_format((int)($sportData['activeEventsCount'] ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 txt-ellipsis-1">Eventos Próximos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card bg-info project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-info h-45 w-45 d-flex-center"><i class="fa-solid fa-user-plus f-s-18"></i></span>
+                    </div>
+                    <span class="bg-white h-45 w-45 d-flex-center b-r-50"><i class="fa-solid fa-ticket-simple text-info f-s-24"></i></span>
+                    <div class="mt-3">
+                        <h4 class="text-white"><?= number_format((int)($sportData['openInscriptionsCount'] ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 text-white txt-ellipsis-1">Inscripciones Abiertas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-4 col-xxl-4">
+            <div class="card bg-success project-profit-card">
+                <div class="card-body">
+                    <div class="profit-arrow">
+                        <span class="bg-white text-success h-45 w-45 d-flex-center"><i class="fa-solid fa-trophy f-s-18"></i></span>
+                    </div>
+                    <span class="bg-white h-45 w-45 d-flex-center b-r-50"><i class="fa-solid fa-users-viewfinder text-success f-s-24"></i></span>
+                    <div class="mt-3">
+                        <h4 class="text-white"><?= number_format((int)($sportData['totalInscritos'] ?? 0), 0, ',', '.') ?></h4>
+                        <p class="f-w-500 mb-0 text-white txt-ellipsis-1">Total de Inscritos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla: Próximos Eventos -->
+        <div class="col-lg-12 col-xxl-12">
+            <div class="header-box d-flex justify-content-between align-items-center">
+                <h5>Próximos Eventos de <?= $config['name'] ?></h5>
+            </div>
+            <div class="card equal-card">
+                <div class="card-body px-2 pt-2">
+                    <div class="table-responsive app-scroll">
+                        <table class="table table-bottom-border align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Evento</th>
+                                    <th>Fecha Inicio</th>
+                                    <th>Categorías</th>
+                                    <th>Inscritos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $eventos = $sportData['eventos'] ?? [];
+                                if (empty($eventos)):
+                                ?>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        No hay próximos eventos de <?= $config['name'] ?> activos.
+                                    </td>
+                                </tr>
+                                <?php else: foreach (array_slice($eventos, 0, 5) as $evento): ?>
+                                <tr>
+                                    <td>
+                                        <div class="fw-medium txt-ellipsis-1"><?= $this->escapeHtml($evento['titulo'] ?? 'Sin título') ?></div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary f-s-12 f-w-700">
+                                            <?= $evento['fecha_inicio'] ? date('d M Y', strtotime($evento['fecha_inicio'])) : 'Sin fecha' ?>
+                                        </span>
+                                    </td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                                <?php endforeach; endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endforeach; ?>
+
+
+    <!-- ============================
+         SIN ROL ESPECÍFICO
+         ============================ -->
+    <?php
+    $hasAnyRole = $hasRole('dios') || $isAllowed('moderador padel gestion') ||
+                  $isAllowed('moderador tenis gestion') || $isAllowed('moderador pickleball gestion');
+    if (!$hasAnyRole):
+    ?>
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card-body app-breadcrumb">
+                <ol class="breadcrumb bg-light-secondary p-2">
+                    <li class="breadcrumb-item"><i class="fa-solid fa-table-tennis-paddle-ball me-1"></i></li>
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 mb-3">
+            <p class="text-muted">No tiene un rol o permiso específico para visualizar este dashboard.</p>
+        </div>
+    </div>
+    <?php endif; ?>
+
+</div><!-- /.container-fluid -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    <?php if ($hasRole('dios') && !empty($genderData)): ?>
+    // Gráfico de género (para rol dios)
+    const genderData = <?= json_encode($genderData ?? []) ?>;
+    const gCounts = genderData.map(i => i.count);
+    const gLabels = genderData.map(i => i.label);
+    const gTotal  = gCounts.reduce((a, b) => a + b, 0);
+    const gColors = gLabels.map(l => {
+        switch(l) {
+            case 'Masculino': return '#0d6efd';
+            case 'Femenino':  return '#dc3545';
+            case 'Otro':      return '#0dcaf0';
+            default:          return '#ffc107';
+        }
+    });
+    const gCtx = document.getElementById('genderDistributionChart');
+    if (gCtx) {
+        new Chart(gCtx, {
+            type: 'doughnut',
+            data: { labels: gLabels, datasets: [{ data: gCounts, backgroundColor: gColors, hoverOffset: 4 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20 } },
+                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed} (${((ctx.parsed/gTotal)*100).toFixed(1)}%)` } }
+                }
+            }
+        });
+    }
+    <?php endif; ?>
+});
+</script>

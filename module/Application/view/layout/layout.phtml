@@ -1,0 +1,729 @@
+<?php
+/**
+ * Layout principal del Dashboard Mavoo Gestión - Laminas MVC
+ *
+ * Reescrito completamente: header-top y nav-horizontal con posicionamiento
+ * sticky/fixed coherente. Compatible con CSS compilado de Ki Admin
+ * (style-BFrEaXgm.css) y Bootstrap 5.3.3.
+ *
+ * Estructura DOM:
+ *   <body class="horizontal-sidebar">
+ *     <div class="app-wrapper">
+ *       <header class="header-top">            (sticky top:0, height 56px, z-index 1100)
+ *         logo + user menu
+ *       </header>
+ *       <nav class="horizontal-sidebar">       (sticky top:56px, height 56px, z-index 1090)
+ *         <div class="app-nav">
+ *           <ul class="main-nav">...            (items, dropdowns)
+ *       </nav>
+ *       <main class="app-content">            (margin-top: 112px, padding-bottom: 56px)
+ *         <?= $this->content ?>
+ *       </main>
+ *     </div>
+ *   </body>
+ */
+
+$base        = $this->basePath();
+$identity    = $this->identity ?? null;
+$roles       = $this->userRoles ?? [];
+$perms       = $this->userPermissions ?? [];
+
+$hasRole  = fn(string $role): bool => in_array($role, (array)$roles, true);
+$permsList = is_array($perms) ? $perms : [];
+$isAllowed = function (string $perm) use ($hasRole, $permsList): bool {
+    return $hasRole('dios') || in_array($perm, $permsList, true);
+};
+
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+
+// Helper para detectar coincidencia flexible de URL en el menú
+if (!function_exists('layoutIsActive')) {
+    function layoutIsActive(string $needle, string $requestUri): bool {
+        if ($needle === '#' || $needle === '') return false;
+        $n = basename(parse_url($needle, PHP_URL_PATH) ?? '');
+        $u = basename(parse_url($requestUri, PHP_URL_PATH) ?? '');
+        return $n !== '' && $n === $u;
+    }
+}
+
+$currentPath = basename(parse_url($requestUri, PHP_URL_PATH) ?? '');
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mavoo - Plataforma de Gestión Deportiva">
+
+    <link rel="icon" href="<?= $base ?>/favicon.png" type="image/png">
+
+    <?= $this->headTitle('Mavoo Gestión')->setSeparator(' | ')->setAutoEscape(false) ?>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..900&display=swap" rel="stylesheet">
+
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/animation/animate.min.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/flag-icons-master/flag-icon.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/tabler-icons/tabler-icons.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/phosphor/phosphor-bold.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/phosphor/phosphoe-fill.css">
+
+    <!-- Bootstrap 5.3.3 (última versión estable) -->
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/bootstrap/bootstrap.min.css">
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="<?= $base ?>/assets/vendor/toastify/toastify.css">
+
+    <!-- Ki Admin compiled CSS (Vite) - cargado al final para que nuestras overrides ganen -->
+    <link rel="stylesheet" href="<?= $base ?>/build/assets/style-BFrEaXgm.css">
+
+    <?= $this->headLink() ?>
+    <?= $this->headStyle() ?>
+
+    <style>
+    /* ============================================================
+       MASTRO LAYOUT - Mavoo Gestión
+       Reset total de conflictos con CSS compilado de Ki Admin.
+       ============================================================ */
+    :root {
+        --primary-rgb: 79, 70, 229;
+        --mavoo-sidebar-h: 56px;
+        --mavoo-header-h: 60px;
+        --mavoo-total-fixed: 116px;        /* sidebar + header */
+    }
+
+    /* Reset agresivo SOLO a elementos del layout, sin tocar la app */
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #F8F9FA;
+    }
+
+    /* Forzar layout vertical con sticky */
+    .app-wrapper {
+        display: block !important;
+        min-height: 100vh;
+        position: relative;
+        background: #F8F9FA;
+    }
+
+    /* ============================================================
+       BOXED LAYOUT (FLOTANTE):
+       El header-top y nav-horizontal son FLOTANTES (position:fixed/sticky)
+       con sus propios bordes redondeados y sombra, separados del contenido.
+       El contenido (main.mavoo-content) tiene margen lateral amplio.
+       ============================================================ */
+    .mavoo-shell {
+        max-width: 100%;
+        margin: 0;
+        /* Sin borde propio; header y nav son flotantes con su propia caja */
+        position: relative;
+    }
+    .mavoo-shell .mavoo-page {
+        background: transparent;
+    }
+
+    /* ============================================================
+       HEADER-TOP: barra superior fija (logo + user)
+       Integrada como bloque pegado al shell, sin bordes ni sombras
+       propias (las hereda del shell).
+       ============================================================ */
+    .mavoo-header {
+        position: sticky;
+        top: 0;
+        height: var(--mavoo-header-h);
+        background: #fff;
+        border-bottom: 1px solid #E5E7EB;
+        z-index: 1100;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        gap: 1rem;
+        border-radius: 0;
+        margin: 0;
+    }
+    /* Margen interior del header: alinea con el padding del mavoo-page (2rem).
+       Usamos un wrapper en lugar de padding directo para que el border-bottom
+       del header ocupe todo el ancho del shell, y el contenido del header
+       respete el padding del mavoo-page. */
+    .mavoo-header .header-inner {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 100%;
+    }
+    @media (max-width: 575px)  { .mavoo-header .header-inner { padding: 0 .5rem; } }
+    .mavoo-header .brand {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        text-decoration: none;
+        color: #1F2937;
+        font-weight: 700;
+        font-size: 1.15rem;
+    }
+    .mavoo-header .brand img {
+        height: 32px;
+        width: auto;
+    }
+    .mavoo-header .header-spacer { flex: 1; }
+    .mavoo-header .user-menu {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+    }
+    .mavoo-header .user-name {
+        font-size: .9rem;
+        color: #4B5563;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    .mavoo-header .user-name i { font-size: 1.15rem; }
+    .mavoo-header .btn-logout {
+        padding: .4rem .9rem;
+        border-radius: 8px;
+        font-size: .82rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    /* ============================================================
+       NAV HORIZONTAL: debajo del header-top
+       ============================================================ */
+    .mavoo-nav {
+        position: sticky;
+        top: var(--mavoo-header-h);
+        height: var(--mavoo-sidebar-h);
+        background: #FFFFFF;
+        border-bottom: 1px solid #E5E7EB;
+        z-index: 1090;
+        border-radius: 0;
+        margin: 0 1rem;
+    }
+    /* Padding lateral del nav para alinear con el contenido del mavoo-page.
+       El nav-scroll ya tiene overflow-x:auto, por lo que en pantallas pequeñas
+       el contenido se puede hacer scroll horizontal. */
+    .mavoo-nav .nav-scroll {
+        padding: 0 1.5rem;
+    }
+    @media (min-width: 768px)  { .mavoo-nav { margin: 0 1.5rem; } }
+    @media (min-width: 1200px) { .mavoo-nav { margin: 0 2rem; } }
+    @media (min-width: 1200px) { .mavoo-nav .nav-scroll { padding: 0 2rem; } }
+    @media (max-width: 575px)  { .mavoo-nav { margin: 0 .5rem; } .mavoo-nav .nav-scroll { padding: 0 .5rem; } }
+    .mavoo-nav .nav-scroll {
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
+        overflow-clip-margin: 1000px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .mavoo-nav .nav-scroll::-webkit-scrollbar { height: 4px; }
+    .mavoo-nav .nav-scroll::-webkit-scrollbar-thumb {
+        background: #CBD5E1; border-radius: 2px;
+    }
+    .mavoo-nav .main-nav {
+        display: flex;
+        align-items: stretch;
+        height: 100%;
+        list-style: none;
+        margin: 0;
+        padding: 0 .5rem;
+        gap: 0;
+        flex-wrap: nowrap;
+    }
+    .mavoo-nav .main-nav > li {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: stretch;
+    }
+    .mavoo-nav .main-nav > li > a {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        padding: 0 1rem;
+        color: #4B5563;
+        font-size: .9rem;
+        font-weight: 500;
+        text-decoration: none;
+        border-bottom: 3px solid transparent;
+        transition: all .15s ease;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+    }
+    .mavoo-nav .main-nav > li > a:hover {
+        color: rgb(var(--primary-rgb));
+        background: rgba(var(--primary-rgb), .04);
+    }
+    .mavoo-nav .main-nav > li.active > a {
+        color: rgb(var(--primary-rgb));
+        border-bottom-color: rgb(var(--primary-rgb));
+        background: rgba(var(--primary-rgb), .06);
+        font-weight: 600;
+    }
+    .mavoo-nav .main-nav > li > a::after {
+        content: '\e92e';
+        font-family: 'tabler-icons';
+        font-size: .75rem;
+        opacity: .55;
+        margin-left: .25rem;
+    }
+    .mavoo-nav .main-nav > li.no-sub > a::after,
+    .mavoo-nav .main-nav > li.no-toggle > a::after { content: none; }
+    .mavoo-nav .main-nav > li > a[aria-expanded="true"] {
+        color: rgb(var(--primary-rgb));
+        background: rgba(var(--primary-rgb), .06);
+    }
+    .mavoo-nav .main-nav > li > a[aria-expanded="true"]::after {
+        content: '\e9c1';
+        opacity: .85;
+    }
+
+    /* SUBMENÚS (dropdowns) */
+    .mavoo-nav .main-nav > li > ul.submenu {
+        position: fixed;
+        top: auto;
+        left: auto;
+        min-width: 230px;
+        background: #fff;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        box-shadow: 0 12px 28px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.06);
+        list-style: none;
+        padding: .4rem 0;
+        margin: 0;
+        display: none;
+        z-index: 12000;
+    }
+    .mavoo-nav .main-nav > li > ul.submenu.show {
+        display: block;
+        /* Sin animación: evita que elementos con stacking context diferente
+           (position:static sobre stacking root) oculten el submenú durante
+           el fade-in. */
+    }
+    .mavoo-nav .main-nav > li > ul.submenu li {
+        display: block;
+        margin: 0;
+        padding: 0;
+        height: auto;
+    }
+    .mavoo-nav .main-nav > li > ul.submenu li a {
+        display: block;
+        padding: .55rem 1.25rem;
+        color: #374151;
+        text-decoration: none;
+        font-size: .88rem;
+        font-weight: 500;
+        transition: background .12s ease;
+        border-radius: 0;
+        border-bottom: none;
+        white-space: nowrap;
+    }
+    .mavoo-nav .main-nav > li > ul.submenu li a:hover {
+        background: rgba(var(--primary-rgb), .07);
+        color: rgb(var(--primary-rgb));
+    }
+
+    /* ============================================================
+       CONTENIDO: continuación del box, sin bordes ni sombras.
+       El .mavoo-shell es el que da el "efecto caja" con borde sutil.
+       ============================================================ */
+    .mavoo-content {
+        padding: 0;
+        margin: 1rem 1rem 0;
+    }
+    @media (min-width: 768px)  { .mavoo-content { margin: 1rem 1.5rem 0; } }
+    @media (min-width: 1200px) { .mavoo-content { margin: 1rem 2rem 0; } }
+    @media (max-width: 575px)  { .mavoo-content { margin: 1rem .5rem 0; } }
+    .mavoo-page {
+        background: #fff;
+        padding: 1.5rem;
+        min-height: calc(100vh - var(--mavoo-total-fixed) - 1rem);
+        border-radius: 0 0 8px 8px;
+    }
+    /* Override total de Bootstrap .container-fluid dentro del mavoo-page:
+       - Resetear padding/margin (Bootstrap define 12px cada lado y margin auto)
+       - Resetear gutters negativos de .row (-15px cada lado)
+       - Resetear padding de .col-* (15px cada lado)
+       - Override de Ki Admin .container-fluid { padding: .7rem 2.5rem }
+       Resultado: contenido ocupa el 100% del .mavoo-page, alineado con header y nav. */
+    .mavoo-page .container-fluid,
+    .mavoo-page > .container-fluid {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+        display: block !important;
+        box-sizing: border-box !important;
+    }
+    .mavoo-page .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    .mavoo-page [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    @media (max-width: 575px)  { .mavoo-page { padding: 1rem; border-radius: 0 0 6px 6px; } }
+    @media (min-width: 768px)  { .mavoo-page { padding: 1.75rem; } }
+    @media (min-width: 1200px) { .mavoo-page { padding: 2rem; } }
+    .mavoo-content > main { display: block; }
+    .mavoo-content footer {
+        padding: 1rem 0 .5rem;
+        color: #6B7280;
+        font-size: .82rem;
+        text-align: center;
+        border-top: 1px solid #E5E7EB;
+    }
+
+    /* ============================================================
+       LOADER GLOBAL
+       ============================================================ */
+    .mavoo-loader {
+        position: fixed;
+        inset: 0;
+        background: rgba(128,128,128,.55);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+    }
+    .mavoo-loader.show { display: flex; }
+    .mavoo-loader .spinner {
+        width: 48px; height: 48px;
+        border: 5px solid rgb(var(--primary-rgb));
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 768px) {
+        :root { --mavoo-header-h: 56px; }
+        .mavoo-header .user-name { display: none; }
+        .mavoo-header { padding: 0 .75rem; }
+        .mavoo-nav .main-nav > li > a { padding: 0 .7rem; font-size: .82rem; }
+    }
+    @media (max-width: 480px) {
+        .mavoo-header .brand span { display: none; }
+        .mavoo-header .btn-logout span { display: none; }
+    }
+
+    /* Modales y backdrops DEBEN estar ENCIMA de TODO (header z-1100, nav z-1090,
+       submenús z-12000). Bootstrap default es z-index:1055, insuficiente. */
+    .modal { z-index: 15000 !important; }
+    .modal-backdrop { z-index: 14999 !important; }
+    .modal-open .modal { z-index: 15000 !important; }
+    </style>
+
+    <!-- jQuery y Bootstrap en HEAD: necesario porque muchas vistas usan
+         jQuery en scripts inline ANTES de que se cargue el body. -->
+    <script src="<?= $base ?>/assets/vendor/jquery/jquery-3.7.1.min.js"></script>
+    <script src="<?= $base ?>/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</head>
+<body class="horizontal-sidebar">
+<div class="app-wrapper">
+<div class="mavoo-shell">
+
+    <!-- ==================== HEADER-TOP ==================== -->
+    <header class="mavoo-header">
+        <div class="header-inner">
+            <a class="brand" href="<?= $this->url('dashboard') ?>">
+                <img alt="Mavoo" src="<?= $base ?>/mavoo.png">
+                <span>Mavoo Gestión</span>
+            </a>
+            <div class="header-spacer"></div>
+            <div class="user-menu">
+                <span class="user-name">
+                    <i class="ti ti-user-circle"></i>
+                    <?= $this->escapeHtml($identity['name'] ?? 'Usuario') ?>
+                </span>
+                <a href="<?= $this->url('auth.logout') ?>" class="btn btn-outline-danger btn-logout">
+                    <i class="ti ti-logout"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== NAV HORIZONTAL ==================== -->
+    <!-- Usamos <div> en lugar de <nav> porque el CSS compilado Ki Admin
+         tiene reglas `nav { width: var(--sidebar-width); display: inline-block; position: fixed; }`
+         que aplican a CUALQUIER <nav> y limitan el ancho a 288px. -->
+    <div class="mavoo-nav" role="navigation" aria-label="Navegación principal">
+        <div class="nav-scroll">
+            <ul class="main-nav" id="mavooMainNav">
+
+                <li class="no-sub <?= $currentPath === 'dashboard' || $requestUri === '/' ? 'active' : '' ?>">
+                    <a href="<?= $this->url('dashboard') ?>">Inicio</a>
+                </li>
+
+                <?php if ($hasRole('jugador')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#carr_dep" href="#">Carrera Deportiva</a>
+                    <ul class="submenu" id="carr_dep">
+                        <li><a href="<?= $this->url('jugador', ['action' => 'carrera']) ?>">Inicio</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'disciplinas']) ?>">Disciplinas</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'eventos']) ?>">Eventos</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'carrera-ajustes']) ?>">Ajustes</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#mis_dis" href="#">Mis Disciplinas</a>
+                    <ul class="submenu" id="mis_dis">
+                        <li><a href="<?= $this->url('jugador', ['action' => 'deporte', 'id' => 'padel']) ?>">Padel</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'deporte', 'id' => 'tenis']) ?>">Tenis</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'deporte', 'id' => 'futbol']) ?>">Futbol</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'deporte', 'id' => 'ciclismo']) ?>">Ciclismo</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($hasRole('entrenador')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#entrenador" href="#">Entrenador</a>
+                    <ul class="submenu" id="entrenador">
+                        <li><a href="<?= $this->url('jugador', ['action' => 'reservas']) ?>">Reservas</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'cursos']) ?>">Cursos</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'clases']) ?>">Clases</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'nominas']) ?>">Nóminas</a></li>
+                        <li><a href="<?= $this->url('jugador', ['action' => 'estadisticas']) ?>">Estadísticas</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($hasRole('moderador') || $hasRole('dios') || $hasRole('admin') || $hasRole('ceo')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#moderador" href="#">Moderador</a>
+                    <ul class="submenu" id="moderador">
+                        <?php if ($isAllowed('arriendo-n1')): ?>
+                            <li><a href="<?= $this->url('reservas') ?>">Sistema de Arriendo</a></li>
+                        <?php endif; ?>
+                        <li><a href="<?= $this->url('admin.ceo.estadisticas') ?>">Estadísticas</a></li>
+                    </ul>
+                </li>
+
+                <?php
+                $sports = ['padel', 'tenis', 'pickleball', 'futbol'];
+                foreach ($sports as $sport):
+                    if ($isAllowed("moderador {$sport}") || $isAllowed("moderador {$sport} gestion")):
+                ?>
+                <li class="<?= strpos($requestUri, '/ligas/' . $sport) !== false ? 'active' : '' ?>">
+                    <a data-mavoo-toggle="submenu" data-target="#mod_<?= $sport ?>" href="#"><?= ucfirst($sport) ?></a>
+                    <ul class="submenu" id="mod_<?= $sport ?>">
+                        <li><a href="<?= $this->url('ligas.ajustes', ['deporte' => $sport]) ?>">Gestión de Torneos</a></li>
+                        <li><a href="<?= $this->url('ligas.sedes', ['deporte' => $sport]) ?>">Sedes</a></li>
+                        <li><a href="<?= $this->url('ligas.categorias', ['deporte' => $sport]) ?>">Categorías</a></li>
+                        <li><a href="<?= $this->url('ligas.nominas', ['deporte' => $sport]) ?>">Nóminas</a></li>
+                        <li><a href="<?= $this->url('ligas.ranking', ['deporte' => $sport]) ?>">Ranking</a></li>
+                        <li><a href="<?= $this->url('ligas.fixture', ['deporte' => $sport]) ?>">Fixture</a></li>
+                        <li><a href="#">Arriendo de Canchas</a></li>
+                    </ul>
+                </li>
+                <?php
+                    endif;
+                endforeach;
+                ?>
+                <?php endif; ?>
+
+                <?php if ($hasRole('admin') || $hasRole('ceo') || $hasRole('dios')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#administrador" href="#">Administrador</a>
+                    <ul class="submenu" id="administrador">
+                        <li><a href="#">Disciplinas</a></li>
+                        <li><a href="<?= $this->url('admin.moderadores') ?>">Moderadores</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.accesos') ?>">Accesos y Permisos</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.usuarios') ?>">Usuarios Registrados</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.estadisticas') ?>">Estadísticas</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($hasRole('ceo') || $hasRole('dios')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#ceo" href="#">CEO</a>
+                    <ul class="submenu" id="ceo">
+                        <li><a href="<?= $this->url('admin.ceo.admins') ?>">Administradores</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.estadisticas') ?>">Estadísticas</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.usuarios') ?>">Usuarios</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.accesos') ?>">Accesos y Permisos</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.categorias') ?>">Categorías Disponibles</a></li>
+                        <li><a href="<?= $this->url('admin.ceo.wapi') ?>">Bot WhatsApp</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($hasRole('dios')): ?>
+                <li>
+                    <a data-mavoo-toggle="submenu" data-target="#dios" href="#">Dios</a>
+                    <ul class="submenu" id="dios">
+                        <li><a href="<?= $this->url('admin.dios.ceo') ?>">CEO's</a></li>
+                        <li><a href="<?= $this->url('admin.dios.dios') ?>">DIOS's</a></li>
+                        <li><a href="<?= $this->url('admin.dios.deportes') ?>">Deportes</a></li>
+                        <li><a href="<?= $this->url('admin.dios.accesos') ?>">Deportes Accesos</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+            </ul>
+        </div>
+    </div>
+    <!-- ==================== FIN NAV ==================== -->
+
+    <!-- ==================== CONTENIDO ==================== -->
+    <main class="mavoo-content">
+        <div class="mavoo-page">
+            <?= $this->content ?>
+        </div>
+
+        <footer>
+            &copy; <?= date('Y') ?> Mavoo Gestión. Todos los derechos reservados.
+        </footer>
+    </main>
+
+</div><!-- /.mavoo-shell -->
+</div><!-- /.app-wrapper -->
+
+<!-- Loader global -->
+<div class="mavoo-loader" id="global-loader" aria-hidden="true">
+    <div class="spinner"></div>
+</div>
+
+<?= $this->inlineScript() ?>
+
+<!-- Scripts base (jQuery y Bootstrap ya están en HEAD) -->
+<script src="<?= $base ?>/assets/vendor/phosphor/phosphor.js"></script>
+
+<script>
+(function () {
+    'use strict';
+
+    // =================== Loader ===================
+    window.cargando = function () {
+        document.getElementById('global-loader')?.classList.add('show');
+    };
+    window.cerrarCargando = function () {
+        document.getElementById('global-loader')?.classList.remove('show');
+    };
+    setTimeout(cerrarCargando, 1500);
+
+    // =================== Loader en submit ===================
+    document.addEventListener('submit', function (e) {
+        if (e.target.tagName === 'FORM') cargando();
+    });
+
+    // =================== Menú: dropdowns ===================
+    (function () {
+        var navList = document.getElementById('mavooMainNav');
+        if (!navList) return;
+
+        function positionSubmenu(toggle, sub) {
+            // Calcula la posición absoluta del toggle en viewport
+            var r = toggle.getBoundingClientRect();
+            // El nav tiene altura ~56px (var --mavoo-sidebar-h) + 60px header = 116
+            var top = r.bottom + 4;
+            var left = r.left;
+            // Asegurar que no se salga del viewport a la derecha
+            var subWidth = 230;
+            if (left + subWidth > window.innerWidth) {
+                left = window.innerWidth - subWidth - 8;
+            }
+            sub.style.top = top + 'px';
+            sub.style.left = left + 'px';
+        }
+
+        function closeAllExcept(target) {
+            navList.querySelectorAll('a[data-mavoo-toggle="submenu"]').forEach(function (toggle) {
+                if (toggle.dataset.target !== target) {
+                    var id = toggle.dataset.target.replace('#', '');
+                    var sub = document.getElementById(id);
+                    if (sub && sub.classList.contains('show')) {
+                        sub.classList.remove('show');
+                        sub.style.top = '';
+                        sub.style.left = '';
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        }
+
+        navList.querySelectorAll('a[data-mavoo-toggle="submenu"]').forEach(function (toggle) {
+            toggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var targetId = toggle.dataset.target.replace('#', '');
+                var sub = document.getElementById(targetId);
+                if (!sub) return;
+
+                var willOpen = !sub.classList.contains('show');
+                closeAllExcept(toggle.dataset.target);
+                if (willOpen) {
+                    positionSubmenu(toggle, sub);
+                    sub.classList.add('show');
+                    toggle.setAttribute('aria-expanded', 'true');
+                } else {
+                    sub.classList.remove('show');
+                    sub.style.top = '';
+                    sub.style.left = '';
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+
+        // Cerrar submenús al click fuera del nav
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.mavoo-nav')) {
+                closeAllExcept(null);
+            }
+        });
+
+        // Esc para cerrar
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeAllExcept(null);
+        });
+    })();
+
+    // =================== Active link al cargar ===================
+    (function () {
+        var current = window.location.pathname.replace(/\/$/, '');
+        document.querySelectorAll('.mavoo-nav .main-nav a[href]').forEach(function (a) {
+            try {
+                var href = new URL(a.getAttribute('href'), window.location.origin).pathname.replace(/\/$/, '');
+                if (href && href !== '#' && href === current) {
+                    var li = a.closest('li');
+                    if (li) li.classList.add('active');
+                }
+            } catch (e) {}
+        });
+    })();
+
+    // =================== Limpiar backdrop de modales duplicados ===================
+    document.addEventListener('shown.bs.modal', function () {
+        setTimeout(function () {
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (var i = 0; i < backdrops.length - 1; i++) backdrops[i].remove();
+            }
+        }, 100);
+    });
+})();
+</script>
+
+</body>
+</html>

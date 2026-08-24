@@ -1,0 +1,472 @@
+<?php
+/**
+ * dashboard.phtml - Dashboard Financiero del Sistema de Arriendos.
+ * Reescrito: sin sintaxis Blade, sin Laravel helpers, con URL helper.
+ *
+ * Variables inyectadas por IndexController::dashboardAction():
+ *   $sistema       stdClass con datos del sistema (incl. moneda, canchas)
+ *   $deporte, $evento, $eventos, $ultimoAjuste, $paises
+ *   $transacciones array (vacío por defecto hasta integración con BD real)
+ *   $resumen       array con ingresos_hoy|semana|mes|anio
+ */
+$sistema = $this->sistema ?? null;
+$resumen = $this->resumen ?? [];
+$transacciones = $this->transacciones ?? [];
+$moneda = htmlspecialchars($sistema->moneda ?? 'CLP', ENT_QUOTES, 'UTF-8');
+?>
+<style>
+/* SCOPE-ONLY: prefixed classes */
+.dashboard-wrapper {
+    background: #F9FAFB;
+    min-height: 60vh;
+    padding: 1rem;
+    border-radius: 12px;
+}
+.dashboard-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+}
+.dashboard-title {
+    font-size: 1.75rem; font-weight: 700; color: #1F2937;
+    display: flex; align-items: center; gap: .75rem;
+}
+.btn-back, .btn-export {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .65rem 1.25rem; border-radius: 8px; font-weight: 600;
+    text-decoration: none; cursor: pointer; transition: all .2s;
+}
+.btn-back {
+    background: #fff; border: 1px solid #E5E7EB; color: #1F2937;
+}
+.btn-back:hover { background: #F9FAFB; color: #4F46E5; border-color: #4F46E5; }
+.btn-export {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    border: none; color: #fff;
+}
+.btn-export:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, .3); }
+
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.stat-card {
+    background: #fff; border-radius: 12px; padding: 1.25rem;
+    border: 1px solid #F3F4F6; position: relative; overflow: hidden;
+    transition: all .3s;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+}
+.stat-card.success::before { background: #10B981; }
+.stat-card.primary::before { background: #4F46E5; }
+.stat-card.warning::before { background: #F59E0B; }
+.stat-card.info::before { background: #3B82F6; }
+.stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .75rem; }
+.stat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+}
+.stat-card.success .stat-icon { background: rgba(16,185,129,.1); color: #10B981; }
+.stat-card.primary .stat-icon { background: rgba(79,70,229,.1); color: #4F46E5; }
+.stat-card.warning .stat-icon { background: rgba(245,158,11,.1); color: #F59E0B; }
+.stat-card.info .stat-icon { background: rgba(59,130,246,.1); color: #3B82F6; }
+.stat-label { font-size: .8rem; color: #6B7280; text-transform: uppercase; font-weight: 600; letter-spacing: .5px; }
+.stat-value { font-size: 1.75rem; font-weight: 700; color: #1F2937; margin-top: .35rem; }
+
+.filters-card, .chart-card, .table-card {
+    background: #fff; border-radius: 12px; padding: 1.25rem;
+    border: 1px solid #F3F4F6; margin-bottom: 1.5rem;
+}
+.filters-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; align-items: end;
+}
+.filter-label { font-size: .85rem; font-weight: 600; color: #1F2937; }
+.filter-input, .filter-select, .btn-filter {
+    padding: .65rem .85rem; border: 1px solid #E5E7EB;
+    border-radius: 8px; font-size: .95rem; background: #fff;
+}
+.filter-input:focus, .filter-select:focus { outline: none; border-color: #4F46E5; }
+.btn-filter {
+    background: #4F46E5; color: #fff; border: none; font-weight: 600; cursor: pointer;
+}
+.btn-filter:hover { background: #3730A3; }
+
+.charts-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.chart-card { padding: 1.25rem; }
+.chart-title {
+    font-size: 1.1rem; font-weight: 700; color: #1F2937;
+    display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
+}
+.chart-container { position: relative; height: 320px; }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead { background: #F9FAFB; }
+.data-table th, .data-table td { padding: .75rem 1rem; text-align: left; border-top: 1px solid #F3F4F6; }
+.data-table th {
+    font-weight: 600; color: #1F2937; font-size: .82rem;
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.data-table tbody tr:hover { background: #F9FAFB; }
+.badge { display: inline-block; padding: .2rem .6rem; border-radius: 12px; font-size: .72rem; font-weight: 600; }
+.badge-success { background: rgba(16,185,129,.1); color: #10B981; }
+.badge-warning { background: rgba(245,158,11,.1); color: #F59E0B; }
+.loading { padding: 2rem; text-align: center; color: #6B7280; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+    .stats-grid, .charts-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="dashboard-wrapper">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="ti ti-chart-line"></i>
+            Dashboard Financiero
+        </h1>
+        <div style="display: flex; gap: .75rem;">
+            <a href="<?= $this->url('reservas') ?>" class="btn-back">
+                <i class="ti ti-arrow-left"></i> Volver
+            </a>
+            <button onclick="exportData()" class="btn-export">
+                <i class="ti ti-download"></i> Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Hoy</div>
+                    <div class="stat-value" id="stat-hoy"><?= $moneda ?> 0</div>
+                </div>
+                <div class="stat-icon"><i class="ti ti-calendar-check"></i></div>
+            </div>
+        </div>
+        <div class="stat-card primary">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Esta Semana</div>
+                    <div class="stat-value" id="stat-semana"><?= $moneda ?> 0</div>
+                </div>
+                <div class="stat-icon"><i class="ti ti-calendar"></i></div>
+            </div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Este Mes</div>
+                    <div class="stat-value" id="stat-mes"><?= $moneda ?> 0</div>
+                </div>
+                <div class="stat-icon"><i class="ti ti-calendar-blank"></i></div>
+            </div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Este Año</div>
+                    <div class="stat-value" id="stat-anio"><?= $moneda ?> 0</div>
+                </div>
+                <div class="stat-icon"><i class="ti ti-chart-bar"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filters-card">
+        <div class="filters-grid">
+            <div>
+                <label class="filter-label" for="start-date">Fecha Inicio</label>
+                <input type="date" id="start-date" class="filter-input" value="<?= date('Y-m-01') ?>">
+            </div>
+            <div>
+                <label class="filter-label" for="end-date">Fecha Fin</label>
+                <input type="date" id="end-date" class="filter-input" value="<?= date('Y-m-d') ?>">
+            </div>
+            <div>
+                <label class="filter-label" for="filter-cancha">Cancha</label>
+                <select id="filter-cancha" class="filter-select">
+                    <option value="">Todas</option>
+                    <?php if (!empty($sistema->canchas) && is_array($sistema->canchas)): ?>
+                        <?php foreach ($sistema->canchas as $cancha): ?>
+                            <option value="<?= (int)($cancha->id ?? 0) ?>"><?= htmlspecialchars($cancha->nombre ?? '', ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+            <div>
+                <label class="filter-label" for="filter-metodo">Método Pago</label>
+                <select id="filter-metodo" class="filter-select">
+                    <option value="">Todos</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Transferencia">Transferencia</option>
+                </select>
+            </div>
+            <div>
+                <span class="filter-label d-block" style="opacity:0;">.</span>
+                <button onclick="applyFilters()" class="btn-filter">
+                    <i class="ti ti-funnel"></i> Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card" style="grid-column: 1 / -1;">
+            <div class="chart-title">
+                <i class="ti ti-trend-up"></i> Ingresos Últimos 30 Días
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-dias"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="ti ti-credit-card"></i> Por Método de Pago
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-metodos"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="ti ti-ball-tennis"></i> Por Cancha
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-canchas"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="ti ti-shopping-bag"></i> Top Extras Vendidos
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-extras"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="ti ti-clock"></i> Horarios Más Rentables
+            </div>
+            <div class="chart-container">
+                <canvas id="chart-horarios"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #F3F4F6;">
+            <h3 class="chart-title" style="margin:0;">Transacciones</h3>
+            <span id="total-transacciones" style="color: #6B7280; font-size: .85rem;">0 registros</span>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Cancha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Método</th>
+                        <th>Estado</th>
+                        <th>Split</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-body">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <i class="ti ti-spinner" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<?php $this->inlineScript()->captureStart(); ?>
+(function () {
+    'use strict';
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js no se ha cargado');
+        return;
+    }
+
+    var charts = {};
+    var moneda = <?= json_encode($moneda) ?>;
+    var dataUrl = <?= json_encode($this->url('mod.arriendo.dashboard.data')) ?>;
+    var exportUrl = <?= json_encode($this->url('mod.arriendo.dashboard.export')) ?>;
+
+    function fmt(value) {
+        try { return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(value || 0); }
+        catch (e) { return String(value || 0); }
+    }
+
+    function applyStats(resumen) {
+        resumen = resumen || {};
+        document.getElementById('stat-hoy').textContent    = moneda + ' ' + fmt(resumen.ingresos_hoy);
+        document.getElementById('stat-semana').textContent = moneda + ' ' + fmt(resumen.ingresos_semana);
+        document.getElementById('stat-mes').textContent    = moneda + ' ' + fmt(resumen.ingresos_mes);
+        document.getElementById('stat-anio').textContent   = moneda + ' ' + fmt(resumen.ingresos_anio);
+    }
+
+    function applyCharts(graficos) {
+        graficos = graficos || {};
+        Object.values(charts).forEach(function (c) { try { c.destroy(); } catch (e) {} });
+        charts = {};
+
+        // Días
+        var dias = graficos.ingresos_por_dia || [];
+        var ctxDias = document.getElementById('chart-dias').getContext('2d');
+        charts.dias = new Chart(ctxDias, {
+            type: 'line',
+            data: {
+                labels: dias.map(function (d) { return d.fecha; }),
+                datasets: [{
+                    label: 'Ingresos',
+                    data: dias.map(function (d) { return d.total; }),
+                    borderColor: '#4F46E5',
+                    backgroundColor: 'rgba(79,70,229,.1)',
+                    tension: .4, fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return moneda + ' ' + fmt(v); } } } }
+            }
+        });
+
+        // Métodos
+        var metodos = graficos.ingresos_por_metodo || {};
+        var ctxMetodos = document.getElementById('chart-metodos').getContext('2d');
+        charts.metodos = new Chart(ctxMetodos, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(metodos),
+                datasets: [{ data: Object.values(metodos), backgroundColor: ['#10B981','#F59E0B','#EF4444','#3B82F6'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // Canchas
+        var canchas = graficos.ingresos_por_cancha || [];
+        var ctxCan = document.getElementById('chart-canchas').getContext('2d');
+        charts.canchas = new Chart(ctxCan, {
+            type: 'bar',
+            data: {
+                labels: canchas.map(function (c) { return c.cancha; }),
+                datasets: [{ label: 'Ingresos', data: canchas.map(function (c) { return c.total; }), backgroundColor: '#4F46E5' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return moneda + ' ' + fmt(v); } } } } }
+        });
+
+        // Extras
+        var extras = graficos.top_extras || [];
+        var ctxEx = document.getElementById('chart-extras').getContext('2d');
+        charts.extras = new Chart(ctxEx, {
+            type: 'bar',
+            data: {
+                labels: extras.map(function (e) { return e.nombre; }),
+                datasets: [{ label: 'Cantidad', data: extras.map(function (e) { return e.cantidad; }), backgroundColor: '#10B981' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+
+        // Horarios
+        var horarios = graficos.horarios_rentables || [];
+        var ctxHr = document.getElementById('chart-horarios').getContext('2d');
+        charts.horarios = new Chart(ctxHr, {
+            type: 'bar',
+            data: {
+                labels: horarios.map(function (h) { return h.horario; }),
+                datasets: [{ label: 'Ingresos', data: horarios.map(function (h) { return h.total; }), backgroundColor: '#F59E0B' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return moneda + ' ' + fmt(v); } } } } }
+        });
+    }
+
+    function applyTable(list) {
+        list = list || [];
+        var tbody = document.getElementById('transactions-body');
+        var totalEl = document.getElementById('total-transacciones');
+        totalEl.textContent = list.length + ' registros';
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 1.5rem; color: #6B7280;">No hay transacciones en el período seleccionado</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(function (t) {
+            var fecha  = t.fecha  || '';
+            var hora   = t.hora   || '';
+            var cancha = t.cancha || '';
+            var cliente = t.cliente || '';
+            var total = fmt(t.total);
+            var metodo = t.metodo || '';
+            var badge = t.pagado
+                ? '<span class="badge badge-success">Pagado</span>'
+                : '<span class="badge badge-warning">Pendiente</span>';
+            var split = (t.split && t.split > 1) ? (t.split + ' personas') : '-';
+            return '<tr>' +
+                '<td>' + fecha + '</td>' +
+                '<td>' + hora  + '</td>' +
+                '<td>' + cancha + '</td>' +
+                '<td>' + cliente + '</td>' +
+                '<td style="font-weight:600;">' + moneda + ' ' + total + '</td>' +
+                '<td>' + metodo + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td>' + split + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    function loadDashboardData() {
+        var startDate = document.getElementById('start-date').value;
+        var endDate   = document.getElementById('end-date').value;
+        var canchaId  = document.getElementById('filter-cancha').value;
+        var metodo    = document.getElementById('filter-metodo').value;
+        var qs = new URLSearchParams();
+        if (startDate) qs.set('start_date', startDate);
+        if (endDate)   qs.set('end_date', endDate);
+        if (canchaId)  qs.set('cancha_id', canchaId);
+        if (metodo)    qs.set('metodo_pago', metodo);
+
+        fetch(dataUrl + '?' + qs.toString(), { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : { resumen:{}, graficos:{ingresos_por_metodo:{}}, transacciones:[] }; })
+            .then(function (data) {
+                applyStats(data.resumen || {});
+                applyCharts(data.graficos || {});
+                applyTable(data.transacciones || []);
+            })
+            .catch(function (err) { console.error('Error dashboard:', err); });
+    }
+
+    window.applyFilters = function () { loadDashboardData(); };
+
+    window.exportData = function () {
+        var startDate = document.getElementById('start-date').value;
+        var endDate   = document.getElementById('end-date').value;
+        var qs = new URLSearchParams();
+        if (startDate) qs.set('start_date', startDate);
+        if (endDate)   qs.set('end_date', endDate);
+        window.location.href = exportUrl + '?' + qs.toString();
+    };
+
+    document.addEventListener('DOMContentLoaded', loadDashboardData);
+})();
+<?php $this->inlineScript()->captureEnd(); ?>
+
+<?php $this->inlineScript()->appendFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'); ?>
