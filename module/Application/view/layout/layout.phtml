@@ -369,11 +369,18 @@ $currentPath = basename(parse_url($requestUri, PHP_URL_PATH) ?? '');
         display: block !important;
         box-sizing: border-box !important;
     }
-    .mavoo-page .row {
+    /* BUG: esto era ".mavoo-page .row"/".mavoo-page [class*=\"col-\"]" (selector
+       descendiente, sin límite de profundidad), así que anulaba el gutter de
+       CUALQUIER grid Bootstrap dentro de la página, incluyendo los formularios
+       de 2 columnas anidados dentro de .card > .card-body varios niveles más
+       adentro -> columnas pegadas entre sí sin espacio horizontal. Solo debe
+       afectar la fila/columna de más afuera (el "shell" de la página), no los
+       grids anidados de los formularios. */
+    .mavoo-page > .container-fluid > .row {
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
-    .mavoo-page [class*="col-"] {
+    .mavoo-page > .container-fluid > .row > [class*="col-"] {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
@@ -530,10 +537,7 @@ html, body {
 }
 .mavoo-header .brand img {
     height: 34px;
-    filter: drop-shadow(0 2px 4px rgba(var(--mavoo-primary-rgb), .25));
-    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
 }
-.mavoo-header .brand:hover img { transform: scale(1.06) rotate(-3deg); }
 .mavoo-header .user-name { color: var(--mavoo-ink-600) !important; }
 .mavoo-header .user-name i { color: var(--mavoo-primary); }
 
@@ -548,9 +552,13 @@ html, body {
     box-shadow: 0 2px 12px rgba(15, 23, 42, .04);
 }
 .mavoo-nav .main-nav > li > a {
+    /* Sin margin vertical: .mavoo-nav tiene altura FIJA (--mavoo-sidebar-h) y
+       el JS de posicionamiento de submenús calcula su posición con
+       getBoundingClientRect() del link al momento del click; un margin
+       vertical aquí cambiaba la altura real del link dentro del contenedor
+       de altura fija, y el submenú terminaba apareciendo desplazado hacia
+       abajo, lejos de su toggle. */
     color: var(--mavoo-ink-600) !important;
-    border-radius: 8px;
-    margin: 8px 2px;
     border-bottom: 2px solid transparent;
     transition: var(--mavoo-transition);
     position: relative;
@@ -565,16 +573,6 @@ html, body {
     background: linear-gradient(180deg, rgba(var(--mavoo-primary-rgb), 0) 60%, rgba(var(--mavoo-primary-rgb), .10) 100%) !important;
     border-bottom-color: var(--mavoo-primary) !important;
     font-weight: 600 !important;
-}
-.mavoo-nav .main-nav > li.active > a::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 50%;
-    width: 6px; height: 6px;
-    background: var(--mavoo-cyan);
-    border-radius: 50%;
-    transform: translate(-50%, -2px);
-    box-shadow: 0 0 8px var(--mavoo-cyan);
 }
 .mavoo-nav .main-nav > li > a[aria-expanded="true"] {
     color: var(--mavoo-primary) !important;
