@@ -430,6 +430,1266 @@ $currentPath = basename(parse_url($requestUri, PHP_URL_PATH) ?? '');
     .modal { z-index: 15000 !important; }
     .modal-backdrop { z-index: 14999 !important; }
     .modal-open .modal { z-index: 15000 !important; }
+
+/* ============================================================
+   MASTRO DESIGN SYSTEM — Mavoo Gestión
+   Reemplazo de estilos para el <style> del layout compartido.
+   - Paleta: azul/celeste ancla + acentos vivos (éxito, alerta, peligro,
+     info, decorative warm, decorative violet).
+   - Solo CSS, no requiere cambios en HTML de las ~45 vistas.
+   - Respeta estructura .mavoo-* (no se cambia position/sticky/fixed).
+   ============================================================ */
+
+:root {
+    /* —— Marca: ancla azul/celeste —— */
+    --mavoo-primary:        #0066FF;
+    --mavoo-primary-rgb:    0, 102, 255;
+    --mavoo-primary-600:    #0052CC;
+    --mavoo-primary-700:    #003D99;
+    --mavoo-primary-50:     #E6F0FF;
+    --mavoo-primary-100:    #CCE0FF;
+    --mavoo-cyan:           #00D3D3;
+    --mavoo-cyan-rgb:       0, 211, 211;
+    --mavoo-cyan-soft:      #E0FAFA;
+    --mavoo-gradient:       linear-gradient(135deg, #0066FF 0%, #00D3D3 100%);
+
+    /* —— Acentos vivos (badges, charts, iconos, alertas) —— */
+    --mavoo-success:        #10B981;
+    --mavoo-success-rgb:    16, 185, 129;
+    --mavoo-success-soft:   #D1FAE5;
+    --mavoo-warning:        #F59E0B;
+    --mavoo-warning-rgb:    245, 158, 11;
+    --mavoo-warning-soft:   #FEF3C7;
+    --mavoo-danger:         #EF4444;
+    --mavoo-danger-rgb:     239, 68, 68;
+    --mavoo-danger-soft:    #FEE2E2;
+    --mavoo-info:           #0EA5E9;
+    --mavoo-info-rgb:       14, 165, 233;
+    --mavoo-info-soft:      #E0F2FE;
+    --mavoo-violet:         #8B5CF6;
+    --mavoo-violet-rgb:     139, 92, 246;
+    --mavoo-violet-soft:    #EDE9FE;
+    --mavoo-pink:           #EC4899;
+    --mavoo-pink-rgb:       236, 72, 153;
+    --mavoo-pink-soft:      #FCE7F3;
+
+    /* —— Neutros —— */
+    --mavoo-ink-900:        #0F172A;
+    --mavoo-ink-700:        #334155;
+    --mavoo-ink-600:        #475569;
+    --mavoo-ink-500:        #64748B;
+    --mavoo-ink-400:        #94A3B8;
+    --mavoo-ink-300:        #CBD5E1;
+    --mavoo-ink-200:        #E2E8F0;
+    --mavoo-ink-100:        #F1F5F9;
+    --mavoo-ink-50:         #F8FAFC;
+    --mavoo-white:          #FFFFFF;
+
+    /* —— Sistema —— */
+    --mavoo-radius-sm:      6px;
+    --mavoo-radius:         10px;
+    --mavoo-radius-lg:      14px;
+    --mavoo-radius-xl:      18px;
+    --mavoo-shadow-xs:      0 1px 2px rgba(15, 23, 42, .04);
+    --mavoo-shadow-sm:      0 2px 6px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+    --mavoo-shadow:         0 4px 14px rgba(15, 23, 42, .07), 0 1px 3px rgba(15, 23, 42, .04);
+    --mavoo-shadow-lg:      0 12px 32px rgba(15, 23, 42, .10), 0 2px 6px rgba(15, 23, 42, .05);
+    --mavoo-shadow-primary: 0 6px 18px rgba(var(--mavoo-primary-rgb), .28);
+    --mavoo-ring:           0 0 0 4px rgba(var(--mavoo-primary-rgb), .15);
+    --mavoo-transition:     all .22s cubic-bezier(.4, 0, .2, 1);
+
+    /* Compat con CSS previo del layout */
+    --primary-rgb: var(--mavoo-primary-rgb);
+}
+
+/* ============================================================
+   BACKGROUND BASE — superficie suave con sutil tinte frío
+   ============================================================ */
+html, body {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(var(--mavoo-cyan-rgb), .06), transparent 60%),
+      radial-gradient(900px 500px at 95% 0%, rgba(var(--mavoo-primary-rgb), .05), transparent 55%),
+      #F4F7FB !important;
+    color: var(--mavoo-ink-700);
+    font-feature-settings: "cv11", "ss01", "ss03";
+}
+.app-wrapper { background: transparent !important; }
+
+/* ============================================================
+   HEADER — cohesión visual con el shell flotante
+   ============================================================ */
+.mavoo-header {
+    background: rgba(255, 255, 255, .85) !important;
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border-bottom: 1px solid var(--mavoo-ink-200) !important;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
+}
+.mavoo-header .brand {
+    color: var(--mavoo-ink-900) !important;
+}
+.mavoo-header .brand img {
+    height: 34px;
+    filter: drop-shadow(0 2px 4px rgba(var(--mavoo-primary-rgb), .25));
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+.mavoo-header .brand:hover img { transform: scale(1.06) rotate(-3deg); }
+.mavoo-header .user-name { color: var(--mavoo-ink-600) !important; }
+.mavoo-header .user-name i { color: var(--mavoo-primary); }
+
+/* ============================================================
+   NAV — horizontal, sticky bajo el header
+   ============================================================ */
+.mavoo-nav {
+    background: rgba(255, 255, 255, .9) !important;
+    backdrop-filter: saturate(160%) blur(10px);
+    -webkit-backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid var(--mavoo-ink-200) !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, .04);
+}
+.mavoo-nav .main-nav > li > a {
+    color: var(--mavoo-ink-600) !important;
+    border-radius: 8px;
+    margin: 8px 2px;
+    border-bottom: 2px solid transparent;
+    transition: var(--mavoo-transition);
+    position: relative;
+}
+.mavoo-nav .main-nav > li > a:hover {
+    color: var(--mavoo-primary) !important;
+    background: var(--mavoo-primary-50) !important;
+    transform: translateY(-1px);
+}
+.mavoo-nav .main-nav > li.active > a {
+    color: var(--mavoo-primary) !important;
+    background: linear-gradient(180deg, rgba(var(--mavoo-primary-rgb), 0) 60%, rgba(var(--mavoo-primary-rgb), .10) 100%) !important;
+    border-bottom-color: var(--mavoo-primary) !important;
+    font-weight: 600 !important;
+}
+.mavoo-nav .main-nav > li.active > a::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    width: 6px; height: 6px;
+    background: var(--mavoo-cyan);
+    border-radius: 50%;
+    transform: translate(-50%, -2px);
+    box-shadow: 0 0 8px var(--mavoo-cyan);
+}
+.mavoo-nav .main-nav > li > a[aria-expanded="true"] {
+    color: var(--mavoo-primary) !important;
+    background: var(--mavoo-primary-50) !important;
+}
+
+/* Submenús */
+.mavoo-nav .main-nav > li > ul.submenu {
+    border: 1px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius-lg) !important;
+    box-shadow: var(--mavoo-shadow-lg) !important;
+    padding: .5rem !important;
+    animation: submenuIn .18s cubic-bezier(.4, 0, .2, 1);
+}
+@keyframes submenuIn {
+    from { opacity: 0; transform: translateY(-6px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.mavoo-nav .main-nav > li > ul.submenu li a {
+    border-radius: 8px !important;
+    margin: 2px 0;
+    transition: var(--mavoo-transition);
+}
+.mavoo-nav .main-nav > li > ul.submenu li a:hover {
+    background: var(--mavoo-primary-50) !important;
+    color: var(--mavoo-primary) !important;
+    padding-left: 1.5rem !important;
+}
+.mavoo-nav .main-nav > li > ul.submenu li a:hover::before {
+    content: '→';
+    position: absolute;
+    margin-left: -.9rem;
+    color: var(--mavoo-cyan);
+    font-weight: 700;
+}
+
+/* ============================================================
+   PAGE — superficie del contenido
+   ============================================================ */
+.mavoo-page {
+    background: var(--mavoo-white) !important;
+    border-radius: 0 0 var(--mavoo-radius-lg) var(--mavoo-radius-lg) !important;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
+}
+
+/* ============================================================
+   CARDS — superficies pulidas con jerarquía clara
+   ============================================================ */
+.card {
+    background: var(--mavoo-white);
+    border: 1px solid var(--mavoo-ink-200);
+    border-radius: var(--mavoo-radius-lg);
+    box-shadow: var(--mavoo-shadow-xs);
+    transition: var(--mavoo-transition);
+    overflow: hidden;
+}
+.card:hover { box-shadow: var(--mavoo-shadow-sm); }
+.card-header {
+    background: linear-gradient(180deg, var(--mavoo-ink-50) 0%, var(--mavoo-white) 100%);
+    border-bottom: 1px solid var(--mavoo-ink-200);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    color: var(--mavoo-ink-900);
+}
+.card-header h5,
+.card-header h4,
+.card-header h6 {
+    color: var(--mavoo-ink-900);
+    font-weight: 700;
+    letter-spacing: -.01em;
+    margin: 0;
+}
+.card-header h5::before,
+.card-header h4::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 18px;
+    background: var(--mavoo-gradient);
+    border-radius: 4px;
+    margin-right: .6rem;
+    vertical-align: -3px;
+}
+.card-body { padding: 1.25rem 1.5rem; }
+.card-footer {
+    background: var(--mavoo-ink-50);
+    border-top: 1px solid var(--mavoo-ink-200);
+    padding: .9rem 1.25rem;
+}
+
+/* ============================================================
+   FORM CONTROLS — más aire, bordes pulidos, focus claro
+   ============================================================ */
+.form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--mavoo-ink-700);
+    margin-bottom: .4rem;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+}
+.form-label::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 12px;
+    background: var(--mavoo-primary);
+    border-radius: 2px;
+    margin-right: .45rem;
+    vertical-align: -1px;
+    opacity: .85;
+}
+
+.form-control,
+.form-select,
+.form-control:focus,
+.form-select:focus {
+    font-family: inherit;
+    font-size: .92rem;
+    /* !important: el bundle compilado de Ki Admin (build/assets/style-*.css)
+       redefine --bs-body-color a partir de su propia variable --link-color
+       (#00d3d3), y Bootstrap usa esa variable para el color de texto de
+       .form-control -> todos los inputs quedaban en cian en vez de un
+       color de texto legible. */
+    color: var(--mavoo-ink-900) !important;
+    background-color: var(--mavoo-white);
+    border: 1.5px solid var(--mavoo-ink-200);
+    border-radius: var(--mavoo-radius);
+    padding: .62rem .9rem;
+    line-height: 1.45;
+    transition: var(--mavoo-transition);
+    box-shadow: none;
+    min-height: 42px;
+}
+.form-control:hover:not(:disabled):not([readonly]),
+.form-select:hover:not(:disabled) {
+    border-color: var(--mavoo-ink-300);
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--mavoo-primary);
+    background-color: var(--mavoo-white);
+    box-shadow: var(--mavoo-ring);
+    outline: none;
+}
+.form-control::placeholder {
+    color: var(--mavoo-ink-400);
+    font-weight: 400;
+}
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--mavoo-ink-100);
+    color: var(--mavoo-ink-500);
+    cursor: not-allowed;
+    opacity: .9;
+}
+.form-control[type="file"] {
+    padding: .5rem;
+    background: var(--mavoo-ink-50);
+}
+.form-control[type="file"]::-webkit-file-upload-button {
+    background: var(--mavoo-gradient);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: .35rem .8rem;
+    margin-right: .8rem;
+    font-weight: 600;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: var(--mavoo-transition);
+}
+.form-control[type="file"]::-webkit-file-upload-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--mavoo-shadow-primary);
+}
+
+/* Inputs de fecha/hora: mejor legibilidad */
+input[type="date"].form-control,
+input[type="datetime-local"].form-control,
+input[type="time"].form-control {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Textarea */
+textarea.form-control {
+    min-height: 110px;
+    resize: vertical;
+}
+
+/* Select arrow — más limpio */
+.form-select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23475569' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right .9rem center;
+    background-size: 14px 12px;
+    padding-right: 2.25rem;
+}
+
+/* Select2 (sobrescribe si está cargado) */
+.select2-container--default .select2-selection--single {
+    height: 42px !important;
+    border: 1.5px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius) !important;
+    background: var(--mavoo-white) !important;
+    transition: var(--mavoo-transition);
+}
+.select2-container--default .select2-selection--single:hover {
+    border-color: var(--mavoo-ink-300) !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--mavoo-primary) !important;
+    box-shadow: var(--mavoo-ring) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important;
+    color: var(--mavoo-ink-900) !important;
+    padding-left: .9rem !important;
+    font-size: .92rem !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px !important;
+    right: .8rem !important;
+}
+.select2-dropdown {
+    border: 1px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius) !important;
+    box-shadow: var(--mavoo-shadow-lg) !important;
+    overflow: hidden;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: var(--mavoo-primary) !important;
+    color: #fff !important;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1.5px solid var(--mavoo-ink-200) !important;
+    border-radius: 8px !important;
+    padding: .5rem .75rem !important;
+}
+
+/* Checkboxes y radios */
+.form-check {
+    padding-left: 1.85em;
+    min-height: 1.6em;
+    margin-bottom: .5rem;
+}
+.form-check-input {
+    width: 1.15em;
+    height: 1.15em;
+    margin-top: .22em;
+    border: 1.5px solid var(--mavoo-ink-300);
+    background-color: var(--mavoo-white);
+    transition: var(--mavoo-transition);
+    cursor: pointer;
+}
+.form-check-input:hover { border-color: var(--mavoo-primary); }
+.form-check-input:checked {
+    background-color: var(--mavoo-primary);
+    border-color: var(--mavoo-primary);
+    box-shadow: 0 0 0 3px rgba(var(--mavoo-primary-rgb), .15);
+}
+.form-check-input[type="radio"] { border-radius: 50%; }
+.form-check-input:focus {
+    border-color: var(--mavoo-primary);
+    box-shadow: var(--mavoo-ring);
+}
+.form-check-input[type="checkbox"]:indeterminate {
+    background-color: var(--mavoo-primary);
+    border-color: var(--mavoo-primary);
+}
+.form-check-label {
+    color: var(--mavoo-ink-700);
+    font-size: .92rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Switch */
+.form-switch .form-check-input {
+    width: 2.25em;
+    height: 1.35em;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%2394A3B8'/%3E%3C/svg%3E");
+    transition: var(--mavoo-transition);
+}
+.form-switch .form-check-input:checked {
+    background-color: var(--mavoo-primary);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+/* Form helper texts */
+.form-text {
+    color: var(--mavoo-ink-500);
+    font-size: .8rem;
+    margin-top: .35rem;
+}
+.invalid-feedback {
+    color: var(--mavoo-danger);
+    font-size: .8rem;
+    font-weight: 500;
+    margin-top: .35rem;
+}
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: var(--mavoo-danger);
+    box-shadow: 0 0 0 4px rgba(var(--mavoo-danger-rgb), .12);
+}
+
+/* Espaciado entre campos del form (en .row > .col-*) */
+.app-form .row,
+.app-form > .row { row-gap: 0; }
+.app-form .mb-3 { margin-bottom: 1.15rem !important; }
+
+/* ============================================================
+   BUTTONS — modernos, con microinteracciones
+   ============================================================ */
+.btn {
+    font-family: inherit;
+    font-weight: 600;
+    font-size: .88rem;
+    letter-spacing: .01em;
+    border-radius: var(--mavoo-radius);
+    padding: .58rem 1.15rem;
+    border: 1.5px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: var(--mavoo-transition);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+}
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,.35) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity .4s ease;
+    pointer-events: none;
+}
+.btn:hover::after { opacity: 1; }
+.btn:focus-visible {
+    outline: none;
+    box-shadow: var(--mavoo-ring);
+}
+.btn:active { transform: translateY(1px) scale(.99); }
+.btn:disabled,
+.btn.disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Primary — ancla de marca */
+.btn-primary {
+    background: var(--mavoo-gradient) !important;
+    background-size: 200% 200% !important;
+    background-position: 0% 50% !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-primary-rgb), .28);
+}
+.btn-primary:hover {
+    background-position: 100% 50% !important;
+    box-shadow: 0 8px 22px rgba(var(--mavoo-primary-rgb), .38);
+    transform: translateY(-2px);
+    color: #fff !important;
+}
+.btn-primary:focus,
+.btn-primary:focus-visible {
+    background: var(--mavoo-gradient) !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 4px rgba(var(--mavoo-primary-rgb), .25), 0 8px 22px rgba(var(--mavoo-primary-rgb), .38) !important;
+}
+
+/* Outline primary */
+.btn-outline-primary {
+    background: transparent;
+    color: var(--mavoo-primary);
+    border: 1.5px solid var(--mavoo-primary);
+}
+.btn-outline-primary:hover {
+    background: var(--mavoo-primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(var(--mavoo-primary-rgb), .30);
+}
+
+/* Success */
+.btn-success {
+    background: var(--mavoo-success);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-success-rgb), .30);
+}
+.btn-success:hover {
+    background: #0EA572;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(var(--mavoo-success-rgb), .40);
+    color: #fff;
+}
+.btn-outline-success {
+    background: transparent;
+    color: var(--mavoo-success);
+    border: 1.5px solid var(--mavoo-success);
+}
+.btn-outline-success:hover {
+    background: var(--mavoo-success);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(var(--mavoo-success-rgb), .30);
+}
+
+/* Warning */
+.btn-warning {
+    background: var(--mavoo-warning);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-warning-rgb), .32);
+}
+.btn-warning:hover {
+    background: #D97706;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(var(--mavoo-warning-rgb), .42);
+    color: #fff;
+}
+.btn-outline-warning {
+    background: transparent;
+    color: var(--mavoo-warning);
+    border: 1.5px solid var(--mavoo-warning);
+}
+.btn-outline-warning:hover {
+    background: var(--mavoo-warning);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* Danger */
+.btn-danger {
+    background: var(--mavoo-danger);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-danger-rgb), .30);
+}
+.btn-danger:hover {
+    background: #DC2626;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(var(--mavoo-danger-rgb), .40);
+    color: #fff;
+}
+.btn-outline-danger {
+    background: transparent;
+    color: var(--mavoo-danger);
+    border: 1.5px solid var(--mavoo-danger);
+}
+.btn-outline-danger:hover {
+    background: var(--mavoo-danger);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(var(--mavoo-danger-rgb), .30);
+}
+
+/* Info */
+.btn-info {
+    background: var(--mavoo-info);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-info-rgb), .30);
+}
+.btn-info:hover {
+    background: #0284C7;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(var(--mavoo-info-rgb), .40);
+    color: #fff;
+}
+.btn-outline-info {
+    background: transparent;
+    color: var(--mavoo-info);
+    border: 1.5px solid var(--mavoo-info);
+}
+.btn-outline-info:hover {
+    background: var(--mavoo-info);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* Light / Secondary */
+.btn-light {
+    background: var(--mavoo-white);
+    color: var(--mavoo-ink-700);
+    border: 1.5px solid var(--mavoo-ink-200);
+}
+.btn-light:hover {
+    background: var(--mavoo-ink-50);
+    border-color: var(--mavoo-ink-300);
+    color: var(--mavoo-ink-900);
+    transform: translateY(-1px);
+}
+.btn-secondary {
+    background: var(--mavoo-ink-100);
+    color: var(--mavoo-ink-700);
+    border: 1.5px solid transparent;
+}
+.btn-secondary:hover {
+    background: var(--mavoo-ink-200);
+    color: var(--mavoo-ink-900);
+}
+
+/* Dark */
+.btn-dark {
+    background: var(--mavoo-ink-900);
+    border: none;
+    color: #fff;
+}
+.btn-dark:hover {
+    background: #1E293B;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .30);
+    color: #fff;
+}
+
+/* Tamaños */
+.btn-sm {
+    padding: .38rem .8rem;
+    font-size: .8rem;
+    border-radius: 8px;
+    gap: .35rem;
+}
+.btn-lg {
+    padding: .8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
+}
+.btn-icon {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    flex-shrink: 0;
+}
+.btn-icon.btn-sm { width: 32px; height: 32px; }
+.btn-icon.btn-lg { width: 46px; height: 46px; }
+
+/* Block */
+.btn-block,
+.w-100.btn { width: 100%; }
+
+/* Logout del header */
+.btn-logout {
+    padding: .42rem .95rem !important;
+    font-size: .82rem !important;
+    border-radius: 8px !important;
+}
+
+/* ============================================================
+   BADGES — vivos y variados (no monocromáticos)
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .35em .7em;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 999px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    transition: var(--mavoo-transition);
+}
+.badge i,
+.badge svg { font-size: .85em; }
+
+.badge.bg-primary,
+.badge-primary {
+    background: var(--mavoo-primary-50) !important;
+    color: var(--mavoo-primary-700) !important;
+    border-color: rgba(var(--mavoo-primary-rgb), .25);
+}
+.badge.bg-success,
+.badge-success {
+    background: var(--mavoo-success-soft) !important;
+    color: #047857 !important;
+    border-color: rgba(var(--mavoo-success-rgb), .25);
+}
+.badge.bg-warning,
+.badge-warning {
+    background: var(--mavoo-warning-soft) !important;
+    color: #92400E !important;
+    border-color: rgba(var(--mavoo-warning-rgb), .30);
+}
+.badge.bg-danger,
+.badge-danger {
+    background: var(--mavoo-danger-soft) !important;
+    color: #B91C1C !important;
+    border-color: rgba(var(--mavoo-danger-rgb), .25);
+}
+.badge.bg-info,
+.badge-info {
+    background: var(--mavoo-info-soft) !important;
+    color: #0369A1 !important;
+    border-color: rgba(var(--mavoo-info-rgb), .25);
+}
+.badge.bg-violet {
+    background: var(--mavoo-violet-soft) !important;
+    color: #6D28D9 !important;
+    border-color: rgba(var(--mavoo-violet-rgb), .25);
+}
+.badge.bg-pink {
+    background: var(--mavoo-pink-soft) !important;
+    color: #BE185D !important;
+    border-color: rgba(var(--mavoo-pink-rgb), .25);
+}
+.badge.bg-dark {
+    background: var(--mavoo-ink-900) !important;
+    color: #fff !important;
+}
+.badge.bg-light {
+    background: var(--mavoo-white) !important;
+    color: var(--mavoo-ink-700) !important;
+    border-color: var(--mavoo-ink-200);
+}
+
+/* Badge "pulse" para notificaciones */
+.badge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    padding: 0;
+    position: relative;
+}
+.badge-dot::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: .35;
+    animation: badgePulse 1.8s ease-out infinite;
+}
+@keyframes badgePulse {
+    0%   { transform: scale(1);   opacity: .35; }
+    100% { transform: scale(2.4); opacity: 0;   }
+}
+
+/* ============================================================
+   ALERTS — coloridos con borde lateral de acento
+   ============================================================ */
+.alert {
+    border: 1px solid transparent;
+    border-radius: var(--mavoo-radius);
+    padding: 1rem 1.15rem;
+    margin-bottom: 1.15rem;
+    font-size: .9rem;
+    border-left-width: 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+}
+.alert i,
+.alert svg { font-size: 1.15rem; margin-top: .1rem; }
+.alert-primary {
+    background: var(--mavoo-primary-50);
+    color: var(--mavoo-primary-700);
+    border-color: rgba(var(--mavoo-primary-rgb), .20);
+    border-left-color: var(--mavoo-primary);
+}
+.alert-success {
+    background: var(--mavoo-success-soft);
+    color: #065F46;
+    border-color: rgba(var(--mavoo-success-rgb), .25);
+    border-left-color: var(--mavoo-success);
+}
+.alert-warning {
+    background: var(--mavoo-warning-soft);
+    color: #92400E;
+    border-color: rgba(var(--mavoo-warning-rgb), .30);
+    border-left-color: var(--mavoo-warning);
+}
+.alert-danger {
+    background: var(--mavoo-danger-soft);
+    color: #991B1B;
+    border-color: rgba(var(--mavoo-danger-rgb), .25);
+    border-left-color: var(--mavoo-danger);
+}
+.alert-info {
+    background: var(--mavoo-info-soft);
+    color: #075985;
+    border-color: rgba(var(--mavoo-info-rgb), .25);
+    border-left-color: var(--mavoo-info);
+}
+
+/* ============================================================
+   TABLES — limpias, con header tintado y hover sutil
+   ============================================================ */
+.table {
+    --bs-table-color: var(--mavoo-ink-700);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--mavoo-ink-200);
+    --bs-table-hover-bg: var(--mavoo-ink-50);
+    --bs-table-hover-color: var(--mavoo-ink-900);
+    margin-bottom: 0;
+    font-size: .9rem;
+    border-color: var(--mavoo-ink-200);
+}
+.table > thead {
+    background: linear-gradient(180deg, var(--mavoo-ink-50) 0%, var(--mavoo-white) 100%);
+}
+.table > thead th {
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--mavoo-ink-600);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .85rem 1rem;
+    border-bottom: 1.5px solid var(--mavoo-ink-200);
+    white-space: nowrap;
+    background: transparent;
+}
+.table > tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--mavoo-ink-100);
+    color: var(--mavoo-ink-700);
+    vertical-align: middle;
+}
+.table > tbody tr {
+    transition: background .15s ease, transform .15s ease;
+}
+.table > tbody tr:hover {
+    background: var(--mavoo-primary-50) !important;
+}
+.table > tbody tr:last-child td { border-bottom: 0; }
+
+/* Table striped con tinte frío */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background: rgba(var(--mavoo-cyan-rgb), .025);
+}
+
+/* Table bordered */
+.table-bordered {
+    border: 1px solid var(--mavoo-ink-200);
+    border-radius: var(--mavoo-radius);
+    overflow: hidden;
+}
+.table-bordered > :not(caption) > * > * {
+    border-color: var(--mavoo-ink-200);
+}
+
+/* ============================================================
+   BREADCRUMB — re-styling del que usan las vistas
+   ============================================================ */
+.breadcrumb {
+    background: var(--mavoo-ink-50) !important;
+    border-radius: var(--mavoo-radius);
+    padding: .75rem 1rem !important;
+    margin: 0 0 1rem;
+    border: 1px solid var(--mavoo-ink-200);
+    font-size: .85rem;
+}
+.breadcrumb-item,
+.breadcrumb-item a {
+    color: var(--mavoo-ink-600);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: var(--mavoo-transition);
+}
+.breadcrumb-item a:hover { color: var(--mavoo-primary); }
+.breadcrumb-item + .breadcrumb-item::before {
+    content: '›';
+    color: var(--mavoo-ink-400);
+    font-weight: 600;
+    padding-right: .5rem;
+}
+.breadcrumb-item.active {
+    color: var(--mavoo-ink-900);
+    font-weight: 600;
+}
+
+/* ============================================================
+   MODALS — cabecera con gradiente y mejor jerarquía
+   ============================================================ */
+.modal-content {
+    border: none;
+    border-radius: var(--mavoo-radius-lg);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .25);
+    overflow: hidden;
+}
+.modal-header {
+    background: var(--mavoo-gradient);
+    color: #fff;
+    border-bottom: none;
+    padding: 1.1rem 1.5rem;
+}
+.modal-header .modal-title {
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.01em;
+}
+.modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: .85;
+}
+.modal-header .btn-close:hover { opacity: 1; transform: rotate(90deg); transition: transform .3s; }
+.modal-body { padding: 1.5rem; }
+.modal-footer {
+    background: var(--mavoo-ink-50);
+    border-top: 1px solid var(--mavoo-ink-200);
+    padding: 1rem 1.5rem;
+    gap: .5rem;
+}
+
+/* ============================================================
+   LIST GROUP — más limpio, item activo con gradiente
+   ============================================================ */
+.list-group {
+    border-radius: var(--mavoo-radius);
+    overflow: hidden;
+    border: 1px solid var(--mavoo-ink-200);
+}
+.list-group-item {
+    border-color: var(--mavoo-ink-200);
+    padding: .8rem 1.1rem;
+    color: var(--mavoo-ink-700);
+    transition: var(--mavoo-transition);
+    background: var(--mavoo-white);
+}
+.list-group-item:hover {
+    background: var(--mavoo-primary-50);
+    color: var(--mavoo-primary);
+    padding-left: 1.35rem;
+}
+.list-group-item.active {
+    background: var(--mavoo-gradient) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    font-weight: 600;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination { gap: .25rem; }
+.page-link {
+    color: var(--mavoo-ink-700);
+    border: 1.5px solid var(--mavoo-ink-200);
+    border-radius: 8px !important;
+    padding: .5rem .85rem;
+    font-weight: 600;
+    font-size: .85rem;
+    transition: var(--mavoo-transition);
+    background: var(--mavoo-white);
+}
+.page-link:hover {
+    color: var(--mavoo-primary);
+    background: var(--mavoo-primary-50);
+    border-color: var(--mavoo-primary);
+    transform: translateY(-1px);
+}
+.page-item.active .page-link {
+    background: var(--mavoo-gradient) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(var(--mavoo-primary-rgb), .30);
+}
+.page-item.disabled .page-link {
+    background: var(--mavoo-ink-50);
+    color: var(--mavoo-ink-400);
+    border-color: var(--mavoo-ink-200);
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+.progress {
+    height: 8px;
+    background: var(--mavoo-ink-100);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.progress-bar {
+    background: var(--mavoo-gradient);
+    border-radius: 999px;
+    transition: width .6s cubic-bezier(.4, 0, .2, 1);
+}
+.progress-bar.bg-success { background: var(--mavoo-success) !important; }
+.progress-bar.bg-warning { background: var(--mavoo-warning) !important; }
+.progress-bar.bg-danger  { background: var(--mavoo-danger)  !important; }
+.progress-bar.bg-info    { background: var(--mavoo-info)    !important; }
+
+/* ============================================================
+   DROPDOWN MENUS
+   ============================================================ */
+.dropdown-menu {
+    border: 1px solid var(--mavoo-ink-200);
+    border-radius: var(--mavoo-radius);
+    box-shadow: var(--mavoo-shadow-lg);
+    padding: .45rem;
+    font-size: .9rem;
+    animation: submenuIn .18s cubic-bezier(.4, 0, .2, 1);
+}
+.dropdown-item {
+    border-radius: 6px;
+    padding: .5rem .85rem;
+    color: var(--mavoo-ink-700);
+    transition: var(--mavoo-transition);
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+.dropdown-item i,
+.dropdown-item svg {
+    font-size: 1rem;
+    color: var(--mavoo-ink-500);
+    transition: var(--mavoo-transition);
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--mavoo-primary-50);
+    color: var(--mavoo-primary);
+}
+.dropdown-item:hover i,
+.dropdown-item:focus svg {
+    color: var(--mavoo-primary);
+}
+.dropdown-item.active,
+.dropdown-item:active {
+    background: var(--mavoo-gradient);
+    color: #fff;
+}
+.dropdown-item.active i { color: #fff; }
+.dropdown-divider {
+    border-color: var(--mavoo-ink-200);
+    margin: .4rem .25rem;
+}
+.dropdown-header {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--mavoo-ink-500);
+    letter-spacing: .05em;
+    padding: .5rem .85rem .25rem;
+}
+
+/* ============================================================
+   FILEPOND — coherente con el sistema
+   ============================================================ */
+.filepond--root {
+    font-family: inherit;
+    margin-bottom: 0;
+}
+.filepond--drop-label {
+    color: var(--mavoo-ink-600) !important;
+    background: var(--mavoo-ink-50) !important;
+    border: 2px dashed var(--mavoo-ink-300) !important;
+    border-radius: var(--mavoo-radius) !important;
+}
+.filepond--drop-label:hover { border-color: var(--mavoo-primary) !important; }
+.filepond--panel-root {
+    background-color: var(--mavoo-ink-50) !important;
+    border: 1.5px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius) !important;
+}
+.filepond--item-panel {
+    background-color: var(--mavoo-primary-50) !important;
+}
+
+/* ============================================================
+   TRUMBOWYG EDITOR — coherente con inputs
+   ============================================================ */
+.trumbowyg-box,
+.trumbowyg-editor {
+    border: 1.5px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius) !important;
+    background: var(--mavoo-white) !important;
+}
+.trumbowyg-box:focus-within {
+    border-color: var(--mavoo-primary) !important;
+    box-shadow: var(--mavoo-ring) !important;
+}
+.trumbowyg-button-pane {
+    background: var(--mavoo-ink-50) !important;
+    border-bottom: 1px solid var(--mavoo-ink-200) !important;
+    border-radius: var(--mavoo-radius) var(--mavoo-radius) 0 0 !important;
+}
+.trumbowyg-editor,
+.trumbowyg-box .trumbowyg-editor {
+    min-height: 160px;
+    padding: 1rem !important;
+    font-size: .92rem;
+    color: var(--mavoo-ink-900);
+}
+.trumbowyg-button-pane .trumbowyg-button-group:not(:last-child)::after {
+    background: var(--mavoo-ink-200) !important;
+}
+
+/* ============================================================
+   TÍTULOS / TIPOGRAFÍA
+   ============================================================ */
+.mavoo-page h1,
+.mavoo-page h2,
+.mavoo-page h3,
+.mavoo-page h4,
+.mavoo-page h5,
+.mavoo-page h6 {
+    color: var(--mavoo-ink-900);
+    font-weight: 700;
+    letter-spacing: -.015em;
+}
+.mavoo-page h1 { font-size: 1.85rem; }
+.mavoo-page h2 { font-size: 1.5rem;  }
+.mavoo-page h3 { font-size: 1.25rem; }
+.mavoo-page h4 { font-size: 1.1rem;  }
+.mavoo-page h5 { font-size: 1rem;    }
+.mavoo-page h6 { font-size: .9rem;   text-transform: uppercase; color: var(--mavoo-ink-500); letter-spacing: .04em; }
+
+.text-muted   { color: var(--mavoo-ink-500) !important; }
+.text-primary { color: var(--mavoo-primary) !important; }
+.text-success { color: var(--mavoo-success) !important; }
+.text-warning { color: var(--mavoo-warning) !important; }
+.text-danger  { color: var(--mavoo-danger)  !important; }
+.text-info    { color: var(--mavoo-info)    !important; }
+
+a { color: var(--mavoo-primary); transition: var(--mavoo-transition); }
+a:hover { color: var(--mavoo-primary-700); }
+
+/* ============================================================
+   BOX LIST — barra lateral de acento (usada en la vista)
+   ============================================================ */
+.box-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+    display: grid;
+    gap: .75rem;
+}
+.box-list li {
+    padding: 1rem 1.15rem;
+    border-radius: var(--mavoo-radius);
+    background: var(--mavoo-white);
+    border: 1px solid var(--mavoo-ink-200);
+    border-left: 4px solid var(--mavoo-primary);
+    box-shadow: var(--mavoo-shadow-xs);
+    transition: var(--mavoo-transition);
+}
+.box-list li:hover {
+    transform: translateX(3px);
+    box-shadow: var(--mavoo-shadow-sm);
+}
+.box-list li h5 { color: var(--mavoo-ink-900); margin: 0 0 .25rem; font-size: 1rem; font-weight: 700; }
+.box-list li h7 { color: var(--mavoo-ink-500); font-size: .82rem; font-weight: 500; }
+.box-list .b-s-4-primary  { border-left-color: var(--mavoo-primary);  }
+.box-list .b-s-4-success  { border-left-color: var(--mavoo-success);  }
+.box-list .b-s-4-warning  { border-left-color: var(--mavoo-warning);  }
+.box-list .b-s-4-danger   { border-left-color: var(--mavoo-danger);   }
+.box-list .b-s-4-info     { border-left-color: var(--mavoo-info);     }
+.box-list .b-s-4-violet   { border-left-color: var(--mavoo-violet);   }
+.box-list .b-s-4-cyan     { border-left-color: var(--mavoo-cyan);     }
+
+/* ============================================================
+   UTILIDADES VARIAS
+   ============================================================ */
+.bg-light-secondary { background: var(--mavoo-primary-50) !important; color: var(--mavoo-primary-700); }
+
+/* Scrollbar pulido (webkit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--mavoo-ink-300);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--mavoo-ink-400); background-clip: padding-box; border: 2px solid transparent; }
+
+/* Selection */
+::selection {
+    background: rgba(var(--mavoo-primary-rgb), .25);
+    color: var(--mavoo-ink-900);
+}
+
+/* Focus visible global (accesibilidad) */
+:focus-visible {
+    outline: 2px solid var(--mavoo-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.btn:focus-visible { outline-offset: 3px; }
+
+/* Pequeña animación de entrada para cards y alertas */
+.card,
+.alert {
+    animation: cardIn .35s cubic-bezier(.4, 0, .2, 1) both;
+}
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Quitar sombreado feo de inputs deshabilitados por Bootstrap */
+.form-control:disabled,
+.form-control[readonly] {
+    box-shadow: none;
+    border-style: dashed;
+}
+
+/* Foco en links del breadcrumb para teclado */
+.breadcrumb-item a:focus-visible {
+    outline: 2px solid var(--mavoo-primary);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
     </style>
 
     <!-- jQuery y Bootstrap en HEAD: necesario porque muchas vistas usan

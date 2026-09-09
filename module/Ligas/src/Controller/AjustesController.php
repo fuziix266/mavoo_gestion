@@ -77,6 +77,22 @@ class AjustesController extends AbstractActionController
         ]);
     }
 
+    /**
+     * El selector de evento del index (ajustes/index.phtml) enlaza a
+     * '.../ajustes/edit/:uuid' (ruta child 'edit' del module.config.php),
+     * pero nunca existió un editAction() -> 404 en dispatch al elegir
+     * cualquier evento. indexAction() ya soporta 'uuid' vía route param,
+     * así que solo hace falta alias + apuntar la plantilla (por defecto
+     * Laminas buscaría 'ligas/ajustes/edit', que no existe).
+     */
+    public function editAction(): ViewModel
+    {
+        $viewModel = $this->indexAction();
+        $viewModel->setTemplate('ligas/ajustes/index');
+
+        return $viewModel;
+    }
+
     // =====================================================================
     //  GUARDAR – Crea o actualiza ajuste de evento
     // =====================================================================
