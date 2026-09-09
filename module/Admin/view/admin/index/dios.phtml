@@ -243,7 +243,13 @@ $this->inlineScript()
     'use strict';
 
     $(function () {
-        if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('usuarios')) {
+        // La fila de "sin resultados" es un único <td colspan="6"> (1 celda real
+        // contra 6 <th> del thead); si se inicializa DataTables con esa fila
+        // presente, su detección automática de columnas cuenta 1 en vez de 6 y
+        // dispara "Incorrect column count". Solo iniciamos si hay filas de datos
+        // reales (no tiene sentido paginar/ordenar/buscar una tabla vacía).
+        var hayUsuarios = <?= empty($usuarios) ? 'false' : 'true' ?>;
+        if (hayUsuarios && typeof $.fn.DataTable !== 'undefined' && document.getElementById('usuarios')) {
             $('#usuarios').DataTable({
                 language: {
                     lengthMenu: "Mostrar _MENU_ registros por página",
