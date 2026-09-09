@@ -327,7 +327,7 @@ class AjustesController extends AbstractActionController
     private function dbExecute(string $sql, array $params = []): bool
     {
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare($sql);
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare($sql);
             $stmt->execute($params);
 
             return true;

@@ -23,8 +23,44 @@ class IndexController extends AbstractActionController
 
     public function indexAction()
     {
+        $identity = $this->auth->getIdentity() ?? [];
+        $userId = (int) ($identity['id'] ?? 0);
+
+        // Tarjetas del dashboard (index.phtml). "Próximos partidos" y "Ranking"
+        // dependen de en qué categoría/deporte se está evaluando al jugador
+        // (un mismo usuario puede tener nóminas y rankings distintos por
+        // categoría) y no hay todavía una noción de "categoría actual" en
+        // este dashboard general, así que se dejan en 0 en vez de inventar
+        // cuál mostrar; "Eventos activos" y "Disciplinas" sí son cálculos
+        // sin ambigüedad (eventos en los que el usuario está inscrito).
+        $statEventos = 0;
+        $statDisciplinas = 0;
+        if ($userId && $this->tableExists('evento_user') && $this->tableExists('mod_eventos')) {
+            try {
+                // OJO: Laminas\Db\Adapter\Driver\Pdo\Connection->prepare() devuelve un
+                // wrapper SIN método fetch(); hay que bajar al \PDO nativo con
+                // getResource() (mismo bug ya visto y corregido en Ligas\FixtureController).
+                $pdo = $this->db->getDriver()->getConnection()->getResource();
+                $stmt = $pdo->prepare(
+                    'SELECT COUNT(DISTINCT e.id) AS total_eventos, COUNT(DISTINCT e.deporte) AS total_disciplinas
+                       FROM mod_eventos e
+                       INNER JOIN evento_user eu ON eu.mod_evento_id = e.id
+                      WHERE eu.user_id = ?'
+                );
+                $stmt->execute([$userId]);
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $statEventos = (int) ($row['total_eventos'] ?? 0);
+                $statDisciplinas = (int) ($row['total_disciplinas'] ?? 0);
+            } catch (\Throwable $e) { /* fallback en 0 */
+            }
+        }
+
         return new ViewModel([
-            'user' => $this->auth->getIdentity() ?? [],
+            'user' => $identity,
+            'stat_eventos' => $statEventos,
+            'stat_partidos' => 0,
+            'stat_ranking' => 0,
+            'stat_disciplinas' => $statDisciplinas,
         ]);
     }
 
@@ -39,7 +75,7 @@ class IndexController extends AbstractActionController
 
         if ($userId && $this->tableExists('mod_eventos')) {
             try {
-                $stmt = $this->db->getDriver()->getConnection()->prepare(
+                $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare(
                     'SELECT e.uuid, e.titulo, e.deporte, e.referencia_utc,
                             a.nombre_evento, a.fecha_inicio, a.afiche_promocional_min
                        FROM mod_eventos e
@@ -126,7 +162,7 @@ class IndexController extends AbstractActionController
 
         if ($this->tableExists('mod_eventos')) {
             try {
-                $stmt = $this->db->getDriver()->getConnection()->prepare(
+                $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare(
                     'SELECT uuid, titulo, inscripcion, referencia_utc
                        FROM mod_eventos
                        WHERE deporte = ?

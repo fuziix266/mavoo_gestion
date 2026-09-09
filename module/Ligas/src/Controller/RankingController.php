@@ -235,7 +235,7 @@ class RankingController extends AbstractActionController
     private function dbQuery(string $sql, array $params = []): array
     {
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare($sql);
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare($sql);
             $stmt->execute($params);
             $out = [];
             while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -251,7 +251,7 @@ class RankingController extends AbstractActionController
     private function dbWrite(string $sql, array $params = []): bool
     {
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare($sql);
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare($sql);
             $stmt->execute($params);
 
             return true;

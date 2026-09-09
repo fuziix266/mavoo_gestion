@@ -39,7 +39,7 @@ class LogsController extends AbstractActionController
                           WHERE e.deporte = ?
                           ORDER BY l.created_at DESC
                           LIMIT 100';
-                $stmt = $this->db->getDriver()->getConnection()->prepare($sql);
+                $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare($sql);
                 $stmt->execute([$deporte]);
                 $logs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             } catch (\Throwable $e) { /* fallback */
@@ -70,7 +70,7 @@ class LogsController extends AbstractActionController
             return null;
         }
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare(
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare(
                 'SELECT * FROM mod_eventos WHERE uuid = ? AND deporte = ?'
             );
             $stmt->execute([$uuid, $deporte]);
@@ -88,7 +88,7 @@ class LogsController extends AbstractActionController
             return [];
         }
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare(
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare(
                 'SELECT uuid, titulo, inscripcion, referencia_utc FROM mod_eventos WHERE deporte = ? ORDER BY referencia_utc DESC LIMIT 30'
             );
             $stmt->execute([$deporte]);
@@ -102,7 +102,7 @@ class LogsController extends AbstractActionController
     private function tableExists(string $t): bool
     {
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare('SHOW TABLES LIKE ?');
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare('SHOW TABLES LIKE ?');
             $stmt->execute([$t]);
 
             return (bool) $stmt->fetch(\PDO::FETCH_ASSOC);

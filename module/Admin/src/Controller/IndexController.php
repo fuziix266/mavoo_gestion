@@ -784,7 +784,7 @@ SQL;
     private function dbWrite(string $sql, array $params = []): int|false
     {
         try {
-            $stmt = $this->db->getDriver()->getConnection()->prepare($sql);
+            $stmt = $this->db->getDriver()->getConnection()->getResource()->prepare($sql);
             $stmt->execute($params);
 
             return $this->dbLastInsertId() ?: 1;
