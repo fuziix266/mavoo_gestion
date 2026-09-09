@@ -47,7 +47,7 @@ $categorias = $this->categorias ?? [];
                             <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                 <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
                                 <?php foreach($eventos as $ev): ?>
-                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>"
+                                    <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid']]) ?>"
                                             <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>>
                                         <?= $ev['titulo'] ?>
                                     </option>
@@ -88,7 +88,7 @@ $categorias = $this->categorias ?? [];
                             </button>
                             <div class="modal fade" id="modalAgregarCategoria" tabindex="-1" aria-labelledby="modalAgregarCategoriaLabel" aria-hidden="true">
                                 <?php if($evento): ?>
-                                <form method="POST" action="<?= $this->url('ligas.categorias', ['deporte' => $deporte, 'accion' => 'nuevacat', 'uuid' => $evento['uuid']]) ?>">
+                                <form method="POST" action="<?= $this->url('ligas.categorias.nuevacat', ['deporte' => $deporte, 'uuid' => $evento['uuid']]) ?>">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -406,7 +406,7 @@ $categorias = $this->categorias ?? [];
 <?php $this->inlineScript()->appendFile($this->basePath('assets/js/select.js')); ?>
 
 <script>
-const URL_ELIMINAR = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'eliminar-categoria', 'uuid' => 'UUID_PLACEHOLDER']) ?>";
+const URL_ELIMINAR = "<?= $this->url('ligas.categorias.eliminar-categoria', ['deporte' => $deporte ?? 'padel', 'uuid' => 'UUID_PLACEHOLDER']) ?>";
 
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.btn-eliminar-categoria[data-categoria-uuid]').forEach(boton => {
@@ -437,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 function cargarCategoriasDisponibles() {
-    fetch("<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'disponibles', 'uuid' => ($evento['uuid'] ?? '')]) ?>")
+    fetch("<?= $this->url('ligas.categorias.disponibles', ['deporte' => $deporte ?? 'padel', 'uuid' => ($evento['uuid'] ?? '')]) ?>")
         .then(res => res.json())
         .then(data => {
             const container = document.getElementById('contenedorCategoriasDisponibles');
@@ -460,7 +460,7 @@ function agregarSeleccionadas() {
     if (seleccionados.length === 0) return;
     if (confirm('¿Agregar estas categorías?')) {
         seleccionados.forEach(id => {
-            fetch("<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'agregar-acceso', 'uuid' => ($evento['uuid'] ?? '')]) ?>", {
+            fetch("<?= $this->url('ligas.categorias.agregar-acceso', ['deporte' => $deporte ?? 'padel', 'uuid' => ($evento['uuid'] ?? '')]) ?>", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': 'csrf'},
                 body: JSON.stringify({categoria_lista_id: id})
@@ -470,15 +470,15 @@ function agregarSeleccionadas() {
 }
 function eliminarAcceso(id) {
     if (confirm('¿Eliminar esta categoría?')) {
-        let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'eliminar-acceso', 'uuid' => ($evento['uuid'] ?? '')]) ?>";
-        fetch(baseUrl + '/' + id, {
+        let baseUrl = "<?= $this->url('ligas.categorias.eliminar-acceso', ['deporte' => $deporte ?? 'padel', 'uuid' => ($evento['uuid'] ?? ''), 'id' => 'ID_PLACEHOLDER']) ?>".replace('ID_PLACEHOLDER', id);
+        fetch(baseUrl, {
             method: 'DELETE',
             headers: {'X-CSRF-TOKEN': 'csrf'}
         }).then(() => location.reload());
     }
 }
 function abrirModalEdicion(id, limite, a_considerar) {
-    let baseUpdate = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'actcat', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    let baseUpdate = "<?= $this->url('ligas.categorias.actcat', ['deporte' => $deporte ?? 'padel', 'uuid' => '0']) ?>".replace('/0', '/' + id);
     document.getElementById('formEditarCategoria').action = baseUpdate;
     document.getElementById('categoria_id_modal').value = id;
     document.getElementById('limite_modal').value = limite;
@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('change', function () {
             const color = this.value;
             const id = this.dataset.id;
-            let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'updateColor', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+            let baseUrl = "<?= $this->url('ligas.categorias.updateColor', ['deporte' => $deporte ?? 'padel', 'uuid' => '0']) ?>".replace('/0', '/' + id);
             fetch(baseUrl, {
                 method: 'PUT',
                 headers: {
@@ -609,7 +609,7 @@ function setupClasificadosSelect(total, initialK) {
 }
 
 function mostrarReglas(id) {
-    let baseUrl = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'reglas', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    let baseUrl = "<?= $this->url('ligas.categorias.reglas', ['deporte' => $deporte ?? 'padel', 'uuid' => '0']) ?>".replace('/0', '/' + id);
     fetch(baseUrl)
         .then(res => res.json())
         .then(data => {
@@ -623,14 +623,14 @@ function mostrarReglas(id) {
 }
 
 function abrirModalEstructura(id, a_considerar) {
-    let baseUrlGuardar = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'guardarestructura', 'uuid' => '0']) ?>".replace('/0', '/' + id);
+    let baseUrlGuardar = "<?= $this->url('ligas.categorias.guardarestructura', ['deporte' => $deporte ?? 'padel', 'uuid' => '0']) ?>".replace('/0', '/' + id);
     document.getElementById('formEstructura').action = baseUrlGuardar;
-    
+
     // Limpiar selector dinámico y valor oculto al abrir
     document.getElementById('dynamicClasificadosSelector').style.display = 'none';
     document.getElementById('customClasificadosValue').value = '';
-    
-    let baseUrlCalcular = "<?= $this->url('ligas.categorias', ['deporte' => $deporte ?? 'padel', 'accion' => 'calcularestructuras', 'uuid' => '0']) ?>".replace('/0', '/' + a_considerar);
+
+    let baseUrlCalcular = "<?= $this->url('ligas.categorias.calcularestructuras', ['deporte' => $deporte ?? 'padel', 'a_considerar' => '0']) ?>".replace('/0', '/' + a_considerar);
     fetch(baseUrlCalcular)
         .then(res => res.json())
         .then(data => {

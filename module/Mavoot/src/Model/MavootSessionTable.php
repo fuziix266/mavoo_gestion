@@ -50,4 +50,41 @@ class MavootSessionTable
             ['id' => $sessionId]
         );
     }
+
+    /**
+     * Devuelve la sesión por id, o null si no existe.
+     */
+    public function getSession($sessionId)
+    {
+        $rowset = $this->tableGateway->select(['id' => $sessionId]);
+
+        return $rowset->current() ?: null;
+    }
+
+    /**
+     * Incrementa el contador de respuestas del bot y devuelve el nuevo valor.
+     */
+    public function incrementBotResponses($sessionId): int
+    {
+        $session = $this->getSession($sessionId);
+        $newCount = ((int) ($session->bot_responses_count ?? 0)) + 1;
+
+        $this->tableGateway->update(
+            ['bot_responses_count' => $newCount, 'updated_at' => date('Y-m-d H:i:s')],
+            ['id' => $sessionId]
+        );
+
+        return $newCount;
+    }
+
+    /**
+     * Cambia el status de la sesión ('active', 'transferred_to_human', 'closed').
+     */
+    public function updateStatus($sessionId, string $status): void
+    {
+        $this->tableGateway->update(
+            ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')],
+            ['id' => $sessionId]
+        );
+    }
 }

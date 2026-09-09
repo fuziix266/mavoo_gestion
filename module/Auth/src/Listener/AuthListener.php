@@ -31,6 +31,16 @@ class AuthListener extends AbstractListenerAggregate
         'api.whatsapp.baileys.webhook',
         'api.whatsapp.auth.wapilogin',
         'api.whatsapp.auth.wapilogin2',
+        // API de Mavoot (chatbot IA): consumida por el Worker de IA y por el
+        // frontend/app móvil sin sesión de administrador (ver module/Mavoot/config
+        // y documentacion_mavoot/mavoot.md). Sin esta whitelist, el guard global
+        // devolvía 302 a /login en vez de JSON, dejando el chatbot inoperativo.
+        'mavoot-api/send-message',
+        'mavoot-api/latest-response',
+        'mavoot-api/pending-jobs',
+        'mavoot-api/claim',
+        'mavoot-api/context',
+        'mavoot-api/response',
     ];
 
     public function __construct(AuthService $authService)
@@ -98,6 +108,16 @@ class AuthListener extends AbstractListenerAggregate
 
         $viewModel = $event->getViewModel();
         if (!$viewModel instanceof ViewModel) {
+            return;
+        }
+
+        // Las respuestas "terminal" (JsonModel de la API, o vistas parciales/modal
+        // como admin/index/editar-modal) no pasan por el layout: inyectar aquí
+        // contaminaba CADA endpoint JSON de la app con identity/userRoles/
+        // userPermissions extra (JsonModel extiende ViewModel), rompiendo el
+        // contrato esperado por el JS que consume esas respuestas (ej. el
+        // modal de estructuras de Ligas iterando el array con forEach).
+        if ($viewModel->terminate()) {
             return;
         }
 

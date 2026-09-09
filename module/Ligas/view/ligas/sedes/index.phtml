@@ -38,7 +38,7 @@ $paises = $this->paises;
                             <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                 <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
                                 <?php foreach($eventos as $ev): ?>
-                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                    <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -79,7 +79,7 @@ $paises = $this->paises;
                         <div class="list-table-header d-flex justify-content-sm-between mb-3">
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"><?= __('deporte_padel.agregar_dia') ?></button>
                             <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                <form id="form-agregar-dia" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'agregar-dia'], $evento ? ['uuid' => $evento['uuid']] : [])) ?>">
+                                <form id="form-agregar-dia" method="POST" action="<?= $evento ? $this->url('ligas.sedes.agregar-dia', ['deporte' => $deporte, 'uuid' => $evento['uuid']]) : '#' ?>">
                                     
                                     <div class="modal-dialog">
                                         <div class="modal-content">
@@ -131,7 +131,7 @@ $paises = $this->paises;
                                             <td><span class="badge text-light-success fs-7"><?= \Carbon\Carbon::parse($sede->fecha_cierre)->format('d - m - Y H:i') ?></span></td>
                                             <td>
                                                 <?php foreach($sede->canchas as $cancha): ?>
-                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'desactivar-cancha', 'id' => $cancha->uuid]) ?>" style="display:inline;">
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes.desactivar-cancha', ['deporte' => $deporte, 'id' => $cancha->uuid]) ?>" style="display:inline;">
                                                         
                                                         <button type="submit" class="btn btn-light-danger btn-xs" onclick="return confirm('<?= __('deporte_padel.confirmar_eliminar_sede') ?>')">
                                                             <i class="ti ti-trash text-danger"></i>
@@ -143,7 +143,7 @@ $paises = $this->paises;
                                                     <i class="ti ti-plus text-success"></i>
                                                 </button>
                                                 <div class="modal fade" id="modalAgregarCancha<?= $sede->id ?>" tabindex="-1" aria-labelledby="modalAgregarCanchaLabel" aria-hidden="true">
-                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'agregar-cancha']) ?>">
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes.agregar-cancha', ['deporte' => $deporte]) ?>">
                                                         
                                                         <input type="hidden" name="mod_gestion_sede_id" value="<?= $sede->id ?>">
                                                         <div class="modal-dialog">
@@ -180,7 +180,7 @@ $paises = $this->paises;
                                             <td>
                                                 <button class="btn edit-item-btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalHabilitar<?= $sede->id ?>"><?= __('deporte_padel.habilitar') ?> (<?= $sede->restricciones->count() ?>)</button>
                                                 <div class="modal fade" id="modalHabilitar<?= $sede->id ?>" tabindex="-1" aria-labelledby="modalHabilitarLabel" aria-hidden="true">
-                                                    <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'agregar-restricciones']) ?>">
+                                                    <form method="POST" action="<?= $this->url('ligas.sedes.agregar-restricciones', ['deporte' => $deporte]) ?>">
                                                         
                                                         <input type="hidden" name="mod_gestion_sede_id" value="<?= $sede->id ?>">
                                                         <div class="modal-dialog">
@@ -213,7 +213,7 @@ $paises = $this->paises;
                                                 </div>
                                             </td>
                                             <td>
-                                                <form method="POST" action="<?= $this->url('ligas.sedes', ['deporte' => $deporte, 'accion' => 'desactivar', 'id' => $sede->uuid]) ?>" style="display:inline;">
+                                                <form method="POST" action="<?= $this->url('ligas.sedes.desactivar', ['deporte' => $deporte, 'id' => $sede->uuid]) ?>" style="display:inline;">
                                                     
                                                     <button type="submit" class="btn btn-light-danger icon-btn b-r-4" onclick="return confirm('<?= __('deporte_padel.confirmar_eliminar_bloque') ?>')">
                                                         <i class="ti ti-trash text-danger"></i>
@@ -272,7 +272,7 @@ $paises = $this->paises;
                             </form>
                         </div>
                         <div class="modal fade" id="modalAgregarSedeLista" tabindex="-1" aria-labelledby="modalAgregarSedeListaLabel" aria-hidden="true">
-                            <form id="form-agregar-sede-lista" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'store-sede-lista'], $evento ? ['uuid' => $evento['uuid']] : [])) ?>">
+                            <form id="form-agregar-sede-lista" method="POST" action="<?= $evento ? $this->url('ligas.sedes.store-sede-lista', ['deporte' => $deporte, 'uuid' => $evento['uuid']]) : '#' ?>">
                                 
                                 <div class="modal-dialog">
                                     <div class="modal-content">
@@ -317,7 +317,7 @@ $paises = $this->paises;
                                                     <i class="ti ti-pencil text-success"></i>
                                                 </button>
                                                 <div class="modal fade" id="modalEditarSedeLista<?= $sedeLista->uuid ?>" tabindex="-1" aria-labelledby="modalEditarSedeListaLabel" aria-hidden="true">
-                                                    <form id="form-editar-sede-lista-<?= $sedeLista->uuid ?>" method="POST" action="<?= $this->url('ligas.sedes', array_merge(['deporte' => $deporte, 'accion' => 'update-sede-lista'], $evento ? ['uuid' => $evento['uuid'], 'id' => $sedeLista->uuid] : [])) ?>">
+                                                    <form id="form-editar-sede-lista-<?= $sedeLista->uuid ?>" method="POST" action="<?= $evento ? $this->url('ligas.sedes.update-sede-lista', ['deporte' => $deporte, 'uuid' => $evento['uuid'], 'id' => $sedeLista->uuid]) : '#' ?>">
                                                         
                                                         <div class="modal-dialog">
                                                             <div class="modal-content">

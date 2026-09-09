@@ -50,7 +50,7 @@ $nominas = $this->nominas ?? [];
                             <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                 <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
                                 <?php foreach($eventos as $ev): ?>
-                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                    <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -206,7 +206,7 @@ $nominas = $this->nominas ?? [];
                                 </button>
                             </div>
                             <div style="display: flex; flex-direction: column; justify-content: center; padding-left: 10px; margin-left: 10px;">
-                                <button class="btn btn-outline-success btn-exportar-excel" onclick="window.location.href='<?= $this->url('ligas.nominas', ['deporte' => $deporte, 'accion' => 'exportar-excel', 'categoria_uuid' => $categoria->uuid]) ?>'">
+                                <button class="btn btn-outline-success btn-exportar-excel" onclick="window.location.href='<?= $this->url('ligas.nominas.exportar-excel', ['deporte' => $deporte, 'categoria_uuid' => $categoria->uuid]) ?>'">
                                     <i class="ti ti-download"></i>
                                 </button>
                             </div>
@@ -571,7 +571,7 @@ $('#formRegistrarJugador').on('submit', function (e) {
     }
 
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'verificar-jugador', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+        url: '<?= $this->url('ligas.nominas.verificar-jugador', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
         method: 'POST',
         data: formData,
         success: function (response) {
@@ -603,7 +603,7 @@ $('#formRegistrarJugador').on('submit', function (e) {
 
 function agregarJugador(formData) {
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'agregar-jugador', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+        url: '<?= $this->url('ligas.nominas.agregar-jugador', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
         method: 'POST',
         data: formData,
         success: function (response) {
@@ -638,7 +638,7 @@ function abrirEditarMarcaDesdeBoton(btn) {
 }
 
 function cargarMarcas() {
-    fetch('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'marcas-listar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>')
+    fetch('<?= $this->url('ligas.nominas.marcas-listar', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>')
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('marcas-data');
@@ -854,7 +854,7 @@ document.getElementById('formAgregarMarca').addEventListener('submit', function(
         formulario: formData.get('formulario') === 'on',
         obligatorio: formData.get('obligatorio') === 'on',
     };
-    fetch('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'marcas-guardar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    fetch('<?= $this->url('ligas.nominas.marcas-guardar', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?= csrf_token() ?>' },
         body: JSON.stringify(data)
@@ -918,7 +918,7 @@ $(document).on('click', '.btn-inscribir', function () {
     const categoriaUuid = $(this).data('uuid');
     $('#campoCategoriaUuid').val(categoriaUuid);
     const $form = $('#modalInscribirUsuarios').find('form');
-    $form.attr('action', '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'inscribir', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>');
+    $form.attr('action', '<?= $this->url('ligas.nominas.inscribir', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>');
     $form.find('input[name="nomina_uuid"]').remove();
     $('#usuario_id_1').val(null).trigger('change');
     $('#usuario_id_2').val(null).trigger('change');
@@ -927,7 +927,7 @@ $(document).on('click', '.btn-ordenar-ranking, .btn-ordenar-random', function ()
     const categoriaUuid = $(this).data('categoria-uuid');
     const tipo = $(this).hasClass('btn-ordenar-ranking') ? 'ranking' : 'random';
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'ordenar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.ordenar', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: { categoria_uuid: categoriaUuid, tipo: tipo, _token: '<?= csrf_token() ?>' },
         success: function (response) {
             if (response.success) location.reload();
@@ -940,7 +940,7 @@ $(document).on('click', '.delete-btn', function () {
     if (!confirm('<?= __('deporte_padel.confirmar_eliminar_registro') ?>')) return;
     const nominaUuid = $(this).data('nomina-uuid');
     const categoriaUuid = $(this).data('categoria-uuid');
-    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'borrar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    $.post('<?= $this->url('ligas.nominas.borrar', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         nomina_uuid: nominaUuid, mod_gestion_categoria_uuid: categoriaUuid, _token: '<?= csrf_token() ?>'
     }, function () { location.reload(); });
 });
@@ -949,7 +949,7 @@ $(document).on('click', '.btn-editar-restricciones', function () {
     const userUuid = $(this).data('user-uuid');
     $('#restriccionesUserUuid').val(userUuid);
     $('#restriccionesNominaUuid').val(nominaUuid);
-    $.get('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'obt_rstr', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    $.get('<?= $this->url('ligas.nominas.obt_rstr', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         nomina_uuid: nominaUuid, user_uuid: userUuid
     }, function (response) {
         const total = response.restricciones.length;
@@ -980,7 +980,7 @@ $('#formRestricciones').on('submit', function (e) {
     const seleccionadas = [];
     const nominaUuid = $('#restriccionesNominaUuid').val();
     $('#listaRestricciones input:checked').each(function () { seleccionadas.push($(this).val()); });
-    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'g_rstr', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    $.post('<?= $this->url('ligas.nominas.g_rstr', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         nomina_uuid: $('#restriccionesNominaUuid').val(), user_uuid: $('#restriccionesUserUuid').val(),
         restricciones: seleccionadas, _token: '<?= csrf_token() ?>'
     }, function () {
@@ -996,7 +996,7 @@ $(document).on('click', '.marca-toggle, .text-light-secondary', function () {
     const nominaUuid = $badge.data('nomina-uuid');
     const index = $badge.data('index');
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_marca', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.act_marca', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: { user_uuid: userUuid, nomina_uuid: nominaUuid, index: index, _token: '<?= csrf_token() ?>' },
         success: function (response) {
             $badge.text(response.texto);
@@ -1017,7 +1017,7 @@ $(document).on('click', '.btn-editar-email', function () {
 });
 $('#formEditarNumero').on('submit', function (e) {
     e.preventDefault();
-    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_tel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    $.post('<?= $this->url('ligas.nominas.act_tel', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         user_uuid: $('#numeroUserUuid').val(), nomina_uuid: $('#numeroNominaUuid').val(),
         numero: $('#nuevoNumero').val(), _token: '<?= csrf_token() ?>'
     }, function (response) {
@@ -1028,7 +1028,7 @@ $('#formEditarNumero').on('submit', function (e) {
 });
 $('#formEditarEmail').on('submit', function (e) {
     e.preventDefault();
-    $.post('<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_mail', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
+    $.post('<?= $this->url('ligas.nominas.act_mail', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', {
         user_uuid: $('#emailUserUuid').val(), nomina_uuid: $('#emailNominaUuid').val(),
         email: $('#nuevoEmail').val(), _token: '<?= csrf_token() ?>'
     }, function (response) {
@@ -1046,7 +1046,7 @@ $(document).on('click', '.btn-editar-identificacion', function () {
 $('#formEditarIdentificacion').on('submit', function (e) {
     e.preventDefault();
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_ident', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.act_ident', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: {
             nomina_uuid: $('#nominaUuidIdentificacion').val(), user_uuid: $('#userUuidIdentificacion').val(),
             pais_uuid: $('#paisUuidEditar').val(), documento: $('#documentoEditar').val(), _token: '<?= csrf_token() ?>'
@@ -1076,7 +1076,7 @@ $(document).on('click', '.btn-editar-ranking-manual', function () {
 $('#formRankingManual').on('submit', function (e) {
     e.preventDefault();
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_rnk', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.act_rnk', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: {
             nomina_uuid: $('#nominaUuidRanking').val(), rankingt_manual: $('#nuevoRanking').val(), _token: '<?= csrf_token() ?>'
         },
@@ -1091,7 +1091,7 @@ $('#formRankingManual').on('submit', function (e) {
 });
 $('#btnRankingAuto').on('click', function () {
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_rnk', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.act_rnk', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: {
             nomina_uuid: $('#nominaUuidRanking').val(), rankingt_manual: null, _token: '<?= csrf_token() ?>'
         },
@@ -1112,7 +1112,7 @@ $(document).on('click', '.btn-editar-nombre', function () {
 $('#formEditarNombre').on('submit', function (e) {
     e.preventDefault();
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'act_nombre', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.act_nombre', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: {
             nomina_uuid: $('#nominaUuidEditar').val(), user_uuid: $('#userUuidEditar').val(),
             nombre: $('#nuevoNombre').val(), _token: '<?= csrf_token() ?>'
@@ -1150,7 +1150,7 @@ $(document).on('click', '.btn-reordenar-destino', function () {
         return;
     }
     $.ajax({
-        url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'mover', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
+        url: '<?= $this->url('ligas.nominas.mover', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>', method: 'POST',
         data: { origen_id: nominaOrigenId, destino_id: nominaDestinoId, _token: '<?= csrf_token() ?>' },
         success: function () { location.reload(); },
         error: function () { alert('<?= __('deporte_padel.error_reordenar_nomina') ?>'); }
@@ -1168,7 +1168,7 @@ $('#modalInscribirUsuarios').on('shown.bs.modal', function (event) {
 
     // Cambiar la acción del formulario según si es agregar o editar
     const form = $('#formInscribirUsuarios');
-    const url = nominaUuid ? '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'editar', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>' : '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'inscribir', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>';
+    const url = nominaUuid ? '<?= $this->url('ligas.nominas.editar', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>' : '<?= $this->url('ligas.nominas.inscribir', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>';
     form.attr('action', url);
 
     // Limpiar y reinicializar Select2
@@ -1192,7 +1192,7 @@ $('#modalInscribirUsuarios').on('shown.bs.modal', function (event) {
         placeholder: '<?= __("dios.js1") ?>',
         minimumInputLength: 2,
         ajax: {
-            url: '<?= $this->url('ligas.nominas', ['deporte' => $deporte ?? 'padel', 'accion' => 'buscar_usuario', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
+            url: '<?= $this->url('ligas.nominas.buscar_usuario', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? 'fake-uuid']) ?>',
             dataType: 'json',
             delay: 250,
             data: function (params) {

@@ -59,14 +59,14 @@ $secciones = [
         [
             'nuevacat' => ['nuevacat', ['uuid' => '[a-f0-9\-]+']],
             'actcat' => ['actcat'],
-            'guardarestructura' => ['guardarestructura'],
+            'guardarestructura' => ['guardarestructura', ['uuid' => '[a-f0-9\-]+']],
             'eliminar-categoria' => ['eliminarCategoria', ['uuid' => '[a-f0-9\-]+']],
             'disponibles' => ['disponibles', ['uuid' => '[a-f0-9\-]+']],
             'agregar-acceso' => ['agregarAcceso', ['uuid' => '[a-f0-9\-]+']],
             'eliminar-acceso' => ['eliminarAcceso', ['uuid' => '[a-f0-9\-]+', 'id' => '[a-zA-Z0-9_-]+']],
-            'updateColor' => ['updateColor'],
+            'updateColor' => ['updateColor', ['uuid' => '[a-f0-9\-]+']],
             'reglas' => ['reglas'],
-            'calcularestructuras' => ['calcularestructuras'],
+            'calcularestructuras' => ['calcularestructuras', ['a_considerar' => '[0-9]+']],
         ],
     ],
     'nominas' => [
@@ -198,7 +198,13 @@ foreach ($secciones as $seccion => $info) {
         $extraPath = '';
         $extraConstraints = ['deporte' => '[a-zA-Z]+'];
         foreach ($extraParams as $name => $pattern) {
-            $extraPath .= '/'.$name;
+            // BUG CRÍTICO (pre-existente): faltaba el ':' -> generaba un segmento
+            // literal "/uuid" en vez del placeholder "/:uuid", por lo que NINGUNA
+            // acción con parámetro (guardar, editar, borrar, toggle...) en todo
+            // el módulo Ligas podía matchear con un valor real. Afectaba a
+            // decenas de rutas en ajustes/sedes/categorias/nominas/ranking/
+            // fixture/notificaciones.
+            $extraPath .= '/:'.$name;
             $extraConstraints[$name] = $pattern;
         }
 

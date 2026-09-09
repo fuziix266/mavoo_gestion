@@ -51,7 +51,7 @@ $categorias = $this->categorias ?? [];
                             <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                 <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
                                 <?php foreach($eventos as $ev): ?>
-                                <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>>
+                                <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid']]) ?>" <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>>
                                     <?= $ev['titulo'] ?>
                                 </option>
                                 <?php endforeach; ?>
@@ -120,11 +120,11 @@ $categorias = $this->categorias ?? [];
                             <?php if (!$asociacion): ?>
                             <button type="button" class="btn btn-primary btn-asociar-ranking" data-bs-toggle="modal" data-bs-target="#asociarRankingModal"><?= __('deporte_padel.asociar_ranking') ?></button>
                             <?php else: ?>
-                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'aplicar', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
+                            <form action="<?= $this->url('ligas.ranking.aplicar', ['deporte' => $deporte, 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
                                 
                                 <button type="submit" class="btn btn-success btn-aplicar-ranking"><?= __('deporte_padel.actualizar_puntuacion') ?></button>
                             </form>
-                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'desasociar', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
+                            <form action="<?= $this->url('ligas.ranking.desasociar', ['deporte' => $deporte, 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST" style="display: inline;">
                                 
                                 <button type="submit" class="btn btn-danger btn-desasociar-ranking"><?= __('deporte_padel.quitar_asociacion_ranking') ?></button>
                             </form>
@@ -258,7 +258,7 @@ $categorias = $this->categorias ?? [];
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-success edit-btn" data-bs-toggle="modal" data-bs-target="#rankingModal" data-mode="edit"><?= __('deporte_padel.editar') ?></button>
-                                            <form action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'destroy', 'uuid' => ($evento['uuid'] ?? ''), 'id' => $ranking->uuid]) ?>" method="POST" style="display: inline;">
+                                            <form action="<?= $this->url('ligas.ranking.destroy', ['deporte' => $deporte, 'uuid' => ($evento['uuid'] ?? ''), 'id' => $ranking->uuid]) ?>" method="POST" style="display: inline;">
                                                 
                                                 
                                                 <button type="submit" class="btn btn-sm btn-danger btn-eliminar-ranking" data-nombre="<?= $ranking->nombre_ranking ?>"><?= __('deporte_padel.eliminar') ?></button>
@@ -348,7 +348,7 @@ $categorias = $this->categorias ?? [];
         <div class="modal fade" id="asociarRankingModal" tabindex="-1" aria-labelledby="asociarRankingModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form id="asociarRankingForm" method="POST" action="<?= $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'asociar', 'uuid' => ($evento['uuid'] ?? '')]) ?>">
+                    <form id="asociarRankingForm" method="POST" action="<?= $this->url('ligas.ranking.asociar', ['deporte' => $deporte, 'uuid' => ($evento['uuid'] ?? '')]) ?>">
                         
                         <div class="modal-header">
                             <h1 class="modal-title fs-5" id="asociarRankingModalLabel"><?= __('deporte_padel.asociar_ranking') ?></h1>
@@ -434,12 +434,10 @@ $categorias = $this->categorias ?? [];
 <script src="<?= $this->basePath('assets/vendor/select/select2.min.js') ?>"></script>
 <script src="<?= $this->basePath('assets/js/select.js') ?>"></script>
 <?php
-$baseRankingEdit = $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => 'UUID_PLACEHOLDER']);
-$baseRankingDelete = $this->url('ligas.ranking', ['deporte' => $deporte, 'accion' => 'delete', 'uuid' => 'UUID_PLACEHOLDER']);
+$baseRankingEdit = $this->url('ligas.ranking.edit', ['deporte' => $deporte, 'ranking_uuid' => 'UUID_PLACEHOLDER']);
 ?>
 <script>
 const RANKING_EDIT_URL = <?= json_encode($baseRankingEdit) ?>;
-const RANKING_DELETE_URL = <?= json_encode($baseRankingDelete) ?>;
 </script>
 <script>
     const searchInput = document.querySelector('.search');
@@ -512,7 +510,7 @@ const RANKING_DELETE_URL = <?= json_encode($baseRankingDelete) ?>;
             const row = button.closest('tr');
             const form = editManualModal.querySelector('form');
             const rankingUuid = row.dataset.uuid;
-            form.action = '<?= $this->url('ligas.ranking', ['deporte' => $deporte ?? 'padel', 'accion' => 'manual', 'uuid' => $evento['uuid'] ?? '']) ?>/:ranking_uuid'.replace(':ranking_uuid', rankingUuid);
+            form.action = '<?= $this->url('ligas.ranking.manual', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? '', 'ranking_uuid' => 'RANKING_UUID_PLACEHOLDER']) ?>'.replace('RANKING_UUID_PLACEHOLDER', rankingUuid);
             form.querySelector('select[name="categoria_manual"]').value = row.dataset.categoria_manual || '';
             form.querySelector('input[name="puntos_manual"]').value = row.dataset.puntos_manual || '';
         });
@@ -543,7 +541,7 @@ const RANKING_DELETE_URL = <?= json_encode($baseRankingDelete) ?>;
             } else {
                 modalTitle.textContent = "<?= __('deporte_padel.agregar_ranking') ?>";
                 submitBtn.textContent = "<?= __('deporte_padel.guardar') ?>";
-                form.action = '<?= $this->url('ligas.ranking', ['deporte' => $deporte ?? 'padel', 'accion' => 'store', 'uuid' => $evento['uuid'] ?? '']) ?>';
+                form.action = '<?= $this->url('ligas.ranking.store', ['deporte' => $deporte ?? 'padel', 'uuid' => $evento['uuid'] ?? '']) ?>';
                 form.querySelector('#ranking_uuid').value = '';
                 form.querySelector('#nombre_ranking').value = 'Nuevo Ranking';
                 form.querySelector('#puntos_inscribirse').value = '0';

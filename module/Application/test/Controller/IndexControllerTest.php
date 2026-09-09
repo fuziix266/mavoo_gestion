@@ -26,20 +26,22 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
         parent::setUp();
     }
 
-    public function testIndexActionCanBeAccessed(): void
+    public function testIndexActionRedirectsToDashboard(): void
     {
+        // "/" ya no renderiza una vista propia: IndexController::indexAction()
+        // redirige siempre a la ruta 'dashboard' (ver Application\Controller\IndexController).
+        // El AuthListener se encarga de redirigir a /login si no hay sesión activa.
         $this->dispatch('/', 'GET');
-        $this->assertResponseStatusCode(200);
+        $this->assertResponseStatusCode(302);
         $this->assertModuleName('application');
         $this->assertControllerName(IndexController::class); // as specified in router's controller name alias
         $this->assertControllerClass('IndexController');
         $this->assertMatchedRouteName('home');
-    }
 
-    public function testIndexActionViewModelTemplateRenderedWithinLayout(): void
-    {
-        $this->dispatch('/', 'GET');
-        $this->assertQuery('body h1');
+        $response = $this->getResponse();
+        $location = $response->getHeaders()->get('Location');
+        $this->assertNotFalse($location, 'Se esperaba un header Location en la redirección.');
+        $this->assertStringContainsString('/dashboard', $location->getFieldValue());
     }
 
     public function testInvalidRouteDoesNotCrash(): void

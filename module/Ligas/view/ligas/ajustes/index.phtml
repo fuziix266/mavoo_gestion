@@ -41,7 +41,7 @@ $paises = $this->paises;
                             <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                 <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . $evento['titulo'] : __('deporte_padel.seleccionar_evento') ?></option>
                                 <?php foreach($eventos as $ev): ?>
-                                    <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte ?? 'padel', 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
+                                    <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte ?? 'padel', 'uuid' => $ev['uuid']]) ?>" <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>><?= $ev['titulo'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -69,7 +69,7 @@ $paises = $this->paises;
                 <div class="card-body">
                     <div class="app-form">
                         <?php $bloqueados = (array)($ultimoAjuste['campos_bloqueados'] ?? []); ?>
-                        <form method="POST" action="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'guardar']) ?>" enctype="multipart/form-data">
+                        <form method="POST" action="<?= $this->url('ligas.ajustes.guardar', ['deporte' => $deporte]) ?>" enctype="multipart/form-data">
                             <input type="hidden" name="uuid" value="<?= $evento['uuid'] ?? '' ?>">
                             <div class="row">
                                 <div class="col-md-6 mb-3">

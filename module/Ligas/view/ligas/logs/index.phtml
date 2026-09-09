@@ -51,7 +51,7 @@ $paises = $this->paises;
 															<select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
 															    <option value=""><?= $evento ? 'Evento seleccionado: ' . $evento['titulo'] : 'Seleccione evento' ?></option>
 															    <?php foreach($eventos as $ev): ?>
-															        <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid'] ?? '']) ?>"
+															        <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid'] ?? '']) ?>"
 															            <?= $evento && $evento['id'] === $ev['id'] ? 'selected' : '' ?>>
 															            <?= $ev['titulo'] ?>
 															        </option>

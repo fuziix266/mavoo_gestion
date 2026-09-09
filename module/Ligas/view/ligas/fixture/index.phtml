@@ -135,7 +135,7 @@ $categoriasRows = $this->categoriasRows ?? [];
                                 <select name="selector_evento" class="select-example form-select select-basic" onchange="if(this.value) window.location.href=this.value">
                                     <option value=""><?= $evento ? __('deporte_padel.evento_seleccionado') . ': ' . $evento['titulo'] : __('deporte_padel.seleccione_evento') ?></option>
                                     <?php foreach($eventos as $ev): ?>
-                                        <option value="<?= $this->url('ligas.ajustes', ['deporte' => $deporte, 'accion' => 'edit', 'uuid' => $ev['uuid']]) ?>"
+                                        <option value="<?= $this->url('ligas.ajustes.edit', ['deporte' => $deporte, 'uuid' => $ev['uuid']]) ?>"
                                             <?= $evento && ($evento['id'] ?? '') === $ev['id'] ? 'selected' : '' ?>>
                                             <?= $ev['titulo'] ?>
                                         </option>
@@ -194,7 +194,7 @@ $categoriasRows = $this->categoriasRows ?? [];
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <form action="<?= $this->url('ligas.fixture', ['deporte' => $deporte ?? 'padel', 'accion' => 'reiniciar-avanzado', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST">
+                        <form action="<?= $this->url('ligas.fixture.reiniciar-avanzado', ['deporte' => $deporte ?? 'padel', 'uuid' => ($evento['uuid'] ?? '')]) ?>" method="POST">
                             
                             <input type="hidden" name="evento_uuid" value="<?= ($evento['uuid'] ?? '') ?>">
                             <div class="modal-body">
@@ -775,7 +775,7 @@ $categoriasRows = $this->categoriasRows ?? [];
             const fixtureTableBody = document.getElementById('fixtureTableBody');
             mostrarFixtureBtn.addEventListener('click', function () {
                 const eventoId = this.dataset.eventoId;
-                fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'links']) ?>?evento_id=' + eventoId, {
+                fetch('<?= $this->url('ligas.fixture.links', ['deporte' => $deporte]) ?>?evento_id=' + eventoId, {
                     method: 'GET',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1287,7 +1287,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1321,7 +1321,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1357,7 +1357,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1394,7 +1394,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1430,7 +1430,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1467,7 +1467,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                             console.error('<?= __('deporte_padel.evento_id_no_definido') ?>');
                             return;
                         }
-                        fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'toggle']) ?>', {
+                        fetch('<?= $this->url('ligas.fixture.toggle', ['deporte' => $deporte]) ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1497,7 +1497,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                 button.addEventListener('click', function () {
                 		cargando();
                     const eventoId = this.getAttribute('data-evento-id');
-                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'programar-grupos']) ?>', {
+                    fetch('<?= $this->url('ligas.fixture.programar-grupos', ['deporte' => $deporte]) ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1521,7 +1521,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                 button.addEventListener('click', function () {
                 		cargando();
                     const eventoId = this.getAttribute('data-evento-id');
-                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'programar-eliminatorias']) ?>', {
+                    fetch('<?= $this->url('ligas.fixture.programar-eliminatorias', ['deporte' => $deporte]) ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1545,7 +1545,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                 button.addEventListener('click', function () {
                 		cargando();
                     const eventoId = this.getAttribute('data-evento-id');
-                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'reset']) ?>', {
+                    fetch('<?= $this->url('ligas.fixture.reset', ['deporte' => $deporte]) ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1569,7 +1569,7 @@ $('.registrar-resultado, .editar-resultado').click(function() {
                 button.addEventListener('click', function () {
                 		cargando();
                     const eventoId = this.getAttribute('data-evento-id');
-                    fetch('<?= $this->url('ligas.fixture', ['deporte' => $deporte, 'accion' => 'reset-total']) ?>', {
+                    fetch('<?= $this->url('ligas.fixture.reset-total', ['deporte' => $deporte]) ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
