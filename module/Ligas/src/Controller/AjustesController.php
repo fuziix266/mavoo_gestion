@@ -40,8 +40,6 @@ class AjustesController extends AbstractActionController
     // =====================================================================
     public function indexAction(): ViewModel
     {
-        file_put_contents('C:\xampp_php8\htdocs\mavoo_gestion/guardar.log',
-            '[INDEX] isPost='.($this->getRequest()->isPost() ? '1' : '0')."\n", FILE_APPEND);
         $deporte = $this->params()->fromRoute('deporte', 'padel');
         $uuid = $this->params()->fromRoute('uuid');
         $identity = $this->auth->getIdentity();
@@ -84,8 +82,6 @@ class AjustesController extends AbstractActionController
     // =====================================================================
     public function guardarAction()
     {
-        file_put_contents('C:\xampp_php8\htdocs\mavoo_gestion/guardar.log',
-            '[GUARDAR] isPost='.($this->getRequest()->isPost() ? '1' : '0')."\n", FILE_APPEND);
         if (! $this->getRequest()->isPost()) {
             return $this->redirect()->toRoute('ligas.ajustes', [
                 'deporte' => $this->params()->fromRoute('deporte', 'padel'),
@@ -93,8 +89,6 @@ class AjustesController extends AbstractActionController
         }
 
         $post = $this->getRequest()->getPost()->toArray();
-        file_put_contents('C:\xampp_php8\htdocs\mavoo_gestion/guardar.log',
-            '[GUARDAR] post='.json_encode($post)."\n", FILE_APPEND);
         $identity = $this->auth->getIdentity();
         $deporte = $this->params()->fromRoute('deporte', 'padel');
         $uuidPost = $post['uuid'] ?? null;
@@ -114,15 +108,11 @@ class AjustesController extends AbstractActionController
             }
         } else {
             $newUuid = Uuid::uuid4()->toString();
-            file_put_contents('C:\xampp_php8\htdocs\mavoo_gestion/guardar.log',
-                "[INSERT] newUuid={$newUuid} user={$identity['id']} deporte={$deporte}\n", FILE_APPEND);
             $insertResult = $this->dbWrite(
                 'INSERT INTO mod_eventos (uuid, user_id, deporte, referencia_utc, created_at, updated_at)
                  VALUES (?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP())',
                 [$newUuid, $identity['id'], $deporte]
             );
-            file_put_contents('C:\xampp_php8\htdocs\mavoo_gestion/guardar.log',
-                '[INSERT] result='.var_export($insertResult, true)."\n", FILE_APPEND);
             $eventoRows = $this->dbQuery(
                 'SELECT * FROM mod_eventos WHERE uuid = ? LIMIT 1',
                 [$newUuid]

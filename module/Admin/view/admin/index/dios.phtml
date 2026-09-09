@@ -213,12 +213,18 @@ if (!function_exists('eav')) {
                                             </form>
                                         </td>
                                     </tr>
-
-                                    <?= $this->partial('admin/index/dios-modal.phtml', ['usuario' => $user, 'baseCL' => $baseCL]) ?>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             </tbody>
                         </table>
+                        <?php // Los modales de edición NO pueden ir dentro de <tbody>: un <div> ahí es HTML
+                              // inválido (tbody solo admite <tr>), el navegador lo reubica al parsear, y
+                              // eso desalinea las columnas que ve DataTables -> "Incorrect column count". ?>
+                        <?php if (! empty($usuarios)): ?>
+                            <?php foreach ($usuarios as $user): ?>
+                                <?= $this->partial('admin/index/dios-modal.phtml', ['usuario' => $user, 'baseCL' => $baseCL]) ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

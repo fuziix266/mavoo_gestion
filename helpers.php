@@ -63,7 +63,19 @@ if (! function_exists('__')) {
         $path = explode('.', substr($key, strlen($file) + 1));
 
         if (! isset($langCache[$file])) {
+            // BUG (pre-existente): las 2 rutas originales navegaban 1-2 niveles
+            // ARRIBA de este archivo (que vive en la raíz de gestion_laminas),
+            // asumiendo que gestion_laminas siempre corre como subcarpeta junto
+            // al proyecto Laravel (que sí tiene resources/lang/es/). Eso
+            // "funcionaba" en local por casualidad de la estructura de carpetas,
+            // pero en producción gestion_laminas corre solo en su propio
+            // contenedor Docker (sin el Laravel hermano al lado) -> nunca
+            // encontraba los archivos y __() devolvía la key cruda
+            // (ej. "deporte_padel.sin_limites") en vez del texto traducido.
+            // Fix: copia propia y autocontenida en gestion_laminas/resources/lang/es/,
+            // manteniendo las rutas viejas como fallback por compatibilidad.
             $candidates = [
+                __DIR__.'/resources/lang/es/'.$file.'.php',
                 dirname(__DIR__).'/resources/lang/es/'.$file.'.php',
                 __DIR__.'/../../resources/lang/es/'.$file.'.php',
             ];

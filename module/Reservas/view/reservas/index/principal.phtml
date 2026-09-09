@@ -587,7 +587,7 @@ $sistema = $this->sistema ?? (object) [];
                         <div class="gallery-grid" id="gallery-grid">
                             <?php if(!empty($sistema->galeria_config) && count($sistema->galeria_config) > 0): ?>
                                 <?php foreach($sistema->galeria_config as $imagen): ?>
-                                <div class="gallery-item" data-filename="<?= $imagen['nombre_archivo'] ?>">
+                                <div class="gallery-item" data-filename="<?= $imagen['filename'] ?>">
                                     <div class="gallery-image">
                                         <img src="<?= $imagen['url'] ?>" alt="Imagen galería" loading="lazy">
                                     </div>
@@ -595,7 +595,7 @@ $sistema = $this->sistema ?? (object) [];
                                         <button type="button" class="btn-gallery-action" onclick="copyImageUrl('<?= $imagen['url'] ?>')" title="Copiar URL">
                                             <i class="ph-duotone ph-copy"></i>
                                         </button>
-                                        <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('<?= $imagen['nombre_archivo'] ?>')" title="Eliminar">
+                                        <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('<?= $imagen['filename'] ?>')" title="Eliminar">
                                             <i class="ph-duotone ph-trash"></i>
                                         </button>
                                     </div>
@@ -1100,7 +1100,7 @@ $sistema = $this->sistema ?? (object) [];
 
         const galleryItem = document.createElement('div');
         galleryItem.className = 'gallery-item';
-        galleryItem.setAttribute('data-filename', imagen.nombre_archivo);
+        galleryItem.setAttribute('data-filename', imagen.filename);
         galleryItem.innerHTML = `
             <div class="gallery-image">
                 <img src="${imagen.url}" alt="Imagen galería" loading="lazy">
@@ -1109,7 +1109,7 @@ $sistema = $this->sistema ?? (object) [];
                 <button type="button" class="btn-gallery-action" onclick="copyImageUrl('${imagen.url}')" title="Copiar URL">
                     <i class="ph-duotone ph-copy"></i>
                 </button>
-                <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('${imagen.nombre_archivo}')" title="Eliminar">
+                <button type="button" class="btn-gallery-action btn-delete" onclick="deleteImage('${imagen.filename}')" title="Eliminar">
                     <i class="ph-duotone ph-trash"></i>
                 </button>
             </div>
@@ -1147,7 +1147,7 @@ $sistema = $this->sistema ?? (object) [];
             return;
         }
 
-        fetch(`<?= $this->url('mod.arriendo.galeria.delete') ?>/' + encodeURIComponent(filename), {
+        fetch(`<?= $this->url('mod.arriendo.galeria.delete') ?>?filename=${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': '<?= "" ?>',

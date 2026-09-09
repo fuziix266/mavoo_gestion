@@ -221,10 +221,10 @@
 <?php $this->inlineScript()->captureStart(); ?>
 (function() {
     const RUTAS = {
-        listar: (alias) => "<?= rtrim($this->basePath(), '/') ?>/admin/ceo/categorias/listar/" + encodeURIComponent(alias),
+        listar: (alias) => "<?= $this->url('admin.ceo.categorias/listar', ['alias' => 'ALIAS_PLACEHOLDER']) ?>".replace('ALIAS_PLACEHOLDER', encodeURIComponent(alias)),
         orden:  "<?= $this->url('admin.ceo.categorias/orden') ?>",
         store:  "<?= $this->url('admin.ceo.categorias/store') ?>",
-        update: (uuid) => "<?= rtrim($this->basePath(), '/') ?>/admin/ceo/categorias/update/" + encodeURIComponent(uuid),
+        update: (uuid) => "<?= $this->url('admin.ceo.categorias/update', ['uuid' => 'UUID_PLACEHOLDER']) ?>".replace('UUID_PLACEHOLDER', encodeURIComponent(uuid)),
     };
 
     const csrf = ""; // CSRF no activo en api REST simple

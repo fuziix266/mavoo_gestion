@@ -563,9 +563,12 @@ class IndexController extends AbstractActionController
         ];
 
         // Serializar configs JSON
-        $amenities = json_encode($this->parseConfigRows($post['amenities'] ?? []));
-        $extras = json_encode($this->parseConfigRows($post['extras'] ?? []));
-        $cupones = json_encode($this->parseCupones($post['cupones'] ?? []));
+        // El form envía los campos como amenities_config[]/extras_config[]/cupones_config[]
+        // (ver principal.phtml); leerlos como 'amenities'/'extras'/'cupones' siempre
+        // devolvía vacío y el guardado de estas 3 secciones nunca se aplicaba.
+        $amenities = json_encode($this->parseConfigRows($post['amenities_config'] ?? []));
+        $extras = json_encode($this->parseConfigRows($post['extras_config'] ?? []));
+        $cupones = json_encode($this->parseCupones($post['cupones_config'] ?? []));
         $galeria = json_encode($this->decodeJson($sistema->galeria_config ?? '[]'));
         $modPer = json_encode(array_values(array_filter((array) ($post['moderadores'] ?? []))));
 

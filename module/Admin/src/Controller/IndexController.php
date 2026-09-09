@@ -381,6 +381,12 @@ SQL;
         $detalle = $this->fetchOne('SELECT * FROM users_detalle WHERE user_id = ?', [$userId]) ?: [];
         $user->detalle = (object) $detalle;
 
+        // editar-modal.phtml lee $user->foto->mini_url/->url (igual que dios.phtml);
+        // sin esto la propiedad no existe y cada render emite un warning de
+        // "Undefined property" antes de caer al avatar por defecto.
+        $foto = $this->fetchOne('SELECT url, mini_url FROM foto_perfil WHERE user_id = ?', [$userId]) ?: [];
+        $user->foto = (object) ['url' => $foto['url'] ?? null, 'mini_url' => $foto['mini_url'] ?? null];
+
         $paises = $this->fetchAll('SELECT uuid, pais FROM paises ORDER BY pais');
 
         $viewModel = new ViewModel([
@@ -868,13 +874,19 @@ SQL;
                 [$userId, $whatsappId]
             );
 
-            // Si quedan otros, marcar el más reciente como defecto
-            $restantes = $this->dbWrite(
+            // Si quedan otros, marcar el más reciente como defecto.
+            // dbWrite() es para INSERT/UPDATE/DELETE (devuelve el last_insert_id
+            // o 1); usado aquí con un SELECT devolvía siempre el entero 1, así
+            // que $restantes['whatsapp_id'] jamás existía y este número nunca
+            // quedaba marcado como el nuevo WhatsApp por defecto. Debe usarse
+            // dbQuery(), que sí devuelve las filas.
+            $restantesRows = $this->dbQuery(
                 'SELECT uw.whatsapp_id, uw.created_at FROM user_whatsapp uw
                  WHERE uw.user_id = ?
                  ORDER BY uw.created_at DESC LIMIT 1',
                 [$userId]
             );
+            $restantes = $restantesRows[0] ?? null;
 
             $this->dbWrite('UPDATE user_whatsapp SET defecto = 0 WHERE user_id = ?', [$userId]);
             if ($restantes) {

@@ -14,7 +14,10 @@ extract($this->vars()->getArrayCopy());
 $meses          = isset($nuevosUsuariosPorMes) ? array_keys($nuevosUsuariosPorMes)   : [];
 $nuevos         = isset($nuevosUsuariosPorMes) ? array_values($nuevosUsuariosPorMes) : [];
 
-$paisesData     = $usuariosPorPais ?? [];
+// El controlador (estadisticasAction) pasa la variable como $paisesRaw, no
+// $usuariosPorPais; con el nombre viejo esto siempre quedaba vacío y el
+// gráfico de "usuarios por país" nunca mostraba datos.
+$paisesData     = $paisesRaw ?? [];
 $paises         = [];
 $usuariosPais   = [];
 foreach ($paisesData as $row) {
