@@ -526,9 +526,7 @@ html, body {
    HEADER — cohesión visual con el shell flotante
    ============================================================ */
 .mavoo-header {
-    background: rgba(255, 255, 255, .85) !important;
-    backdrop-filter: saturate(160%) blur(12px);
-    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    background: rgba(255, 255, 255, .97) !important;
     border-bottom: 1px solid var(--mavoo-ink-200) !important;
     box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
 }
@@ -545,9 +543,7 @@ html, body {
    NAV — horizontal, sticky bajo el header
    ============================================================ */
 .mavoo-nav {
-    background: rgba(255, 255, 255, .9) !important;
-    backdrop-filter: saturate(160%) blur(10px);
-    -webkit-backdrop-filter: saturate(160%) blur(10px);
+    background: rgba(255, 255, 255, .99) !important;
     border-bottom: 1px solid var(--mavoo-ink-200) !important;
     box-shadow: 0 2px 12px rgba(15, 23, 42, .04);
 }
@@ -1687,6 +1683,85 @@ a:hover { color: var(--mavoo-primary-700); }
     outline: 2px solid var(--mavoo-primary);
     outline-offset: 2px;
     border-radius: 3px;
+}
+
+/* ============================================================
+   TABBAR DE SECCIONES — usada por menuh.phtml (Ligas) para
+   navegar entre Ajustes/Sedes/Categorías/Nóminas/Fixture/etc.
+   Reemplaza estilos inline: cada ítem es una card real con
+   borde + sombra propia, no un bloque plano sin separación.
+   ============================================================ */
+.mavoo-tabbar {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0;
+    margin: 0 0 1.5rem;
+}
+.mavoo-tabbar__item {
+    flex: 1 1 130px;
+    min-width: 120px;
+}
+.mavoo-tabbar__link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    padding: 16px 10px;
+    background: var(--mavoo-white);
+    border: 1px solid var(--mavoo-ink-200);
+    border-radius: var(--mavoo-radius-lg);
+    box-shadow: var(--mavoo-shadow-xs);
+    color: var(--mavoo-ink-700);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.mavoo-tabbar__link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mavoo-shadow-sm);
+    border-color: var(--mavoo-primary-100);
+}
+.mavoo-tabbar__icon {
+    display: block;
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 8px;
+    border-radius: 10px;
+    background: var(--mavoo-primary-50);
+    color: var(--mavoo-primary);
+    font-size: 19px;
+    line-height: 36px;
+}
+.mavoo-tabbar__label {
+    display: block;
+    font-weight: 600;
+    font-size: .86rem;
+    color: var(--mavoo-ink-900);
+}
+.mavoo-tabbar__hint {
+    display: block;
+    font-size: .74rem;
+    color: var(--mavoo-ink-500);
+    margin-top: 2px;
+}
+.mavoo-tabbar__item.active .mavoo-tabbar__link {
+    background: var(--mavoo-gradient);
+    border-color: transparent;
+    box-shadow: var(--mavoo-shadow-primary);
+}
+.mavoo-tabbar__item.active .mavoo-tabbar__icon {
+    background: rgba(255, 255, 255, .18);
+    color: var(--mavoo-white);
+}
+.mavoo-tabbar__item.active .mavoo-tabbar__label,
+.mavoo-tabbar__item.active .mavoo-tabbar__hint {
+    color: var(--mavoo-white);
+}
+.mavoo-tabbar__item.active .mavoo-tabbar__hint { color: rgba(255, 255, 255, .85); }
+@media (max-width: 640px) {
+    .mavoo-tabbar { gap: 8px; }
+    .mavoo-tabbar__item { flex: 1 1 100%; }
+    .mavoo-tabbar__link { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; }
+    .mavoo-tabbar__icon { margin: 0; flex-shrink: 0; }
 }
     </style>
 

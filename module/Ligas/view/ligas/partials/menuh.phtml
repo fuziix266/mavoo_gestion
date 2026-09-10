@@ -16,114 +16,89 @@ $menuEV = $this->menuEV ?? (object)[
     'notificaciones' => true,
     'logs'           => true
 ];
+
+$deporteLower = strtolower($deporte);
+// Se agrega '/' final para que el match también funcione en la ruta base
+// (p.ej. '/ligas/futbol/ajustes' sin slash final), no solo en subrutas.
+$uri = $_SERVER['REQUEST_URI'] . '/';
+
+$items = [
+    [
+        'match' => '/ajustes/',
+        'href'  => '/ligas/' . $deporteLower . '/ajustes',
+        'icon'  => 'ph-gear',
+        'label' => 'Ajustes Generales',
+        'hint'  => 'Configuración básica',
+        'show'  => true,
+    ],
+    [
+        'match' => '/sedes/',
+        'href'  => $this->url('ligas.sedes', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-buildings',
+        'label' => 'Días y Sedes',
+        'hint'  => 'Ubicaciones y horarios',
+        'show'  => $menuEV->sedes,
+    ],
+    [
+        'match' => '/categorias/',
+        'href'  => $this->url('ligas.categorias', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-list-checks',
+        'label' => 'Categorías y Reglas',
+        'hint'  => 'Definición de normativas',
+        'show'  => $menuEV->categorias,
+    ],
+    [
+        'match' => '/nominas/',
+        'href'  => $this->url('ligas.nominas', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-users-three',
+        'label' => 'Nóminas',
+        'hint'  => 'Jugadores inscritos',
+        'show'  => $menuEV->nominas,
+    ],
+    [
+        'match' => '/fixture/',
+        'href'  => $this->url('ligas.fixture', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-calendar',
+        'label' => 'Programación',
+        'hint'  => 'Calendario de eventos',
+        'show'  => $menuEV->fixture,
+    ],
+    [
+        'match' => '/ranking/',
+        'href'  => $this->url('ligas.ranking', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-trophy',
+        'label' => 'Ranking',
+        'hint'  => 'Clasificaciones',
+        'show'  => $menuEV->ranking,
+    ],
+    [
+        'match' => '/notificaciones/',
+        'href'  => $this->url('ligas.notificaciones', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-bell',
+        'label' => 'Notificaciones',
+        'hint'  => 'Alertas y comunicaciones',
+        'show'  => $menuEV->notificaciones,
+    ],
+    [
+        'match' => '/logs/',
+        'href'  => $this->url('ligas.logs', ['deporte' => $deporteLower]),
+        'icon'  => 'ph-list-magnifying-glass',
+        'label' => 'Logs',
+        'hint'  => 'Historial de actividades',
+        'show'  => $menuEV->logs,
+    ],
+];
 ?>
-<style>
-@media (max-width: 640px) {
-    .mobile-menu {
-        flex-direction: column !important;
-        gap: 6px !important;
-        padding: 6px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    .mobile-menu li {
-        padding: 8px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        margin: 0 !important;
-    }
-    .mobile-menu li a {
-        font-size: 12px !important;
-    }
-    .mobile-menu li div {
-        font-size: 10px !important;
-    }
-    .mobile-menu li i {
-        font-size: 18px !important;
-    }
-}
-</style>
-
-
-<ul class="mobile-menu" style="list-style:none; display:flex; gap:18px; padding:12px; margin:0; background:#f9fafb; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.05); width:100%; box-sizing:border-box;">
-    
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/ajustes/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="/ligas/<?= strtolower($deporte) ?>/ajustes" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ajustes/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-gear" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ajustes/') ? '#fff' : '#5285EF' ?>"></i>
-            Ajustes Generales
+<ul class="mavoo-tabbar">
+<?php foreach ($items as $item): ?>
+    <?php if (! $item['show']) continue; ?>
+    <?php $active = str_contains($uri, $item['match']); ?>
+    <li class="mavoo-tabbar__item<?= $active ? ' active' : '' ?>">
+        <a href="<?= $this->escapeUrl($item['href']) ?>" class="mavoo-tabbar__link">
+            <i class="ph-fill <?= $item['icon'] ?> mavoo-tabbar__icon"></i>
+            <span class="mavoo-tabbar__label"><?= $this->escapeHtml($item['label']) ?></span>
+            <span class="mavoo-tabbar__hint"><?= $this->escapeHtml($item['hint']) ?></span>
         </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ajustes/') ? '#e0e7ff' : '#6b7280' ?>;">Configuración básica</div>
     </li>
-
-    <?php if($menuEV->sedes): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/sedes/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.sedes', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/sedes/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-buildings" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/sedes/') ? '#fff' : '#5285EF' ?>"></i>
-            Días y Sedes
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/sedes/') ? '#e0e7ff' : '#6b7280' ?>;">Ubicaciones y horarios</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->categorias): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/categorias/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.categorias', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/categorias/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-list-checks" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/categorias/') ? '#fff' : '#5285EF' ?>"></i>
-            Categorías y Reglas
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/categorias/') ? '#e0e7ff' : '#6b7280' ?>;">Definición de normativas</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->nominas): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/nominas/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.nominas', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/nominas/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-users-three" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/nominas/') ? '#fff' : '#5285EF' ?>"></i>
-            Nóminas
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/nominas/') ? '#e0e7ff' : '#6b7280' ?>;">Definición de normativas</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->fixture): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/fixture/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.fixture', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/fixture/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-calendar" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/fixture/') ? '#fff' : '#5285EF' ?>"></i>
-            Programación
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/fixture/') ? '#e0e7ff' : '#6b7280' ?>;">Calendario de eventos</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->ranking): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/ranking/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.ranking', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ranking/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-trophy" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ranking/') ? '#fff' : '#5285EF' ?>"></i>
-            Ranking
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/ranking/') ? '#e0e7ff' : '#6b7280' ?>;">Clasificaciones</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->notificaciones): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/notificaciones/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.notificaciones', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/notificaciones/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-bell" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/notificaciones/') ? '#fff' : '#5285EF' ?>"></i>
-            Notificaciones
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/notificaciones/') ? '#e0e7ff' : '#6b7280' ?>;">Alertas y comunicaciones</div>
-    </li>
-    <?php endif; ?>
-
-    <?php if($menuEV->logs): ?>
-    <li style="flex:1; text-align:center; <?= str_contains($_SERVER['REQUEST_URI'], '/logs/') ? 'background:#5285EF; border-radius:10px;' : 'background:#fff;' ?> padding:14px; transition:all .3s;">
-        <a href="<?= $this->url('ligas.logs', ['deporte' => strtolower($deporte)]) ?>" style="text-decoration:none; color:<?= str_contains($_SERVER['REQUEST_URI'], '/logs/') ? '#fff' : '#111' ?>; font-weight:600; font-size:14px; display:block;">
-            <i class="ph-fill ph-list-magnifying-glass" style="font-size:20px; margin-bottom:6px; display:block; color:<?= str_contains($_SERVER['REQUEST_URI'], '/logs/') ? '#fff' : '#5285EF' ?>"></i>
-            Logs
-        </a>
-        <div style="font-size:12px; color:<?= str_contains($_SERVER['REQUEST_URI'], '/logs/') ? '#e0e7ff' : '#6b7280' ?>;">Historial de actividades</div>
-    </li>
-    <?php endif; ?>
-
+<?php endforeach; ?>
 </ul>
